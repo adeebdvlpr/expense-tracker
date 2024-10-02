@@ -1,4 +1,4 @@
-// import React from 'react';
+// import React from 'react'; V1
 
 // const ExpenseList = ({ expenses, onDeleteExpense }) => {
 //   return (
@@ -15,6 +15,97 @@
 
 // export default ExpenseList;
 
+//V3
+// import React from 'react';
+// import { 
+//   List, 
+//   ListItem, 
+//   ListItemText, 
+//   ListItemSecondaryAction, 
+//   IconButton, 
+//   Typography,
+//   Box 
+// } from '@mui/material';
+// import DeleteIcon from '@mui/icons-material/Delete';
+
+// const ExpenseList = ({ expenses, onDeleteExpense }) => {
+//   if (!expenses || expenses.length === 0) {
+//     return (
+//       <Box sx={{ textAlign: 'center', py: 2 }}>
+//         <Typography variant="body1">No expenses found. Add some expenses to get started!</Typography>
+//       </Box>
+//     );
+//   }
+
+//   return (
+//     <List>
+//       {expenses.map((expense) => (
+//         <ListItem key={expense._id}>
+//           <ListItemText
+//             primary={expense.description}
+//             secondary={
+//               <React.Fragment>
+//                 <Typography component="span" variant="body2" color="text.primary">
+//                   ${expense.amount.toFixed(2)}
+//                 </Typography>
+//                 {" — "}{expense.category}
+//               </React.Fragment>
+//             }
+//           />
+//           <ListItemSecondaryAction>
+//             <IconButton edge="end" aria-label="delete" onClick={() => onDeleteExpense(expense._id)}>
+//               <DeleteIcon />
+//             </IconButton>
+//           </ListItemSecondaryAction>
+//         </ListItem>
+//       ))}
+//     </List>
+//   );
+// };
+
+// export default ExpenseList;
+
+// import React from 'react'; V2
+// import { 
+//   List, 
+//   ListItem, 
+//   ListItemText, 
+//   ListItemSecondaryAction, 
+//   IconButton, 
+//   Typography 
+// } from '@mui/material';
+// import DeleteIcon from '@mui/icons-material/Delete';
+
+// const ExpenseList = ({ expenses, onDeleteExpense }) => {
+//   return (
+//     <List>
+//       {expenses.map((expense) => (
+//         <ListItem key={expense._id}>
+//           <ListItemText
+//             primary={expense.description}
+//             secondary={
+//               <React.Fragment>
+//                 <Typography component="span" variant="body2" color="text.primary">
+//                   ${expense.amount.toFixed(2)}
+//                 </Typography>
+//                 {" — "}{expense.category}
+//               </React.Fragment>
+//             }
+//           />
+//           <ListItemSecondaryAction>
+//             <IconButton edge="end" aria-label="delete" onClick={() => onDeleteExpense(expense._id)}>
+//               <DeleteIcon />
+//             </IconButton>
+//           </ListItemSecondaryAction>
+//         </ListItem>
+//       ))}
+//     </List>
+//   );
+// };
+
+// export default ExpenseList;
+
+//V4
 import React from 'react';
 import { 
   List, 
@@ -22,23 +113,34 @@ import {
   ListItemText, 
   ListItemSecondaryAction, 
   IconButton, 
-  Typography 
+  Typography,
+  Box 
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const ExpenseList = ({ expenses, onDeleteExpense }) => {
+  if (!expenses || expenses.length === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 2 }}>
+        <Typography variant="body1">No expenses found. Add some expenses to get started!</Typography>
+      </Box>
+    );
+  }
+
   return (
     <List>
       {expenses.map((expense) => (
-        <ListItem key={expense._id}>
+        <ListItem key={expense._id || Math.random().toString()}>
           <ListItemText
-            primary={expense.description}
+            primary={expense.description || 'No description'}
             secondary={
               <React.Fragment>
                 <Typography component="span" variant="body2" color="text.primary">
-                  ${expense.amount.toFixed(2)}
+                  ${typeof expense.amount === 'number' && !isNaN(expense.amount) 
+                    ? expense.amount.toFixed(2) 
+                    : '0.00'}
                 </Typography>
-                {" — "}{expense.category}
+                {" — "}{expense.category || 'Uncategorized'}
               </React.Fragment>
             }
           />

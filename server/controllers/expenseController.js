@@ -2,17 +2,26 @@ const Expense = require('../models/Expense');
 
 exports.addExpense = async (req, res, next) => {
   try {
+    const { description, amount, category } = req.body;
     const newExpense = new Expense({
-      ...req.body,
+      description,
+      amount: parseFloat(amount) || 0, // Ensure amount is stored as a number
+      category,
       user: req.user.id
     });
-    await newExpense.save();
-    res.status(201).json(newExpense);
+    const savedExpense = await newExpense.save();
+    res.status(201).json({
+      _id: savedExpense._id,
+      description: savedExpense.description,
+      amount: savedExpense.amount,
+      category: savedExpense.category
+    });
   } catch (error) {
     console.error('Error adding expense:', error);
     next(error);
   }
 };
+
 
 exports.getExpenses = async (req, res, next) => {
   try {

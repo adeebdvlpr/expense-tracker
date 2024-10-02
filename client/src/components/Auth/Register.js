@@ -51,13 +51,13 @@ import {
 
 const Register = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
-    username: '',
+    // username: '',
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
 
-  const { username, email, password } = formData;
+  const { email, password } = formData;
 
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -89,7 +89,7 @@ const Register = ({ onRegisterSuccess }) => {
         </Typography>
         <Box component="form" onSubmit={onSubmit} noValidate sx={{ mt: 1 }}>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <TextField
+          {/* <TextField
             margin="normal"
             required
             fullWidth
@@ -100,7 +100,7 @@ const Register = ({ onRegisterSuccess }) => {
             autoFocus
             value={username}
             onChange={onChange}
-          />
+          /> */}
           <TextField
             margin="normal"
             required
