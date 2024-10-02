@@ -41,7 +41,6 @@
 // };
 
 // export default ExpenseForm;
-
 import React, { useState } from 'react';
 import { 
   TextField, 
@@ -61,11 +60,40 @@ const ExpenseForm = ({ onAddExpense }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!description || !amount || !category) return;
-    onAddExpense({ description, amount: parseFloat(amount), category });
+    onAddExpense({ 
+      description, 
+      amount: parseFloat(amount), // Ensure amount is sent as a number
+      category 
+    });
     setDescription('');
     setAmount('');
     setCategory('');
   };
+
+// import React, { useState } from 'react';
+// import { 
+//   TextField, 
+//   Button, 
+//   Select, 
+//   MenuItem, 
+//   FormControl, 
+//   InputLabel, 
+//   Box 
+// } from '@mui/material';
+
+// const ExpenseForm = ({ onAddExpense }) => {
+//   const [description, setDescription] = useState('');
+//   const [amount, setAmount] = useState('');
+//   const [category, setCategory] = useState('');
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     if (!description || !amount || !category) return;
+//     onAddExpense({ description, amount: parseFloat(amount), category });
+//     setDescription('');
+//     setAmount('');
+//     setCategory('');
+//   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
