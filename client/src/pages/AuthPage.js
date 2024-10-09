@@ -182,29 +182,58 @@ const AuthPage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     navigate('/');
+  //   }
+  // }, [navigate]);
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      navigate('/');
+      navigate('/', { replace: true });
     }
-  }, [navigate]);
+  }, []);
+
 
   const { email, password } = formData;
 
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // const onSubmit = async e => {
+  //   e.preventDefault();
+  //   setError('');
+  //   try {
+  //     const res = await (isLogin ? login(formData) : register(formData));
+  //     localStorage.setItem('token', res.data.token);
+  //     navigate('/');
+  //   } catch (err) {
+  //     console.error('Auth error:', err.response?.data || err.message);
+  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+  //   }
+  // };
+
+  const [isLoading, setIsLoading] = useState(false);
+
+
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
       const res = await (isLogin ? login(formData) : register(formData));
       localStorage.setItem('token', res.data.token);
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Auth error:', err.response?.data || err.message);
       setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <Container component="main" maxWidth="xs">
@@ -252,13 +281,14 @@ const AuthPage = () => {
             value={password}
             onChange={onChange}
           />
-          <Button
+            <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={isLoading}
           >
-            {isLogin ? 'Sign In' : 'Register'}
+            {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}
           </Button>
         </Box>
       </Box>
