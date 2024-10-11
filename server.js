@@ -11,12 +11,18 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+
 // app.use(cors());
 app.use(cors({
   origin: 'https://ad-expense-tracker-16896725c6ee.herokuapp.com/',
   credentials: true
 }));
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Expense Tracker API');
+});
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
