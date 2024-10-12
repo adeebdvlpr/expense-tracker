@@ -12,13 +12,22 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 
-// app.use(cors());
+// Update CORS configuration
 app.use(cors({
-  origin: ['https://ad-expense-tracker-16896725c6ee.herokuapp.com', 'http://localhost:3000'],
+  origin: ['https://ad-expense-tracker.netlify.app', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
+
+// Add this middleware to log CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://ad-expense-tracker.netlify.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 app.use(express.json());
 
