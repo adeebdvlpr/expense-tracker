@@ -218,16 +218,33 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
 
+  // const onSubmit = async e => {
+  //   e.preventDefault();
+  //   setError('');
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await (isLogin ? login(formData) : register(formData));
+  //     localStorage.setItem('token', res.data.token);
+  //     navigate('/', { replace: true });
+  //   } catch (err) {
+  //     console.error('Auth error:', err.response?.data || err.message);
+  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
       const res = await (isLogin ? login(formData) : register(formData));
+      console.log('Auth response:', res);  // Log the entire response
       localStorage.setItem('token', res.data.token);
       navigate('/', { replace: true });
     } catch (err) {
-      console.error('Auth error:', err.response?.data || err.message);
+      console.error('Auth error:', err.response || err);
       setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
     } finally {
       setIsLoading(false);
