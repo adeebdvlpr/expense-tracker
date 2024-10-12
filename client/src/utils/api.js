@@ -10,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true // Add this line
 });
 
 api.interceptors.request.use(
@@ -35,8 +36,9 @@ api.interceptors.response.use(
 );
 
 export const register = (userData) => api.post('/auth/register', userData);
+
 export const login = (userData) => api.post('/auth/login', userData);
-// export const getExpenses = () => api.get('/expenses');
+
 export const getExpenses = async () => {
   try {
     const response = await api.get('/expenses');
@@ -46,6 +48,7 @@ export const getExpenses = async () => {
     throw error;
   }
 };
+
 export const addExpense = async (expense) => {
   try {
     const response = await api.post('/expenses', {
@@ -59,6 +62,7 @@ export const addExpense = async (expense) => {
     throw error;
   }
 };
+
 export const deleteExpense = (id) => api.delete(`/expenses/${id}`);
 
 export default api;

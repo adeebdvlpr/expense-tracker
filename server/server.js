@@ -14,9 +14,12 @@ const PORT = process.env.PORT || 5001;
 
 // app.use(cors());
 app.use(cors({
-  origin: 'https://ad-expense-tracker-16896725c6ee.herokuapp.com/',
-  credentials: true
+  origin: ['https://ad-expense-tracker-16896725c6ee.herokuapp.com', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
