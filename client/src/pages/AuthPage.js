@@ -234,18 +234,40 @@ const AuthPage = () => {
   //   }
   // };
 
+  // const onSubmit = async e => {
+  //   e.preventDefault();
+  //   setError('');
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await (isLogin ? login(formData) : register(formData));
+  //     console.log('Auth response:', res);  // Log the entire response
+  //     localStorage.setItem('token', res.data.token);
+  //     navigate('/', { replace: true });
+  //   } catch (err) {
+  //     console.error('Auth error:', err.response || err);
+  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
+      console.log('Attempting login with:', formData);
       const res = await (isLogin ? login(formData) : register(formData));
-      console.log('Auth response:', res);  // Log the entire response
-      localStorage.setItem('token', res.data.token);
-      navigate('/', { replace: true });
+      console.log('Auth response:', res);
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        navigate('/', { replace: true });
+      } else {
+        throw new Error('No token received from server');
+      }
     } catch (err) {
       console.error('Auth error:', err.response || err);
-      setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+      setError(err.response?.data?.message || err.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
     } finally {
       setIsLoading(false);
     }
