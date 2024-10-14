@@ -15,8 +15,14 @@ const ExpenseTracker = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/auth');
+    } else {
+      fetchExpenses();
+    }
+  }, [navigate]);
+
 
   // const fetchExpenses = async () => {
   //   try {
