@@ -15,8 +15,13 @@ const ExpenseTracker = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      navigate('/auth');
+    } else {
+      fetchExpenses();
+    }
+  }, [navigate]);
 
   const fetchExpenses = async () => {
     try {
@@ -59,7 +64,7 @@ const ExpenseTracker = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
-    navigate('/auth', { replace: true });
+    window.location.href = '/auth';
   };
 
 
