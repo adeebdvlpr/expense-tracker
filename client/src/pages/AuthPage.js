@@ -186,10 +186,8 @@ const AuthPage = () => {
   const { email, password } = formData;
 
   useEffect(() => {
-    // Check if user is already authenticated
     const token = sessionStorage.getItem('token');
     if (token) {
-      console.log('User already authenticated, redirecting to ExpenseTracker');
       navigate('/', { replace: true });
     }
   }, [navigate]);
@@ -201,13 +199,9 @@ const AuthPage = () => {
     setError('');
     setIsLoading(true);
     try {
-      console.log('Attempting authentication...');
       const res = await (isLogin ? login(formData) : register(formData));
-      console.log('Authentication response:', res);
       if (res.data && res.data.token) {
         sessionStorage.setItem('token', res.data.token);
-        console.log('Token stored in sessionStorage');
-        // Use navigate with replace option to prevent going back to login page
         navigate('/', { replace: true });
       } else {
         throw new Error('No token received from server');
@@ -219,7 +213,6 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <Container component="main" maxWidth="xs">
