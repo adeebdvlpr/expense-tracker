@@ -106,7 +106,7 @@ const App = () => {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          <Route path="/auth" element={isAuthenticated ? <Navigate to="/" /> : <AuthPage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route 
             path="/" 
             element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" />} 
