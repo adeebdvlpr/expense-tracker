@@ -185,13 +185,6 @@ const AuthPage = () => {
 
   const { email, password } = formData;
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      navigate('/', { replace: true });
-    }
-  }, [navigate]);
-
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const onSubmit = async e => {
@@ -202,7 +195,8 @@ const AuthPage = () => {
       const res = await (isLogin ? login(formData) : register(formData));
       if (res.data && res.data.token) {
         sessionStorage.setItem('token', res.data.token);
-        navigate('/', { replace: true });
+        // Use window.location.href instead of navigate
+        window.location.href = '/';
       } else {
         throw new Error('No token received from server');
       }
@@ -213,6 +207,7 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Container component="main" maxWidth="xs">
