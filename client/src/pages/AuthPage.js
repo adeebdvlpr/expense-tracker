@@ -168,7 +168,7 @@
 // };
 
 // export default AuthPage;
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../utils/api';
 import { TextField, Button, Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
@@ -185,6 +185,15 @@ const AuthPage = () => {
 
   const { email, password } = formData;
 
+  useEffect(() => {
+    // Check if user is already authenticated
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      console.log('User already authenticated, redirecting to ExpenseTracker');
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const onSubmit = async e => {
@@ -192,12 +201,14 @@ const AuthPage = () => {
     setError('');
     setIsLoading(true);
     try {
+      console.log('Attempting authentication...');
       const res = await (isLogin ? login(formData) : register(formData));
+      console.log('Authentication response:', res);
       if (res.data && res.data.token) {
         sessionStorage.setItem('token', res.data.token);
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 100);
+        console.log('Token stored in sessionStorage');
+        // Use navigate with replace option to prevent going back to login page
+        navigate('/', { replace: true });
       } else {
         throw new Error('No token received from server');
       }
@@ -208,6 +219,7 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Container component="main" maxWidth="xs">
