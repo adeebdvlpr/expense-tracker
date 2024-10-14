@@ -2,7 +2,7 @@
   "name": "expense-tracker",
   "version": "1.0.0",
   "engines": {
-    "node": "14.x"
+    "node": "20.x"
   },
   "scripts": {
     "start": "node server/server.js",
@@ -17,8 +17,5 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.1",
     "mongoose": "^8.6.1"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.12"
   }
 }
