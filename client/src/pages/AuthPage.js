@@ -168,7 +168,7 @@
 // };
 
 // export default AuthPage;
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../utils/api';
 import { TextField, Button, Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
@@ -180,88 +180,25 @@ const AuthPage = () => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  
-
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (token) {
-  //     navigate('/');
-  //   }
-  // }, [navigate]);
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/', { replace: true });
-    }
-  }, []);
-
 
   const { email, password } = formData;
 
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  // const onSubmit = async e => {
-  //   e.preventDefault();
-  //   setError('');
-  //   try {
-  //     const res = await (isLogin ? login(formData) : register(formData));
-  //     localStorage.setItem('token', res.data.token);
-  //     navigate('/');
-  //   } catch (err) {
-  //     console.error('Auth error:', err.response?.data || err.message);
-  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
-  //   }
-  // };
-
-  const [isLoading, setIsLoading] = useState(false);
-
-
-  // const onSubmit = async e => {
-  //   e.preventDefault();
-  //   setError('');
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await (isLogin ? login(formData) : register(formData));
-  //     localStorage.setItem('token', res.data.token);
-  //     navigate('/', { replace: true });
-  //   } catch (err) {
-  //     console.error('Auth error:', err.response?.data || err.message);
-  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const onSubmit = async e => {
-  //   e.preventDefault();
-  //   setError('');
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await (isLogin ? login(formData) : register(formData));
-  //     console.log('Auth response:', res);  // Log the entire response
-  //     localStorage.setItem('token', res.data.token);
-  //     navigate('/', { replace: true });
-  //   } catch (err) {
-  //     console.error('Auth error:', err.response || err);
-  //     setError(err.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
-      console.log('Attempting login with:', formData);
       const res = await (isLogin ? login(formData) : register(formData));
-      console.log('Auth response:', res);
       if (res.data && res.data.token) {
         localStorage.setItem('token', res.data.token);
-        navigate('/', { replace: true });
+        // Use a timeout to delay the navigation slightly
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 100);
       } else {
         throw new Error('No token received from server');
       }
