@@ -130,15 +130,13 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
   return (
     <List>
       {expenses.map((expense) => (
-        <ListItem key={expense._id || Math.random().toString()}>
+        <ListItem key={expense._id}>
           <ListItemText
             primary={expense.description || 'No description'}
             secondary={
               <React.Fragment>
                 <Typography component="span" variant="body2" color="text.primary">
-                  ${typeof expense.amount === 'number' && !isNaN(expense.amount) 
-                    ? expense.amount.toFixed(2) 
-                    : '0.00'}
+                  ${typeof expense.amount === 'number' ? expense.amount.toFixed(2) : '0.00'}
                 </Typography>
                 {" — "}{expense.category || 'Uncategorized'}
               </React.Fragment>

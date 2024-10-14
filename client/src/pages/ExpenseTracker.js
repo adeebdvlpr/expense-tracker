@@ -171,28 +171,10 @@ const ExpenseTracker = () => {
     }
   };
 
-  // const handleAddExpense = async (expense) => {
-  //   try {
-  //     const newExpense = await addExpense(expense);
-  //     setExpenses([...expenses, newExpense]);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error('Error adding expense:', err);
-  //     setError('Failed to add expense. Please try again.');
-  //   }
-  // };
-
   const handleAddExpense = async (expense) => {
     try {
       const newExpense = await addExpense(expense);
-      // Ensure the new expense has the correct structure
-      const formattedNewExpense = {
-        ...newExpense,
-        amount: parseFloat(newExpense.amount) || 0, // Use 0 if parsing fails
-        description: newExpense.description || '',
-        category: newExpense.category || 'Uncategorized'
-      };
-      setExpenses(prevExpenses => [...prevExpenses, formattedNewExpense]);
+      setExpenses(prevExpenses => [...prevExpenses, newExpense]);
       setError(null);
     } catch (err) {
       console.error('Error adding expense:', err);
@@ -230,7 +212,7 @@ const ExpenseTracker = () => {
       <Box
         sx={{
           width: '200px',
-          backgroundColor: '#e8f5e9', // Light green color
+          backgroundColor: '#e8f5e9',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

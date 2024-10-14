@@ -170,7 +170,16 @@ api.interceptors.response.use(
 export const login = (userData) => api.post('/auth/login', userData);
 export const register = (userData) => api.post('/auth/register', userData);
 export const getExpenses = () => api.get('/expenses');
-export const addExpense = (expense) => api.post('/expenses', expense);
+// export const addExpense = (expense) => api.post('/expenses', expense);
+export const addExpense = async (expense) => {
+  try {
+    const response = await api.post('/expenses', expense);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding expense:', error.response?.data || error.message);
+    throw error;
+  }
+};
 export const deleteExpense = (id) => api.delete(`/expenses/${id}`);
 
 export default api;
