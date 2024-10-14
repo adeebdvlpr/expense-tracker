@@ -8,7 +8,6 @@ import ExpenseChart from '../components/ExpenseChart';
 import { Container, Typography, Box, Alert, CircularProgress, Button } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 
-
 const ExpenseTracker = () => {
   const [expenses, setExpenses] = useState([]);
   const [error, setError] = useState(null);
@@ -19,54 +18,22 @@ const ExpenseTracker = () => {
     fetchExpenses();
   }, []);
 
-  // const fetchExpenses = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const data = await getExpenses();
-  //     setExpenses(Array.isArray(data) ? data : []);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error('Error fetching expenses:', err);
-  //     setError('Failed to fetch expenses. Please try again later.');
-  //     if (err.response && err.response.status === 401) {
-  //       localStorage.removeItem('token');
-  //       navigate('/auth');
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-
   const fetchExpenses = async () => {
     try {
       setLoading(true);
       const data = await getExpenses();
-      console.log('Fetched expenses:', data); // Add this line for debugging
       setExpenses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       console.error('Error fetching expenses:', err);
       setError('Failed to fetch expenses. Please try again later.');
       if (err.response && err.response.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/auth');
+        handleLogout();
       }
     } finally {
       setLoading(false);
     }
   };
-
-  // const handleAddExpense = async (expense) => {
-  //   try {
-  //     const newExpense = await addExpense(expense);
-  //     setExpenses(prevExpenses => [...prevExpenses, newExpense]);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error('Error adding expense:', err);
-  //     setError('Failed to add expense. Please try again.');
-  //   }
-  // };
 
   const handleAddExpense = async (expense) => {
     try {
@@ -78,7 +45,6 @@ const ExpenseTracker = () => {
       setError('Failed to add expense. Please try again.');
     }
   };
-
 
   const handleDeleteExpense = async (id) => {
     try {
@@ -93,8 +59,9 @@ const ExpenseTracker = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
-    navigate('/auth');
+    navigate('/auth', { replace: true });
   };
+
 
   if (loading) {
     return (

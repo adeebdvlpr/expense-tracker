@@ -13,7 +13,6 @@ const App = () => {
   useEffect(() => {
     const checkAuth = () => {
       const token = sessionStorage.getItem('token');
-      console.log('Checking authentication:', token ? 'Token found' : 'No token');
       setIsAuthenticated(!!token);
       setIsLoading(false);
     };
