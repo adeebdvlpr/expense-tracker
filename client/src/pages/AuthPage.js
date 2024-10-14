@@ -183,8 +183,6 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  
-
   const { email, password } = formData;
 
   const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -196,8 +194,7 @@ const AuthPage = () => {
     try {
       const res = await (isLogin ? login(formData) : register(formData));
       if (res.data && res.data.token) {
-        localStorage.setItem('token', res.data.token);
-        // Use a timeout to delay the navigation slightly
+        sessionStorage.setItem('token', res.data.token);
         setTimeout(() => {
           navigate('/', { replace: true });
         }, 100);
@@ -211,7 +208,6 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <Container component="main" maxWidth="xs">
