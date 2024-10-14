@@ -8,6 +8,7 @@ import ExpenseChart from '../components/ExpenseChart';
 import { Container, Typography, Box, Alert, CircularProgress, Button } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 
+
 const ExpenseTracker = () => {
   const [expenses, setExpenses] = useState([]);
   const [error, setError] = useState(null);
@@ -91,7 +92,7 @@ const ExpenseTracker = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     navigate('/auth');
   };
 
