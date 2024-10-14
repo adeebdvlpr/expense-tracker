@@ -11,11 +11,19 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    const checkAuth = () => {
+      const token = sessionStorage.getItem('token');
+      console.log('Checking authentication:', token ? 'Token found' : 'No token');
+      setIsAuthenticated(!!token);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
   }, []);
 
   if (isLoading) {
@@ -27,10 +35,13 @@ const App = () => {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          <Route path="/auth" element={isAuthenticated ? <Navigate to="/" /> : <AuthPage />} />
+          <Route 
+            path="/auth" 
+            element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />} 
+          />
           <Route 
             path="/" 
-            element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" />} 
+            element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" replace />} 
           />
         </Routes>
       </BrowserRouter>
