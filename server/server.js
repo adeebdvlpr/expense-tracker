@@ -77,23 +77,11 @@ const PORT = process.env.PORT || 5001;
 
 // Update CORS configuration
 app.use(cors({
-  origin: ['https://cashflow-compass.netlify.app/', 'http://localhost:3000'],
+  origin: ['https://cashflow-compass.netlify.app', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
-
-// Add this middleware to set CORS headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://cashflow-compass.netlify.app');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 app.use(express.json());
 
@@ -101,8 +89,9 @@ app.get('/', (req, res) => {
   res.send('Welcome to the Expense Tracker API');
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/expenses', expenseRoutes);
+// Update the route paths
+app.use('/auth', authRoutes);
+app.use('/expenses', expenseRoutes);
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -116,13 +105,13 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong!');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
 }
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
