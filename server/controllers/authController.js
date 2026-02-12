@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); ///Users/adeebdoyle/repos/expense-tracker/server/models/User.js
+const User = require('../models/User'); 
 
 exports.register = async (req, res) => {
   try {
@@ -73,40 +73,3 @@ exports.login = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
-
-// exports.login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     console.log('Login attempt:', { email }); // Log the email (don't log passwords)
-
-//     // Check if user exists
-//     let user = await User.findOne({ email });
-//     if (!user) {
-//       console.log('User not found');
-//       return res.status(400).json({ message: 'Invalid credentials' });
-//     }
-
-//     // Check password
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       console.log('Password mismatch');
-//       return res.status(400).json({ message: 'Invalid credentials' });
-//     }
-
-//     // Create and send JWT token
-//     const payload = {
-//       user: {
-//         id: user.id,
-//       },
-//     };
-
-//     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-//       if (err) throw err;
-//       console.log('Login successful');
-//       res.json({ token });
-//     });
-//   } catch (error) {
-//     console.error('Login error:', error);
-//     res.status(500).send('Server error');
-//   }
-// };
