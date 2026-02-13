@@ -23,11 +23,13 @@ const Login = ({ onLoginSuccess }) => {
   const onSubmit = async e => {
     e.preventDefault();
     setError('');
+
     try {
-      console.log('Attempting login with:', formData);
-      const res = await login(formData);
-      console.log('Login response:', res.data);
-      onLoginSuccess(res.data.token);
+      console.log('Attempting login with:', {email});
+      const data = await login(formData);
+
+      console.log('Login success');
+      onLoginSuccess(data.token);
     } catch (err) {
       console.error('Login error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Login failed. Please try again.');

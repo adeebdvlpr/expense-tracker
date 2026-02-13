@@ -32,6 +32,17 @@ api.interceptors.response.use(
   }
 );
 
+//create exported const for login
+export const login = async (userData) => {
+  const response = await api.post('/api/auth/login', userData);
+  return response.data;
+}; 
+
+//create exported const for register
+export const register = async (userData) => {
+  const response = await api.post('/api/auth/register', userData);
+  return response.data;
+};
 
 // export const getExpenses = () => api.get('/expenses');
 export const getExpenses = async () => {
@@ -46,7 +57,6 @@ export const getExpenses = async () => {
 export const addExpense = (expense) => api.post('/expenses', expense);
 export const deleteExpense = (id) => api.delete(`/expenses/${id}`);
 
-//create exported const for login + register?
-export const login = (formData) => api.post(); 
+
 
 export default api;
