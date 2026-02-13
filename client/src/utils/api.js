@@ -47,15 +47,18 @@ export const register = async (userData) => {
 // export const getExpenses = () => api.get('/expenses');
 export const getExpenses = async () => {
   try {
-    const response = await api.get('/expenses');
+    const response = await api.get('/api/expenses');
     return response.data;
   } catch (error) {
     console.error('Error fetching expenses:', error.response?.data || error.message);
     throw error;
   }
 };
-export const addExpense = (expense) => api.post('/expenses', expense);
-export const deleteExpense = (id) => api.delete(`/expenses/${id}`);
+export const addExpense = async (expense) => {
+  const response = await api.post('/api/expenses', expense);
+  return response.data;
+};
+export const deleteExpense = (id) => api.delete(`/api/expenses/${id}`);
 
 
 
