@@ -15,6 +15,7 @@ const ExpenseTracker = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+  
     const token = sessionStorage.getItem('token');
     if (!token) {
       navigate('/auth');
@@ -27,6 +28,7 @@ const ExpenseTracker = () => {
     try {
       setLoading(true);
       const data = await getExpenses();
+      
       setExpenses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
@@ -116,7 +118,7 @@ const ExpenseTracker = () => {
             <ExpenseList expenses={expenses} onDeleteExpense={handleDeleteExpense} />
           </Box>
           <Box>
-            <ExpenseChart expenses={expenses} />
+            <ExpenseChart expenses={expenses}  />
           </Box>
         </Container>
       </Box>

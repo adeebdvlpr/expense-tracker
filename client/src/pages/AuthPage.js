@@ -2,39 +2,41 @@ import React, { useState } from 'react';
 //might remove this import below 
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../utils/api';
-import Login from '../components/auth/Login.js';
 import Register from '../components/auth/Register.js';
+import Login from '../components/auth/Login.js';
 import { TextField, Button, Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  // const [formData, setFormData] = useState({
-  //   email: '',
-  //   password: '',
-  // }); -----> formData will be collected from the Login/Register component now...should be able to delete
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   // const navigate = useNavigate(); --> same should be able to delete..using other nav method - try to understand
 
-  const { email, password } = formData;
+   const handleTabChange = (_e, newValue) => {
+    setIsLogin(newValue === 0);
+    setError('');
+  };
 
-  const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const onSubmit = async e => {
-    e.preventDefault();
+   const handleAuthSubmit = async ({ email, password}) => {
     setError('');
     setIsLoading(true);
+
     try {
-      const data = await (isLogin ? login(formData) : register(formData));
-      if (data?.token) {
-        sessionStorage.setItem('token', data.token);
-        window.location.href = '/';
-      } else {
-        throw new Error('No token received from server');
+      const data = await (isLogin ? login({ email, password }) : register({ email, password }));
+
+      if (!data?.token) {
+        throw new Error('No token received from server'); 
       }
+
+        sessionStorage.setItem('token', data.token);
+        window.location.assign('/');
     } catch (err) {
       console.error('Auth error:', err.response || err);
-      setError(err.response?.data?.message || err.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+      setError(
+        err.response?.data?.message || 
+        err.message ||
+        `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -52,52 +54,34 @@ const AuthPage = () => {
         }}
       >
         <Box sx={{ mb: 3 }}>
-          <img src="/logo.png"  style={{ width: '300px', height: 'auto' }} />
+          <img
+           src="/logo.png" 
+           alt="Cashflow Compass logo"  
+           style={{ width: '300px', height: 'auto' }}
+          />
         </Box>
+
         <Typography component="h2" variant="h5">
           {isLogin ? 'Sign In' : 'Register'}
         </Typography>
-        <Tabs value={isLogin ? 0 : 1} onChange={(e, newValue) => setIsLogin(newValue === 0)} sx={{ mb: 2 }}>
+
+        <Tabs value={isLogin ? 0 : 1} onChange={( handleTabChange)} sx={{ mb: 2 }}>
           <Tab label="Login" />
           <Tab label="Register" />
         </Tabs>
-        <Box component="form" onSubmit={onSubmit} noValidate sx={{ mt: 1 }}>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={onChange}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={onChange}
-          />
-            <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Register')}
-          </Button>
+
+        {error && (
+          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {isLogin ? (
+          <Login onSubmit={handleAuthSubmit} isLoading={isLoading} />
+        ) : (
+          <Register onSubmit={handleAuthSubmit} isLoading={isLoading} />
+        )}
         </Box>
-      </Box>
     </Container>
   );
 };
