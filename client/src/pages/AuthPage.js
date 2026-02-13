@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+//might remove this import below 
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../utils/api';
+import Login from '../components/auth/Login.js';
+import Register from '../components/auth/Register.js';
 import { TextField, Button, Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  // const [formData, setFormData] = useState({
+  //   email: '',
+  //   password: '',
+  // }); -----> formData will be collected from the Login/Register component now...should be able to delete
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); --> same should be able to delete..using other nav method - try to understand
 
   const { email, password } = formData;
 
@@ -22,10 +25,9 @@ const AuthPage = () => {
     setError('');
     setIsLoading(true);
     try {
-      const res = await (isLogin ? login(formData) : register(formData));
-      if (res.data && res.data.token) {
-        sessionStorage.setItem('token', res.data.token);
-        // Use window.location.href instead of navigate
+      const data = await (isLogin ? login(formData) : register(formData));
+      if (data?.token) {
+        sessionStorage.setItem('token', data.token);
         window.location.href = '/';
       } else {
         throw new Error('No token received from server');
