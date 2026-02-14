@@ -10,24 +10,33 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // const navigate = useNavigate(); --> same should be able to delete..using other nav method - try to understand
 
-   const handleTabChange = (_e, newValue) => {
+  const handleTabChange = (_e, newValue) => {
     setIsLogin(newValue === 0);
     setError('');
   };
 
-   const handleAuthSubmit = async ({ email, password}) => {
+  const handleAuthSubmit = async (payload) => {
     setError('');
     setIsLoading(true);
 
     try {
-      const data = await (isLogin ? login({ email, password }) : register({ email, password }));
+      const data = isLogin
+        ? await login({
+            identifier: payload.identifier,
+            password: payload.password,
+          })
+        : await register({
+            username: payload.username,
+            email: payload.email,
+            password: payload.password,
+            dateOfBirth: payload.dateOfBirth,
+            reason: payload.reason,
+          });
 
       if (!data?.token) {
         throw new Error('No token received from server'); 
       }
-
         sessionStorage.setItem('token', data.token);
         window.location.assign('/');
     } catch (err) {
@@ -41,7 +50,6 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <Container component="main" maxWidth="xs">
