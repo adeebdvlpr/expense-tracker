@@ -36,7 +36,7 @@ exports.getExpenses = async (req, res, next) => {
   }
 };
 
-// ✅ Delete an expense WITH ownership enforcement
+//  Delete an expense WITH ownership enforcement
 exports.deleteExpense = async (req, res, next) => {
   try {
     const result = await Expense.findOneAndDelete({
