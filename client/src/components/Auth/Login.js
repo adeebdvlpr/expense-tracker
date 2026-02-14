@@ -13,13 +13,10 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-
 const Login = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const { identifier, password } = formData;
   const [showPassword, setShowPassword] = React.useState(false);
-
- 
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (event) => {
@@ -29,7 +26,6 @@ const Login = ({ onSubmit, isLoading }) => {
   const handleMouseUpPassword = (event) => {
     event.preventDefault();
   };
-
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 

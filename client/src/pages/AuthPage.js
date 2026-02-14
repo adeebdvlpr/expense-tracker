@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-//might remove this import below 
-import { useNavigate } from 'react-router-dom';
 import { login, register } from '../utils/api';
 import Register from '../components/auth/Register.js';
 import Login from '../components/auth/Login.js';
-import { TextField, Button, Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
+import { Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);

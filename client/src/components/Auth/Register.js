@@ -28,8 +28,6 @@ const Register = ({ onSubmit, isLoading }) => {
   const { username, email, password, dateOfBirth, reason} = formData;
   const [showPassword, setShowPassword] = React.useState(false);
 
- 
-
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -40,7 +38,6 @@ const Register = ({ onSubmit, isLoading }) => {
   const handleMouseUpPassword = (event) => {
     event.preventDefault();
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
