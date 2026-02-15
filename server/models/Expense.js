@@ -10,7 +10,7 @@ const ExpenseSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   category: { type: String, required: true },
   date: { type: Date, default: Date.now },
-}, { collection: 'expense-data' });
+}, { collection: 'expense-data', timestamps: true });
 
 ExpenseSchema.index({ date: -1 });
 
