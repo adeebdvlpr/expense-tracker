@@ -60,6 +60,17 @@ export const addExpense = async (expense) => {
 };
 export const deleteExpense = (id) => api.delete(`/api/expenses/${id}`);
 
+///    ---------   user\account APIs ONLY below
+
+export const getMe = async () => {
+  const response = await api.get('/api/users/me');
+  return response.data;
+};
+
+export const updateMe = async (updates) => {
+  const response = await api.patch('/api/users/me', updates);
+  return response.data;
+};
 
 
 export default api;

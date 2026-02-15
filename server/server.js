@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/auth');
 const expenseRoutes = require('./routes/expenses');
+const userRoutes = require('./routes/users.js');
+
 
 dotenv.config();
 
@@ -27,7 +29,7 @@ app.use(cors({
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: false, // ✅ header-based JWT auth, no cookies needed
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', ,'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-auth-token']
 }));
 
@@ -41,6 +43,7 @@ app.get('/', (req, res) => {
 // Update the route paths
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/users', userRoutes);
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,

@@ -39,6 +39,7 @@ const Register = ({ onSubmit, isLoading }) => {
     event.preventDefault();
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     await onSubmit({ username, email, password, dateOfBirth, reason });

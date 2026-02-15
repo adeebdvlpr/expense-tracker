@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import ExpenseTracker from './pages/ExpenseTracker';
 import AuthPage from './pages/AuthPage';
+import AccountPage from './pages/AccountPage';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,6 +42,10 @@ const App = () => {
           <Route 
             path="/" 
             element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" replace />} 
+          />
+          <Route
+            path="/account"
+            element={isAuthenticated ? <AccountPage /> : <Navigate to="/auth" replace />}
           />
         </Routes>
       </BrowserRouter>

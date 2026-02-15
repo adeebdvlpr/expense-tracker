@@ -33,26 +33,22 @@ exports.register = async (req, res) => {
         // Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    
-    // Create new user
-    user = new User({
+
+        // Create new user
+    const userData = {
       username: normalizedUserName,
       email: normalizedEmail,
       passwordHash,
-      dateOfBirth,
-      reason 
-    });
+    };
 
+    if (dateOfBirth) userData.dateOfBirth = dateOfBirth; // will be a Date if validator ran .toDate()
+    if (reason) userData.reason = reason;
 
+    user = new User(userData);
 
     await user.save();
-
-    // Create and send JWT token
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
+        // Create and send JWT token
+    const payload = { user: { id: user.id } };
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
       if (err) throw err;
