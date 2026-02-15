@@ -29,10 +29,7 @@ const UserSchema = new mongoose.Schema({
     required: false, 
     enum: ['Budgeting', 'Saving', 'Debt', 'Tracking', 'Other']
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
+
     // for third-party auth later
     // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
     // googleId: { type: String

@@ -42,12 +42,12 @@ const authRegisterValidators = [
         }
         return true;
       }),
-    body('password')
-      .trim()
-      .notEmpty().withMessage('Password is required')
-      .isLength({ min: 5 }).withMessage('Password must be at least 7 characters')
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-        .withMessage('Password must contain uppercase, lowercase, and number'),
+  body('password')
+     .trim()
+     .notEmpty().withMessage('Password is required')
+     .isLength({ min: 7 }).withMessage('Password must be at least 7 characters')
+     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+       .withMessage('Password must contain uppercase, lowercase, and number'),
   body('dateOfBirth')
     .optional({checkFalsy: true})
     .isISO8601({ strict: true }).withMessage('Date must be in YYYY-MM-DD format')
