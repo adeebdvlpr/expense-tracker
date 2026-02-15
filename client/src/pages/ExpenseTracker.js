@@ -109,6 +109,14 @@ const ExpenseTracker = () => {
             >
               Logout
             </Button>
+            <Button
+              variant="outlined"
+              onClick={() => navigate('/account')}
+              sx={{ mr: 2 }}
+            >
+              Account
+            </Button>
+
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Box sx={{ mb: 4 }}>
