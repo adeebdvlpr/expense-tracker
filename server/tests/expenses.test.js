@@ -34,7 +34,7 @@ describe('Expenses CRUD (basic)', () => {
       .send({
         description: 'Coffee',
         amount: 4.75,
-        category: 'Food',
+        category: 'Entertainment & Leisure',
       })
       .expect(201);
 
