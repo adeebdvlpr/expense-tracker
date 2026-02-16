@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { login, register } from '../utils/api';
 import Register from '../components/auth/Register.js';
 import Login from '../components/auth/Login.js';
-import { Typography, Container, Box, Alert, Tab, Tabs } from '@mui/material';
+import { Typography, Container, Box, Alert, Tab, Tabs, Paper } from '@mui/material';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -50,46 +50,57 @@ const AuthPage = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ mb: 3 }}>
-          <img
-           src="/logo.png" 
-           alt="Cashflow Compass logo"  
-           style={{ width: '300px', height: 'auto' }}
-          />
-        </Box>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        px: 2,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: 'grid', gap: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <img
+                src="/logo.png"
+                alt="Cashflow Compass logo"
+                style={{ width: 260, height: 'auto' }}
+              />
+            </Box>
 
-        <Typography component="h2" variant="h5">
-          {isLogin ? 'Sign In' : 'Register'}
-        </Typography>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h2" component="h1">
+                {isLogin ? 'Welcome back' : 'Create your account'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {isLogin ? 'Sign in to continue tracking expenses.' : 'Start tracking your spending in minutes.'}
+              </Typography>
+            </Box>
 
-        <Tabs value={isLogin ? 0 : 1} onChange={( handleTabChange)} sx={{ mb: 2 }}>
-          <Tab label="Login" />
-          <Tab label="Register" />
-        </Tabs>
+            <Tabs
+              value={isLogin ? 0 : 1}
+              onChange={handleTabChange}
+              variant="fullWidth"
+              sx={{ mb: 1 }}
+            >
+              <Tab label="Login" />
+              <Tab label="Register" />
+            </Tabs>
 
-        {error && (
-          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+            {error && <Alert severity="error">{error}</Alert>}
 
-        {isLogin ? (
-          <Login onSubmit={handleAuthSubmit} isLoading={isLoading} />
-        ) : (
-          <Register onSubmit={handleAuthSubmit} isLoading={isLoading} />
-        )}
-        </Box>
-    </Container>
+            {isLogin ? (
+              <Login onSubmit={handleAuthSubmit} isLoading={isLoading} />
+            ) : (
+              <Register onSubmit={handleAuthSubmit} isLoading={isLoading} />
+            )}
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
+
 
 export default AuthPage;
