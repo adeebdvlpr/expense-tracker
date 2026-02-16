@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getExpenses, addExpense, deleteExpense } from '../utils/api';
 import ExpenseForm from '../components/ExpenseForm';
@@ -24,7 +24,12 @@ const ExpenseTracker = () => {
     }
   }, [navigate]);
 
-  const fetchExpenses = async () => {
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem('token');
+    window.location.assign('/auth');
+  }, []);
+
+  const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getExpenses();
@@ -34,13 +39,17 @@ const ExpenseTracker = () => {
     } catch (err) {
       console.error('Error fetching expenses:', err);
       setError('Failed to fetch expenses. Please try again later.');
-      if (err.response && err.response.status === 401) {
+      if (err?.response?.status === 401) {
         handleLogout();
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleLogout]);
+
+  useEffect(() => {
+    fetchExpenses();
+  }, [fetchExpenses]);
 
   const handleAddExpense = async (expense) => {
     try {
@@ -64,11 +73,6 @@ const ExpenseTracker = () => {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    window.location.href = '/auth';
-  };
-
 
   if (loading) {
     return (
@@ -84,7 +88,8 @@ const ExpenseTracker = () => {
       <Box
         sx={{
           width: '200px',
-          backgroundColor: '#e8f5e9',
+          backgroundColor: 'background.paper',
+            borderRight: (t) => `1px solid ${t.palette.divider}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
