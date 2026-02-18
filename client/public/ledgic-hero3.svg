@@ -1,0 +1,487 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ledgic expense tracker hero illustration">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&amp;display=swap');
+
+      /* === INK STYLES === */
+      .ink-heavy { stroke: #2e4521; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .ink-med   { stroke: #2e4521; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .ink-light { stroke: #2e4521; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .ink-faint { stroke: rgba(46,69,33,0.35); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+
+      .hand-text { font-family: 'Caveat', 'Comic Sans MS', cursive; fill: #2e4521; }
+
+      /* === ANIMATIONS === */
+      @keyframes floatMain {
+        0%,100% { transform: translateY(0px) rotate(-0.5deg); }
+        50%      { transform: translateY(-16px) rotate(0.8deg); }
+      }
+      @keyframes floatReceipt {
+        0%,100% { transform: translateY(0px) rotate(-3deg); }
+        50%      { transform: translateY(-10px) rotate(-1.5deg); }
+      }
+      @keyframes bobCardA {
+        0%,100% { transform: translate(0px, 0px) rotate(4deg); }
+        40%      { transform: translate(-4px, -18px) rotate(2deg); }
+      }
+      @keyframes bobCardB {
+        0%,100% { transform: translate(0px, 0px) rotate(-5deg); }
+        45%      { transform: translate(3px, -14px) rotate(-2.5deg); }
+      }
+      @keyframes sketchJitter {
+        0%,100% { opacity: 0.7; stroke-dashoffset: 0; }
+        50%      { opacity: 1.0; stroke-dashoffset: 3; }
+      }
+      @keyframes barGrow {
+        0%    { transform: scaleY(0.3); }
+        60%   { transform: scaleY(1.05); }
+        100%  { transform: scaleY(1); }
+      }
+      @keyframes dashDraw {
+        from { stroke-dashoffset: 400; }
+        to   { stroke-dashoffset: 0; }
+      }
+      @keyframes wiggleDot {
+        0%,100% { transform: scale(1) rotate(0deg); }
+        50%      { transform: scale(1.18) rotate(12deg); }
+      }
+      @keyframes spinArrow {
+        0%    { transform: rotate(0deg); }
+        15%   { transform: rotate(22deg); }
+        85%   { transform: rotate(-8deg); }
+        100%  { transform: rotate(0deg); }
+      }
+
+      #phone-group    { transform-origin: 610px 430px; animation: floatMain 5.5s ease-in-out infinite; }
+      #receipt-behind { transform-origin: 580px 460px; animation: floatReceipt 6.8s ease-in-out infinite; }
+      #card-spend     { transform-origin: 295px 310px; animation: bobCardA 4.2s ease-in-out infinite; }
+      #card-savings   { transform-origin: 905px 580px; animation: bobCardB 3.8s ease-in-out infinite; }
+      .bar1 { transform-origin: 572px 538px; animation: barGrow 3s cubic-bezier(.22,.61,.36,1) infinite alternate; }
+      .bar2 { transform-origin: 608px 538px; animation: barGrow 3s 0.25s cubic-bezier(.22,.61,.36,1) infinite alternate; }
+      .bar3 { transform-origin: 644px 538px; animation: barGrow 3s 0.5s cubic-bezier(.22,.61,.36,1) infinite alternate; }
+      .trend-line { stroke-dasharray: 400; stroke-dashoffset: 400; animation: dashDraw 3.2s 0.4s ease forwards, sketchJitter 3.5s 3.6s ease-in-out infinite; }
+      .dot-accent  { animation: wiggleDot 3s ease-in-out infinite; }
+      .arrow-accent { transform-origin: 950px 260px; animation: spinArrow 5s ease-in-out infinite; }
+    </style>
+
+    <filter id="shadow-phone">
+      <feDropShadow dx="6" dy="20" stdDeviation="22" flood-color="#2e4521" flood-opacity="0.18"/>
+      <feDropShadow dx="0" dy="5"  stdDeviation="5"  flood-color="#2e4521" flood-opacity="0.10"/>
+    </filter>
+    <filter id="shadow-card">
+      <feDropShadow dx="4" dy="12" stdDeviation="14" flood-color="#2e4521" flood-opacity="0.20"/>
+    </filter>
+    <filter id="shadow-receipt">
+      <feDropShadow dx="-6" dy="14" stdDeviation="16" flood-color="#2e4521" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <!-- ============================================================ -->
+  <!-- BACKGROUND — dotted grid + swirly clouds, pen-and-ink feel   -->
+  <!-- ============================================================ -->
+
+  <!-- very light warm tint -->
+  <rect width="1200" height="900" fill="#fafaf7"/>
+
+  <!-- hand-drawn grid dots -->
+  <g opacity="0.13" fill="#2e4521">
+    <circle cx="80"  cy="80"  r="2.5"/><circle cx="160" cy="80"  r="2.5"/><circle cx="240" cy="80"  r="2.5"/>
+    <circle cx="320" cy="80"  r="2.5"/><circle cx="400" cy="80"  r="2.5"/><circle cx="80"  cy="160" r="2.5"/>
+    <circle cx="160" cy="160" r="2.5"/><circle cx="240" cy="160" r="2.5"/><circle cx="320" cy="160" r="2.5"/>
+    <circle cx="80"  cy="240" r="2.5"/><circle cx="160" cy="240" r="2.5"/><circle cx="240" cy="240" r="2.5"/>
+    <circle cx="80"  cy="320" r="2.5"/><circle cx="160" cy="320" r="2.5"/>
+    <circle cx="920" cy="680" r="2.5"/><circle cx="1000" cy="680" r="2.5"/><circle cx="1080" cy="680" r="2.5"/>
+    <circle cx="1160" cy="680" r="2.5"/><circle cx="920" cy="760" r="2.5"/><circle cx="1000" cy="760" r="2.5"/>
+    <circle cx="1080" cy="760" r="2.5"/><circle cx="1160" cy="760" r="2.5"/><circle cx="920" cy="840" r="2.5"/>
+    <circle cx="1000" cy="840" r="2.5"/><circle cx="1080" cy="840" r="2.5"/>
+  </g>
+
+  <!-- big swoopy cloud shape top-left — Wisteria Blue wash -->
+  <path d="M 60 180 C 90 80, 220 50, 320 110 C 380 60, 490 80, 500 170 C 560 150, 610 200, 570 270
+           C 610 330, 540 390, 460 360 C 400 420, 280 410, 220 350 C 120 380, 60 310, 60 240 Z"
+        fill="rgba(126,146,200,0.13)" class="ink-faint"/>
+
+  <!-- big swoopy cloud shape bottom-right — Seagrass wash -->
+  <path d="M 700 600 C 740 520, 860 490, 960 540 C 1020 490, 1120 510, 1130 600
+           C 1180 610, 1200 670, 1160 720 C 1190 780, 1110 830, 1030 800
+           C 980 860, 860 860, 810 800 C 720 820, 660 760, 680 700 C 630 680, 640 620, 700 600 Z"
+        fill="rgba(67,154,134,0.12)" class="ink-faint"/>
+
+  <!-- scattered ink dashes — pen feel -->
+  <g class="ink-faint">
+    <path d="M 130 480 C 150 475, 170 478, 180 490"/>
+    <path d="M 145 510 C 165 505, 185 508, 195 520"/>
+    <path d="M 1020 200 C 1040 196, 1058 200, 1065 212"/>
+    <path d="M 1035 228 C 1055 224, 1073 228, 1080 240"/>
+    <path d="M 390 760 C 412 754, 432 758, 440 770"/>
+    <path d="M 400 788 C 422 782, 442 786, 450 798"/>
+  </g>
+
+  <!-- sparkle stars -->
+  <g class="ink-light" opacity="0.5">
+    <!-- star 1 -->
+    <path d="M 200 700 L 207 718 M 200 700 L 193 718 M 200 700 L 218 707 M 200 700 L 182 707"/>
+    <!-- star 2 -->
+    <path d="M 1050 140 L 1057 156 M 1050 140 L 1043 156 M 1050 140 L 1066 147 M 1050 140 L 1034 147"/>
+    <!-- star 3 -->
+    <path d="M 960 820 L 966 834 M 960 820 L 954 834 M 960 820 L 974 826 M 960 820 L 946 826"/>
+  </g>
+
+  <!-- curly arrow accent (top right corner) — Dark Spruce -->
+  <g class="arrow-accent">
+    <path d="M 920 240 C 940 210, 980 210, 990 240 C 1000 270, 970 285, 950 270"
+          stroke="#2e4521" stroke-width="2.8" stroke-linecap="round" fill="none" opacity="0.55"/>
+    <path d="M 950 270 L 944 258 M 950 270 L 962 262"
+          stroke="#2e4521" stroke-width="2.8" stroke-linecap="round" fill="none" opacity="0.55"/>
+  </g>
+
+  <!-- ground ellipse shadow -->
+  <ellipse cx="612" cy="754" rx="230" ry="42" fill="rgba(46,69,33,0.10)"/>
+
+
+  <!-- ============================================================ -->
+  <!-- RECEIPT / NOTE BEHIND PHONE                                  -->
+  <!-- ============================================================ -->
+  <g id="receipt-behind" filter="url(#shadow-receipt)">
+    <!-- torn receipt shape — wobbly, off-angle -->
+    <path d="M 490 195
+             C 505 172, 525 162, 548 164
+             L 700 168
+             C 722 170, 738 188, 740 212
+             L 750 650
+             C 752 672, 735 690, 712 692
+             L 560 696
+             C 538 698, 522 682, 518 660
+             L 482 225
+             C 480 208, 484 200, 490 195 Z"
+          fill="#f8f6ec" stroke="#2e4521" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- receipt torn top edge squiggle -->
+    <path d="M 490 195 C 506 188, 518 194, 530 187 C 542 180, 555 192, 568 185
+             C 581 178, 594 190, 608 184 C 622 178, 635 192, 648 186
+             C 661 180, 674 190, 688 186 C 700 182, 708 188, 715 192"
+          stroke="#2e4521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+    <!-- receipt text lines (handwritten labels) -->
+    <text x="530" y="255" class="hand-text" font-size="13" opacity="0.55">GROCERIES</text>
+    <path d="M 526 265 C 560 260, 605 262, 640 268" class="ink-faint"/>
+    <text x="530" y="300" class="hand-text" font-size="13" opacity="0.55">TRANSPORT</text>
+    <path d="M 526 310 C 562 305, 608 307, 645 313" class="ink-faint"/>
+    <text x="530" y="345" class="hand-text" font-size="13" opacity="0.55">DINING OUT</text>
+    <path d="M 526 355 C 564 350, 610 352, 646 358" class="ink-faint"/>
+
+    <!-- dashed total line -->
+    <path d="M 526 378 C 580 374, 620 374, 660 378"
+          stroke="#2e4521" stroke-width="1.6" stroke-dasharray="5,4" stroke-linecap="round" fill="none" opacity="0.4"/>
+    <text x="530" y="400" class="hand-text" font-size="15" font-weight="700" fill="#7e92c8" opacity="0.85">TOTAL  $284.50</text>
+  </g>
+
+
+  <!-- ============================================================ -->
+  <!-- MAIN PHONE — trapezoid perspective (wider top, narrow bottom) -->
+  <!-- ============================================================ -->
+  <g id="phone-group" filter="url(#shadow-phone)">
+
+    <!-- phone body: hand-drawn trapezoid feel with wobbly paths -->
+    <!-- shadow / 3D depth offset -->
+    <path d="M 498 162
+             C 500 140, 520 122, 545 120
+             L 730 118
+             C 755 118, 774 136, 776 160
+             L 754 660
+             C 752 682, 733 700, 710 702
+             L 530 704
+             C 507 704, 488 686, 486 663
+             Z"
+          fill="rgba(46,69,33,0.07)" stroke="none"/>
+
+    <!-- main phone shape — deliberately slightly wobbly -->
+    <path d="M 486 158
+             C 488 136, 509 118, 534 116
+             L 722 114
+             C 747 114, 767 133, 769 158
+             L 748 656
+             C 746 679, 727 698, 703 700
+             L 518 702
+             C 494 702, 475 683, 473 659
+             Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- inner screen border — slightly off-true -->
+    <path d="M 502 175
+             C 504 158, 518 146, 536 144
+             L 718 142
+             C 736 142, 750 156, 752 174
+             L 732 642
+             C 730 660, 717 673, 700 674
+             L 534 676
+             C 517 676, 503 663, 502 646
+             Z"
+          fill="#f4f6fb" stroke="#2e4521" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!--  TOP BAR  -->
+    <rect x="510" y="148" width="232" height="22" rx="11" fill="#2e4521"/>
+    <!-- camera notch -->
+    <ellipse cx="626" cy="152" rx="18" ry="8" fill="#2e4521"/>
+    <circle cx="626" cy="152" r="4" fill="rgba(126,146,200,0.5)"/>
+
+    <!--  HEADER AREA  -->
+    <!-- app title hand text -->
+    <text x="518" y="200" class="hand-text" font-size="21" font-weight="700" fill="#2e4521">💸 Ledgic</text>
+    <text x="518" y="226" class="hand-text" font-size="13" fill="#439a86">November 2024</text>
+
+    <!-- wavy underline -->
+    <path d="M 516 232 C 540 228, 568 234, 596 230 C 624 226, 652 232, 680 228 C 708 224, 730 230, 748 228"
+          stroke="#7e92c8" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+
+    <!--  TOTAL SPEND CARD  -->
+    <path d="M 510 246
+             C 510 234, 522 224, 534 224
+             L 718 222
+             C 730 222, 742 232, 743 244
+             L 745 314
+             C 745 326, 734 336, 722 337
+             L 536 340
+             C 524 340, 512 330, 511 318
+             Z"
+          fill="rgba(126,146,200,0.18)" stroke="#7e92c8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <text x="524" y="250" class="hand-text" font-size="12" fill="#2e4521" opacity="0.7">Total Spent</text>
+    <text x="524" y="290" class="hand-text" font-size="34" font-weight="700" fill="#2e4521">$1,284</text>
+    <text x="524" y="316" class="hand-text" font-size="12" fill="#439a86">↑ 12% from last month</text>
+
+    <!--  CATEGORY PILLS  -->
+    <!-- Food pill -->
+    <path d="M 512 355 C 514 343, 526 336, 536 337 L 616 336 C 626 337, 634 344, 634 355
+             L 634 377 C 634 388, 624 395, 614 396 L 534 397 C 524 396, 513 389, 512 378 Z"
+          fill="rgba(126,146,200,0.25)" stroke="#7e92c8" stroke-width="2" stroke-linecap="round"/>
+    <text x="524" y="355" class="hand-text" font-size="11" fill="#2e4521">🍔 Food</text>
+    <text x="524" y="372" class="hand-text" font-size="13" font-weight="700" fill="#2e4521">$342</text>
+
+    <!-- Transport pill -->
+    <path d="M 644 355 C 646 343, 658 336, 668 337 L 748 336 C 758 337, 766 344, 766 355
+             L 766 377 C 766 388, 756 395, 746 396 L 666 397 C 656 396, 645 389, 644 378 Z"
+          fill="rgba(67,154,134,0.22)" stroke="#439a86" stroke-width="2" stroke-linecap="round"/>
+    <text x="656" y="355" class="hand-text" font-size="11" fill="#2e4521">🚌 Transit</text>
+    <text x="656" y="372" class="hand-text" font-size="13" font-weight="700" fill="#2e4521">$98</text>
+
+    <!--  CHART AREA  -->
+    <path d="M 510 414
+             C 510 402, 521 393, 533 393
+             L 719 391
+             C 731 391, 743 400, 744 412
+             L 746 570
+             C 746 582, 735 592, 723 593
+             L 537 595
+             C 525 595, 512 586, 511 574
+             Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <text x="522" y="414" class="hand-text" font-size="12" fill="#2e4521" opacity="0.7">Spending Trend</text>
+
+    <!-- bar chart — hand drawn feel, wobbly heights -->
+    <!-- bars base line -->
+    <path d="M 518 555 C 560 557, 620 556, 738 555" class="ink-light"/>
+
+    <!-- bar 1 (Food) — wisteria -->
+    <path d="M 548 555 C 547 555, 546 488, 547 488 C 548 488, 598 488, 599 488 C 600 488, 600 555, 599 555 Z"
+          fill="#7e92c8" opacity="0.85" stroke="#2e4521" stroke-width="1.6" stroke-linecap="round" class="bar1"/>
+
+    <!-- bar 2 (Transport) — seagrass -->
+    <path d="M 614 555 C 613 555, 612 510, 613 510 C 614 510, 664 510, 665 510 C 666 510, 666 555, 665 555 Z"
+          fill="#439a86" opacity="0.85" stroke="#2e4521" stroke-width="1.6" stroke-linecap="round" class="bar2"/>
+
+    <!-- bar 3 (Other) — sage green -->
+    <path d="M 680 555 C 679 555, 678 525, 679 525 C 680 525, 730 525, 731 525 C 732 525, 732 555, 731 555 Z"
+          fill="#74aa7a" opacity="0.85" stroke="#2e4521" stroke-width="1.6" stroke-linecap="round" class="bar3"/>
+
+    <!-- trend line over bars -->
+    <path d="M 548 496 C 580 480, 614 516, 644 514 C 674 512, 704 528, 730 522"
+          stroke="#2e4521" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="400" fill="none"
+          class="trend-line"/>
+    <!-- trend dots -->
+    <circle cx="548" cy="496" r="4.5" fill="#2e4521"/>
+    <circle cx="644" cy="514" r="4.5" fill="#2e4521"/>
+    <circle cx="730" cy="522" r="4.5" fill="#2e4521"/>
+
+    <!-- chart legend -->
+    <rect x="522" y="565" width="10" height="10" rx="3" fill="#7e92c8"/>
+    <text x="536" y="575" class="hand-text" font-size="10" fill="#2e4521">Food</text>
+    <rect x="580" y="565" width="10" height="10" rx="3" fill="#439a86"/>
+    <text x="594" y="575" class="hand-text" font-size="10" fill="#2e4521">Transit</text>
+    <rect x="644" y="565" width="10" height="10" rx="3" fill="#74aa7a"/>
+    <text x="658" y="575" class="hand-text" font-size="10" fill="#2e4521">Other</text>
+
+    <!--  BOTTOM BUDGET ROW  -->
+    <path d="M 510 608
+             C 510 596, 521 587, 533 587
+             L 719 585
+             C 731 585, 743 594, 744 606
+             L 746 660
+             C 746 672, 735 682, 723 683
+             L 537 685
+             C 525 685, 512 676, 511 664
+             Z"
+          fill="rgba(116,170,122,0.18)" stroke="#74aa7a" stroke-width="2" stroke-linecap="round"/>
+
+    <text x="522" y="612" class="hand-text" font-size="11" fill="#2e4521" opacity="0.7">Monthly Budget</text>
+    <!-- budget bar track -->
+    <path d="M 520 632 C 560 630, 660 630, 740 632" stroke="rgba(46,69,33,0.2)" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <!-- budget fill (68%) -->
+    <path d="M 520 632 C 554 630, 630 630, 676 632" stroke="#74aa7a" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <text x="682" y="637" class="hand-text" font-size="12" font-weight="700" fill="#2e4521">68%</text>
+    <text x="522" y="658" class="hand-text" font-size="11" fill="#2e4521">$868 of $1,280 used</text>
+
+    <!-- phone bottom bar -->
+    <path d="M 580 690 C 598 687, 618 687, 636 690" stroke="#2e4521" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+    <!-- outer wobbly 2nd outline (sketch double-line feel) -->
+    <path d="M 484 156
+             C 487 133, 509 116, 534 114
+             L 724 112
+             C 749 112, 769 131, 771 156
+             L 750 658
+             C 748 681, 729 700, 704 702
+             L 516 704
+             C 491 704, 472 685, 470 660
+             Z"
+          fill="none" stroke="rgba(46,69,33,0.28)" stroke-width="2" stroke-linecap="round" stroke-dasharray="8,5"/>
+  </g>
+
+
+  <!-- ============================================================ -->
+  <!-- FLOATING CARD A — "Recent Transaction"  (top-left)          -->
+  <!-- ============================================================ -->
+  <g id="card-spend" filter="url(#shadow-card)">
+    <!-- card shape — rounded, slightly droopy -->
+    <path d="M 148 272
+             C 150 250, 168 238, 192 238
+             L 432 235
+             C 456 234, 472 248, 474 270
+             L 478 348
+             C 478 370, 462 385, 438 386
+             L 200 390
+             C 176 390, 158 376, 156 354
+             Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- wisteria top strip -->
+    <path d="M 148 272
+             C 150 250, 168 238, 192 238
+             L 432 235
+             C 456 234, 472 248, 474 270
+             L 476 290
+             L 146 293
+             Z"
+          fill="#7e92c8" opacity="0.9"/>
+    <!-- second wobbly border -->
+    <path d="M 146 270
+             C 149 248, 168 236, 192 236
+             L 432 233
+             C 457 232, 474 247, 476 270"
+          stroke="rgba(46,69,33,0.30)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+    <!-- card content -->
+    <text x="162" y="274" class="hand-text" font-size="13" font-weight="700" fill="#ffffff">Latest Transaction</text>
+
+    <!-- emoji + merchant -->
+    <text x="162" y="315" class="hand-text" font-size="14" fill="#2e4521">☕  Blue Bottle Coffee</text>
+    <text x="162" y="338" class="hand-text" font-size="13" fill="#439a86">Today  •  10:42 AM</text>
+    <!-- amount -->
+    <text x="408" y="336" class="hand-text" font-size="18" font-weight="700" fill="#2e4521" text-anchor="middle">-$6.80</text>
+
+    <!-- doodle underline -->
+    <path d="M 160 352 C 230 348, 310 350, 390 354" class="ink-faint"/>
+  </g>
+
+
+  <!-- ============================================================ -->
+  <!-- FLOATING CARD B — "Savings Goal"  (bottom-right)            -->
+  <!-- ============================================================ -->
+  <g id="card-savings" filter="url(#shadow-card)">
+    <!-- card shape — slightly lopsided / droopy -->
+    <path d="M 762 556
+             C 764 534, 782 522, 808 522
+             L 1038 518
+             C 1062 518, 1078 532, 1080 554
+             L 1085 640
+             C 1085 662, 1069 677, 1045 678
+             L 815 682
+             C 791 682, 772 668, 770 646
+             Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- seagrass top strip -->
+    <path d="M 762 556
+             C 764 534, 782 522, 808 522
+             L 1038 518
+             C 1062 518, 1078 532, 1080 554
+             L 1082 574
+             L 760 578
+             Z"
+          fill="#439a86" opacity="0.9"/>
+    <path d="M 760 554
+             C 762 532, 782 520, 808 520
+             L 1038 516
+             C 1063 516, 1080 531, 1082 554"
+          stroke="rgba(46,69,33,0.30)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+    <text x="776" y="558" class="hand-text" font-size="13" font-weight="700" fill="#ffffff">Savings Goal 🏖️</text>
+
+    <!-- goal label -->
+    <text x="776" y="600" class="hand-text" font-size="14" fill="#2e4521">Summer Vacation Fund</text>
+
+    <!-- progress bar -->
+    <path d="M 776 618 C 820 616, 940 616, 1066 618" stroke="rgba(46,69,33,0.15)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M 776 618 C 820 616, 888 616, 922 618" stroke="#74aa7a" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+    <text x="776" y="646" class="hand-text" font-size="12" fill="#2e4521">$960 saved of $2,000</text>
+    <text x="1024" y="646" class="hand-text" font-size="14" font-weight="700" fill="#439a86" text-anchor="middle">48%</text>
+  </g>
+
+
+  <!-- ============================================================ -->
+  <!-- DECORATIVE ACCENTS                                           -->
+  <!-- ============================================================ -->
+
+  <!-- small wobbly dollar sign doodle (top right) -->
+  <g opacity="0.45" transform="translate(1070, 360) rotate(-10)">
+    <circle cx="0" cy="0" r="28" fill="rgba(126,146,200,0.20)" stroke="#7e92c8" stroke-width="2.2"/>
+    <text x="0" y="8" class="hand-text" font-size="26" font-weight="700" fill="#7e92c8" text-anchor="middle">$</text>
+  </g>
+
+  <!-- small pie chart doodle (bottom left) -->
+  <g opacity="0.50" transform="translate(200, 640)">
+    <circle cx="0" cy="0" r="30" fill="rgba(116,170,122,0.18)" stroke="#74aa7a" stroke-width="2.2"/>
+    <!-- pie slices hand drawn -->
+    <path d="M 0 0 L 0 -30 A 30 30 0 0 1 26 -15 Z" fill="#7e92c8" opacity="0.8"/>
+    <path d="M 0 0 L 26 -15 A 30 30 0 0 1 26 15 Z" fill="#439a86" opacity="0.8"/>
+    <path d="M 0 0 L 26 15 A 30 30 0 0 1 -30 0 Z" fill="#74aa7a" opacity="0.8"/>
+    <path d="M 0 0 L -30 0 A 30 30 0 0 1 0 -30 Z" fill="rgba(46,69,33,0.3)" opacity="0.8"/>
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#2e4521" stroke-width="2"/>
+  </g>
+
+  <!-- wobbly thought bubble near phone (top area) -->
+  <g opacity="0.35">
+    <circle cx="800" cy="130" r="22" fill="rgba(126,146,200,0.25)" stroke="#7e92c8" stroke-width="1.8"/>
+    <circle cx="822" cy="158" r="12" fill="rgba(126,146,200,0.20)" stroke="#7e92c8" stroke-width="1.6"/>
+    <circle cx="835" cy="178" r="7"  fill="rgba(126,146,200,0.18)" stroke="#7e92c8" stroke-width="1.4"/>
+    <text x="800" y="136" class="hand-text" font-size="18" fill="#2e4521" text-anchor="middle">📊</text>
+  </g>
+
+  <!-- scattered colored dots accent -->
+  <circle cx="175" cy="196" r="9" fill="#7e92c8" opacity="0.45" class="dot-accent"/>
+  <circle cx="1090" cy="470" r="7" fill="#439a86" opacity="0.40" class="dot-accent"/>
+  <circle cx="380" cy="680" r="8" fill="#74aa7a" opacity="0.42" class="dot-accent"/>
+  <circle cx="1010" cy="155" r="6" fill="#7e92c8" opacity="0.38" class="dot-accent"/>
+
+  <!-- tiny receipt doodle bottom-left bg -->
+  <g opacity="0.22" transform="translate(100, 700) rotate(-8)">
+    <rect x="0" y="0" width="60" height="80" rx="6" fill="none" stroke="#2e4521" stroke-width="1.8"/>
+    <path d="M 8 20 L 52 19" stroke="#2e4521" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M 8 32 L 52 31" stroke="#2e4521" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M 8 44 L 40 43" stroke="#2e4521" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M 8 60 L 52 59" stroke="#2e4521" stroke-width="2" stroke-linecap="round"/>
+    <!-- tear at top -->
+    <path d="M 0 0 C 10 -5, 20 2, 30 -4 C 40 -8, 50 -2, 60 0" stroke="#2e4521" stroke-width="1.6" fill="none"/>
+  </g>
+
+</svg>

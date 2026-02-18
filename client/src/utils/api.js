@@ -45,15 +45,26 @@ export const register = async (userData) => {
 };
 
 // export const getExpenses = () => api.get('/expenses');
-export const getExpenses = async () => {
+// export const getExpenses = async () => {
+//   try {
+//     const response = await api.get('/api/expenses');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching expenses:', error.response?.data || error.message);
+//     throw error;
+//   }
+// };
+export const getExpenses = async (params = {}) => {
   try {
-    const response = await api.get('/api/expenses');
+    const response = await api.get('/api/expenses', { params });
     return response.data;
   } catch (error) {
     console.error('Error fetching expenses:', error.response?.data || error.message);
     throw error;
   }
 };
+
+
 export const addExpense = async (expense) => {
   const response = await api.post('/api/expenses', expense);
   return response.data;
@@ -73,4 +84,4 @@ export const updateMe = async (updates) => {
 };
 
 
-export default api;
+export default api; 

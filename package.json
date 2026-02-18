@@ -11,6 +11,7 @@
     "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "dependencies": {
+    "@mui/x-charts": "^8.27.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -22,7 +23,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.1",
     "mongoose": "^8.6.1",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "eslint": "^10.0.0",

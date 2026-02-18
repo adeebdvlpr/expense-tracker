@@ -1,0 +1,191 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ledgic playful sketch dashboard illustration">
+  <defs>
+    <!-- Sketchy stroke style -->
+    <style>
+      .ink { stroke: rgba(17,24,39,0.55); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .inkLight { stroke: rgba(17,24,39,0.25); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .paper { fill: #ffffff; }
+      .paperTint { fill: #f6f8fb; }
+      .accent1 { fill: rgba(126,146,200,0.22); }
+      .accent2 { fill: rgba(67,154,134,0.20); }
+      .accent3 { fill: rgba(116,170,122,0.20); }
+
+      /* Motion: float + wobble (kept subtle but noticeable) */
+      @keyframes floaty {
+        0%   { transform: translate(0px, 0px); }
+        50%  { transform: translate(0px, -16px); }
+        100% { transform: translate(0px, 0px); }
+      }
+      @keyframes wobble {
+        0%   { transform: rotate(-1.2deg); }
+        50%  { transform: rotate(1.2deg); }
+        100% { transform: rotate(-1.2deg); }
+      }
+      @keyframes bob {
+        0%   { transform: translate(0px, 0px) rotate(1deg); }
+        50%  { transform: translate(0px, -10px) rotate(-1deg); }
+        100% { transform: translate(0px, 0px) rotate(1deg); }
+      }
+      @keyframes bob2 {
+        0%   { transform: translate(0px, 0px) rotate(-1deg); }
+        50%  { transform: translate(0px, -12px) rotate(1deg); }
+        100% { transform: translate(0px, 0px) rotate(-1deg); }
+      }
+      @keyframes bob3 {
+        0%   { transform: translate(0px, 0px) rotate(0.6deg); }
+        50%  { transform: translate(0px, -8px) rotate(-0.6deg); }
+        100% { transform: translate(0px, 0px) rotate(0.6deg); }
+      }
+
+      /* Apply animations */
+      #scene { transform-origin: 600px 450px; animation: floaty 6.2s ease-in-out infinite; }
+      #phoneGroup { transform-origin: 610px 460px; animation: wobble 3.2s ease-in-out infinite; }
+      #chipA { transform-origin: 320px 250px; animation: bob 2.8s ease-in-out infinite; }
+      #chipB { transform-origin: 930px 660px; animation: bob2 3.1s ease-in-out infinite; }
+      #chipC { transform-origin: 940px 260px; animation: bob3 2.6s ease-in-out infinite; }
+      #doodles { transform-origin: 600px 450px; animation: wobble 4.6s ease-in-out infinite; opacity: 0.95; }
+    </style>
+  </defs>
+
+  <!-- Whole scene wrapper -->
+  <g id="scene">
+
+    <!-- Sketchy background (no blobs, more doodle/hatch) -->
+    <g id="doodles">
+      <!-- soft hatch clouds -->
+      <path d="M155 220 C220 150, 330 150, 380 210 C450 190, 520 230, 500 290 C520 350, 440 380, 390 350 C320 400, 220 380, 210 320 C140 310, 120 260, 155 220 Z"
+            class="accent1"/>
+      <path d="M770 470 C820 410, 920 410, 970 470 C1040 450, 1090 500, 1070 560 C1090 620, 1020 650, 970 625 C900 670, 820 650, 805 595 C740 590, 725 520, 770 470 Z"
+            class="accent2"/>
+
+      <!-- scribble loops -->
+      <path d="M170 610 C210 560, 290 560, 330 610 C370 660, 450 660, 490 610" class="inkLight" fill="none"/>
+      <path d="M720 170 C770 130, 830 130, 880 170 C930 210, 990 210, 1040 170" class="inkLight" fill="none"/>
+
+      <!-- hatch marks -->
+      <g class="inkLight">
+        <path d="M110 360 L170 320" fill="none"/>
+        <path d="M130 390 L190 350" fill="none"/>
+        <path d="M150 420 L210 380" fill="none"/>
+        <path d="M1030 360 L1090 320" fill="none"/>
+        <path d="M1010 390 L1070 350" fill="none"/>
+        <path d="M990 420 L1050 380" fill="none"/>
+      </g>
+
+      <!-- little starbursts -->
+      <g class="inkLight">
+        <path d="M230 170 L250 205" fill="none"/>
+        <path d="M260 175 L230 205" fill="none"/>
+        <path d="M980 720 L1000 755" fill="none"/>
+        <path d="M1010 725 L980 755" fill="none"/>
+      </g>
+    </g>
+
+    <!-- Shadow (ground) -->
+    <ellipse cx="610" cy="720" rx="250" ry="52" fill="rgba(17,24,39,0.10)"/>
+
+    <!-- PHONE GROUP (sketchy, wobbly) -->
+    <g id="phoneGroup">
+      <!-- Outer phone outline (double stroke for hand-drawn feel) -->
+      <path d="M470 195
+               C470 175, 490 155, 510 155
+               L710 155
+               C730 155, 750 175, 750 195
+               L750 655
+               C750 675, 730 695, 710 695
+               L510 695
+               C490 695, 470 675, 470 655
+               Z"
+            class="paper ink"/>
+      <path d="M474 200
+               C474 180, 492 160, 512 160
+               L708 160
+               C728 160, 746 180, 746 200
+               L746 650
+               C746 670, 728 690, 708 690
+               L512 690
+               C492 690, 474 670, 474 650
+               Z"
+            class="paper" stroke="rgba(17,24,39,0.22)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Top bar -->
+      <rect x="495" y="182" width="230" height="56" rx="22" class="paperTint" stroke="rgba(17,24,39,0.25)" stroke-width="2"/>
+      <circle cx="525" cy="210" r="10" class="accent1" stroke="rgba(17,24,39,0.18)" stroke-width="2"/>
+      <path d="M548 206 C585 195, 622 195, 660 206" class="inkLight" fill="none"/>
+
+      <!-- Title scribble -->
+      <path d="M500 262 C560 240, 650 240, 710 262" class="inkLight" fill="none"/>
+      <path d="M505 286 C590 270, 640 272, 705 288" class="inkLight" fill="none"/>
+
+      <!-- Card 1 -->
+      <rect x="495" y="312" width="230" height="92" rx="26" class="paperTint" stroke="rgba(17,24,39,0.25)" stroke-width="2"/>
+      <path d="M515 340 C555 330, 600 330, 640 340" class="inkLight" fill="none"/>
+      <rect x="515" y="360" width="88" height="26" rx="13" class="accent1" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+      <rect x="610" y="360" width="92" height="26" rx="13" class="accent3" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+
+      <!-- Card 2 -->
+      <rect x="495" y="420" width="230" height="92" rx="26" class="paperTint" stroke="rgba(17,24,39,0.25)" stroke-width="2"/>
+      <path d="M515 448 C560 438, 610 438, 655 448" class="inkLight" fill="none"/>
+      <rect x="515" y="468" width="138" height="26" rx="13" class="accent2" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+      <rect x="658" y="468" width="44" height="26" rx="13" class="accent1" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+
+      <!-- Card 3 + donut doodle -->
+      <rect x="495" y="528" width="230" height="120" rx="26" class="paperTint" stroke="rgba(17,24,39,0.25)" stroke-width="2"/>
+      <path d="M515 556 C545 548, 590 548, 620 556" class="inkLight" fill="none"/>
+      <rect x="515" y="576" width="70" height="26" rx="13" class="accent3" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+      <rect x="590" y="576" width="62" height="26" rx="13" class="accent2" stroke="rgba(17,24,39,0.10)" stroke-width="2"/>
+      <rect x="657" y="576" width="48" height="26" rx="13" fill="rgba(17,24,39,0.06)" stroke="rgba(17,24,39,0.08)" stroke-width="2"/>
+
+      <circle cx="680" cy="620" r="20" fill="#fff" stroke="rgba(17,24,39,0.22)" stroke-width="2"/>
+      <path d="M680 600 A20 20 0 0 1 698 624" stroke="#7e92c8" stroke-width="6" stroke-linecap="round"/>
+      <path d="M698 624 A20 20 0 0 1 668 638" stroke="#439a86" stroke-width="6" stroke-linecap="round"/>
+      <path d="M668 638 A20 20 0 0 1 680 600" stroke="#74aa7a" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="680" cy="620" r="8" fill="#fff"/>
+    </g>
+
+    <!-- FLOATING CHIPS (more motion) -->
+    <g id="chipA">
+      <path d="M240 225
+               C250 200, 275 190, 305 195
+               L430 215
+               C460 220, 475 245, 465 270
+               C455 295, 430 305, 400 300
+               L275 280
+               C245 275, 230 250, 240 225 Z"
+            fill="#fff" class="ink"/>
+      <circle cx="290" cy="245" r="12" class="accent1" stroke="rgba(17,24,39,0.12)" stroke-width="2"/>
+      <path d="M310 245 C350 235, 395 238, 435 250" class="inkLight" fill="none"/>
+    </g>
+
+    <g id="chipB">
+      <path d="M800 650
+               C812 625, 840 615, 870 620
+               L1010 640
+               C1040 645, 1055 670, 1045 695
+               C1035 720, 1008 730, 978 725
+               L838 705
+               C808 700, 788 675, 800 650 Z"
+            fill="#fff" class="ink"/>
+      <circle cx="850" cy="670" r="12" class="accent2" stroke="rgba(17,24,39,0.12)" stroke-width="2"/>
+      <path d="M870 670 C910 660, 955 663, 995 675" class="inkLight" fill="none"/>
+    </g>
+
+    <g id="chipC">
+      <path d="M840 235
+               C850 212, 875 202, 905 207
+               L1015 225
+               C1042 230, 1055 252, 1045 275
+               C1035 298, 1010 308, 980 303
+               L870 285
+               C842 280, 830 258, 840 235 Z"
+            fill="#fff" class="ink"/>
+      <circle cx="892" cy="255" r="11" class="accent3" stroke="rgba(17,24,39,0.12)" stroke-width="2"/>
+      <path d="M910 255 C946 246, 985 249, 1018 260" class="inkLight" fill="none"/>
+    </g>
+
+    <!-- Extra playful dots -->
+    <circle cx="210" cy="560" r="8" fill="rgba(126,146,200,0.35)"/>
+    <circle cx="980" cy="160" r="6" fill="rgba(67,154,134,0.35)"/>
+    <circle cx="1030" cy="520" r="10" fill="rgba(116,170,122,0.28)"/>
+  </g>
+</svg>

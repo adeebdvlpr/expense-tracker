@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 
 const palette = {
-  primary: { main: '#7e92c8' },   // Wisteria Blue
+  primary: { main: '#5a6e9a' },   // Wisteria Blue
   secondary: { main: '#2e4521' }, // Dark Spruce
   success: { main: '#74aa7a' },   // Sage Green (accent)
   info: { main: '#439a86' },      // Seagrass (neutral-ish)
@@ -19,7 +19,7 @@ const palette = {
 const theme = createTheme({
   palette,
   spacing: 8, // 8px system
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 14 },
   typography: {
     fontFamily: [
       'Sansation',
@@ -31,6 +31,7 @@ const theme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
+    h0: { fontSize: '3rem', fontWeight: 700, lineHeight: 1.5 },   
     h1: { fontSize: '2rem', fontWeight: 700, lineHeight: 1.2 },    // ~32px
     h2: { fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.25 }, // ~24px
     h3: { fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.3 }, // ~20px
@@ -45,10 +46,14 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 14,
           paddingLeft: 16,
           paddingRight: 16,
+          transition: ' transform 120ms ease, box-shadow 120ms ease',
         },
+        contained: {
+          '&:hover': { transform: 'translateY(-1px)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' },
+        }
       },
     },
     MuiPaper: {
