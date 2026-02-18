@@ -36,7 +36,7 @@ const AuthPage = () => {
         throw new Error('No token received from server'); 
       }
         sessionStorage.setItem('token', data.token);
-        window.location.assign('/');
+        window.location.assign('/app');
     } catch (err) {
       console.error('Auth error:', err.response || err);
       setError(
@@ -61,12 +61,21 @@ const AuthPage = () => {
       <Container maxWidth="sm">
         <Paper sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ display: 'grid', gap: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
               <img
-                src="/logo.png"
-                alt="Cashflow Compass logo"
-                style={{ width: 260, height: 'auto' }}
+                src="/blue2_ledgic_logo.png"
+                alt="Ledgic logo"
+                style={{ width: 110, height: 'auto' }}
               />
+            </Box>
+            <Box sx={{textAlign: 'center' }}>
+                <Typography variant='h0'>
+                  {'Ledgic'}
+                </Typography>
+            </Box>
+
+            <Box mt={10} >
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
@@ -74,7 +83,7 @@ const AuthPage = () => {
                 {isLogin ? 'Welcome back' : 'Create your account'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {isLogin ? 'Sign in to continue tracking expenses.' : 'Start tracking your spending in minutes.'}
+                {isLogin ? 'Sign in to your Ledgic account' : 'Start tracking your expenses intelligently'}
               </Typography>
             </Box>
 

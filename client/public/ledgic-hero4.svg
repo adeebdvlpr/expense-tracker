@@ -1,0 +1,350 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ledgic expense tracker hero illustration">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&amp;display=swap');
+
+      .ht { font-family: 'Caveat', cursive; fill: #2e4521; }
+
+      @keyframes floatMain {
+        0%,100% { transform: translateY(0px) rotate(-0.6deg); }
+        50%      { transform: translateY(-18px) rotate(0.6deg); }
+      }
+      @keyframes floatReceipt {
+        0%,100% { transform: translateY(0px) rotate(-4deg); }
+        50%      { transform: translateY(-9px) rotate(-2deg); }
+      }
+      @keyframes bobA {
+        0%,100% { transform: translate(0,0) rotate(3.5deg); }
+        45%      { transform: translate(-5px,-16px) rotate(1.5deg); }
+      }
+      @keyframes bobB {
+        0%,100% { transform: translate(0,0) rotate(-4deg); }
+        50%      { transform: translate(4px,-14px) rotate(-2deg); }
+      }
+      @keyframes dashDraw {
+        from { stroke-dashoffset: 500; }
+        to   { stroke-dashoffset: 0; }
+      }
+      @keyframes barPulse {
+        0%,100% { opacity: 0.75; } 50% { opacity: 1; }
+      }
+      @keyframes pulseRing {
+        0%,100% { opacity:0.5; transform: scale(1); }
+        50%      { opacity:0.9; transform: scale(1.1); }
+      }
+      @keyframes barGrow1 {
+        0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); }
+      }
+      @keyframes barGrow2 {
+        0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); }
+      }
+      @keyframes barGrow3 {
+        0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); }
+      }
+
+      #phone-group    { transform-origin: 620px 420px; animation: floatMain 5.8s ease-in-out infinite; }
+      #receipt-behind { transform-origin: 570px 440px; animation: floatReceipt 7.2s ease-in-out infinite; }
+      #card-a         { transform-origin: 300px 298px; animation: bobA 4.4s ease-in-out infinite; }
+      #card-b         { transform-origin: 934px 588px; animation: bobB 4.1s ease-in-out infinite; }
+      .tl  { stroke-dasharray: 500; stroke-dashoffset: 500; animation: dashDraw 3.8s 0.8s ease forwards; }
+      .br1 { transform-origin: 572px 548px; animation: barGrow1 2.4s 0.1s cubic-bezier(.34,1.56,.64,1) both, barPulse 3.5s 3s ease-in-out infinite; }
+      .br2 { transform-origin: 618px 548px; animation: barGrow2 2.4s 0.35s cubic-bezier(.34,1.56,.64,1) both, barPulse 3.5s 3.25s ease-in-out infinite; }
+      .br3 { transform-origin: 664px 548px; animation: barGrow3 2.4s 0.6s cubic-bezier(.34,1.56,.64,1) both, barPulse 3.5s 3.5s ease-in-out infinite; }
+      .pr  { animation: pulseRing 2.8s ease-in-out infinite; }
+    </style>
+
+    <linearGradient id="screenGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#eef2fc"/>
+      <stop offset="100%" stop-color="#f6f9fd"/>
+    </linearGradient>
+    <linearGradient id="sideGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b8c4de"/>
+      <stop offset="100%" stop-color="#cdd6ea"/>
+    </linearGradient>
+    <linearGradient id="topEdgeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dce4f4"/>
+      <stop offset="100%" stop-color="#c8d2e8"/>
+    </linearGradient>
+
+    <filter id="f-phone" x="-25%" y="-15%" width="160%" height="145%">
+      <feDropShadow dx="10" dy="28" stdDeviation="26" flood-color="#0f1e08" flood-opacity="0.20"/>
+      <feDropShadow dx="2"  dy="6"  stdDeviation="6"  flood-color="#0f1e08" flood-opacity="0.09"/>
+    </filter>
+    <filter id="f-card" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="5" dy="14" stdDeviation="16" flood-color="#0f1e08" flood-opacity="0.17"/>
+    </filter>
+    <filter id="f-receipt" x="-25%" y="-15%" width="155%" height="140%">
+      <feDropShadow dx="-6" dy="18" stdDeviation="18" flood-color="#0f1e08" flood-opacity="0.11"/>
+    </filter>
+    <filter id="f-sm" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="2" dy="5" stdDeviation="7" flood-color="#0f1e08" flood-opacity="0.13"/>
+    </filter>
+
+    <!-- clip for screen contents -->
+    <clipPath id="sc">
+      <polygon points="518,148 754,132 736,692 500,708"/>
+    </clipPath>
+  </defs>
+
+
+  <!-- ─── BACKGROUND ACCENTS (no fill rect — transparent bg) ─── -->
+
+  <!-- soft wash ellipses -->
+  <ellipse cx="230" cy="230" rx="300" ry="210" fill="rgba(126,146,200,0.065)" transform="rotate(-18 230 230)"/>
+  <ellipse cx="990" cy="670" rx="270" ry="190" fill="rgba(67,154,134,0.065)" transform="rotate(12 990 670)"/>
+
+  <!-- dot grid — top left -->
+  <g fill="rgba(46,69,33,0.09)">
+    <circle cx="76"  cy="86"  r="2"/><circle cx="146" cy="86"  r="2"/><circle cx="216" cy="86"  r="2"/>
+    <circle cx="286" cy="86"  r="2"/><circle cx="76"  cy="156" r="2"/><circle cx="146" cy="156" r="2"/>
+    <circle cx="216" cy="156" r="2"/><circle cx="76"  cy="226" r="2"/><circle cx="146" cy="226" r="2"/>
+    <circle cx="76"  cy="296" r="2"/>
+  </g>
+  <!-- dot grid — bottom right -->
+  <g fill="rgba(46,69,33,0.09)">
+    <circle cx="950"  cy="708" r="2"/><circle cx="1020" cy="708" r="2"/><circle cx="1090" cy="708" r="2"/>
+    <circle cx="1160" cy="708" r="2"/><circle cx="950"  cy="778" r="2"/><circle cx="1020" cy="778" r="2"/>
+    <circle cx="1090" cy="778" r="2"/><circle cx="950"  cy="848" r="2"/><circle cx="1020" cy="848" r="2"/>
+  </g>
+
+  <!-- ink dash pairs -->
+  <path d="M 938 212 C 958 206, 982 210, 992 224" stroke="rgba(46,69,33,0.22)" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+  <path d="M 950 238 C 970 232, 994 236, 1004 250" stroke="rgba(46,69,33,0.16)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <path d="M 148 594 C 168 588, 192 592, 202 606" stroke="rgba(46,69,33,0.20)" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+  <path d="M 162 620 C 182 614, 206 618, 216 632" stroke="rgba(46,69,33,0.15)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+  <!-- sparkle cross marks -->
+  <g stroke="rgba(46,69,33,0.28)" stroke-width="1.7" stroke-linecap="round">
+    <line x1="196" y1="698" x2="196" y2="714"/><line x1="188" y1="706" x2="204" y2="706"/>
+    <line x1="190" y1="700" x2="202" y2="712"/><line x1="202" y1="700" x2="190" y2="712"/>
+  </g>
+  <g stroke="rgba(46,69,33,0.26)" stroke-width="1.7" stroke-linecap="round">
+    <line x1="1054" y1="150" x2="1054" y2="164"/><line x1="1047" y1="157" x2="1061" y2="157"/>
+    <line x1="1048" y1="152" x2="1060" y2="162"/><line x1="1060" y1="152" x2="1048" y2="162"/>
+  </g>
+
+  <!-- ground shadow -->
+  <ellipse cx="624" cy="760" rx="200" ry="30" fill="rgba(46,69,33,0.08)"/>
+
+
+  <!-- ─── RECEIPT / NOTE peeking behind phone ─── -->
+  <g id="receipt-behind" filter="url(#f-receipt)">
+    <g transform="rotate(-6, 576, 430)">
+      <rect x="426" y="174" width="256" height="516" rx="18"
+            fill="#fdf9ee" stroke="#2e4521" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- torn top edge -->
+      <path d="M 426 192 C 443 183, 456 194, 470 185 C 484 176, 498 190, 514 182
+               C 528 174, 544 186, 558 180 C 572 174, 586 186, 600 180
+               C 614 174, 628 184, 642 177 C 656 170, 666 180, 674 192"
+            stroke="#2e4521" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <text x="450" y="212" class="ht" font-size="13" font-weight="700" fill="#7e92c8" opacity="0.80">EXPENSE RECEIPT</text>
+      <line x1="446" y1="218" x2="658" y2="218" stroke="rgba(46,69,33,0.15)" stroke-width="1.2"/>
+      <text x="450" y="244" class="ht" font-size="13" fill="#2e4521" opacity="0.62">Groceries</text>
+      <text x="634" y="244" class="ht" font-size="13" fill="#2e4521" opacity="0.62" text-anchor="end">$84.20</text>
+      <line x1="446" y1="252" x2="656" y2="252" stroke="rgba(46,69,33,0.10)" stroke-width="1"/>
+      <text x="450" y="278" class="ht" font-size="13" fill="#2e4521" opacity="0.62">Transport</text>
+      <text x="634" y="278" class="ht" font-size="13" fill="#2e4521" opacity="0.62" text-anchor="end">$34.00</text>
+      <line x1="446" y1="286" x2="656" y2="286" stroke="rgba(46,69,33,0.10)" stroke-width="1"/>
+      <text x="450" y="312" class="ht" font-size="13" fill="#2e4521" opacity="0.62">Dining</text>
+      <text x="634" y="312" class="ht" font-size="13" fill="#2e4521" opacity="0.62" text-anchor="end">$62.50</text>
+      <line x1="446" y1="340" x2="656" y2="340" stroke="rgba(46,69,33,0.28)" stroke-width="1.3" stroke-dasharray="5,4"/>
+      <text x="450" y="362" class="ht" font-size="15" font-weight="700" fill="#2e4521">TOTAL</text>
+      <text x="634" y="362" class="ht" font-size="15" font-weight="700" fill="#7e92c8" text-anchor="end">$180.70</text>
+    </g>
+  </g>
+
+
+  <!-- PHONE — 3-face perspective -->
+  <!--
+    Front face  : 518,148  754,132  736,692  500,708
+    Left side   : 454,172  518,148  500,708  436,732
+    Top edge    : 454,172  518,148  754,132  756,156
+  -->
+  <g id="phone-group" filter="url(#f-phone)">
+
+    <!-- LEFT SIDE FACE -->
+    <polygon points="454,172 518,148 500,708 436,732"
+             fill="url(#sideGrad)" stroke="#2e4521" stroke-width="2.8" stroke-linejoin="round"/>
+    <!-- subtle shading stripes on side -->
+    <line x1="464" y1="200" x2="448" y2="714" stroke="rgba(126,146,200,0.16)" stroke-width="1.1"/>
+    <line x1="478" y1="178" x2="462" y2="720" stroke="rgba(126,146,200,0.10)" stroke-width="0.8"/>
+    <!-- physical buttons -->
+    <path d="M 456 294 C 453 292, 451 306, 453 314 C 456 316, 459 314, 459 307 C 459 300, 457 294, 456 294 Z"
+          fill="#b0bcd4" stroke="#2e4521" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M 455 336 C 452 334, 450 350, 452 360 C 455 362, 458 360, 458 352 C 458 344, 456 336, 455 336 Z"
+          fill="#b0bcd4" stroke="#2e4521" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M 454 368 C 451 366, 449 382, 451 392 C 454 394, 457 392, 457 384 C 457 376, 455 368, 454 368 Z"
+          fill="#b0bcd4" stroke="#2e4521" stroke-width="1.7" stroke-linecap="round"/>
+
+    <!-- TOP EDGE FACE -->
+    <polygon points="454,172 518,148 754,132 756,156"
+             fill="url(#topEdgeGrad)" stroke="#2e4521" stroke-width="2.8" stroke-linejoin="round"/>
+
+    <!-- FRONT FACE -->
+    <polygon points="518,148 754,132 736,692 500,708"
+             fill="url(#screenGrad)" stroke="#2e4521" stroke-width="3.2"
+             stroke-linejoin="round" stroke-linecap="round"/>
+
+    <!-- inner screen bezel -->
+    <polygon points="530,163 742,148 724,677 512,692"
+             fill="none" stroke="rgba(46,69,33,0.16)" stroke-width="1.5" stroke-linejoin="round"/>
+
+    <!-- camera notch bar -->
+    <polygon points="590,148 712,140 711,164 589,172" fill="#2e4521" rx="8"/>
+    <ellipse cx="650" cy="156" rx="6" ry="5" fill="rgba(126,146,200,0.50)"/>
+
+    <!-- ── SCREEN CONTENT — skewed to match face perspective ── -->
+    <g clip-path="url(#sc)">
+      <!-- perspective skew: content tilts slightly left-up like the face plane -->
+      <g transform="matrix(1, -0.03, 0, 1, 0, 0)">
+
+        <!-- HEADER -->
+        <text x="534" y="200" class="ht" font-size="19" font-weight="700" fill="#2e4521">💸 Ledgic</text>
+        <text x="534" y="220" class="ht" font-size="12" fill="#439a86">November 2024</text>
+        <path d="M 532 226 C 552 222, 576 228, 598 224 C 620 220, 642 226, 664 222 C 686 218, 708 224, 726 221"
+              stroke="#7e92c8" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+
+        <!-- TOTAL CARD -->
+        <rect x="530" y="238" width="198" height="84" rx="13"
+              fill="rgba(126,146,200,0.18)" stroke="#7e92c8" stroke-width="1.9" stroke-linecap="round"/>
+        <text x="542" y="259" class="ht" font-size="11" fill="rgba(46,69,33,0.60)">Total Spent · Nov</text>
+        <text x="542" y="293" class="ht" font-size="31" font-weight="700" fill="#2e4521">$1,284</text>
+        <text x="542" y="313" class="ht" font-size="11" fill="#439a86">↑ 12% vs last month</text>
+
+        <!-- CATEGORY PILLS -->
+        <rect x="530" y="333" width="90" height="48" rx="11"
+              fill="rgba(126,146,200,0.22)" stroke="#7e92c8" stroke-width="1.7" stroke-linecap="round"/>
+        <text x="540" y="353" class="ht" font-size="11" fill="#2e4521">🍔 Food</text>
+        <text x="540" y="372" class="ht" font-size="13" font-weight="700" fill="#2e4521">$342</text>
+
+        <rect x="630" y="333" width="98" height="48" rx="11"
+              fill="rgba(67,154,134,0.22)" stroke="#439a86" stroke-width="1.7" stroke-linecap="round"/>
+        <text x="640" y="353" class="ht" font-size="11" fill="#2e4521">🚌 Transit</text>
+        <text x="640" y="372" class="ht" font-size="13" font-weight="700" fill="#2e4521">$98</text>
+
+        <!-- CHART -->
+        <rect x="530" y="393" width="198" height="168" rx="13"
+              fill="rgba(255,255,255,0.70)" stroke="rgba(46,69,33,0.20)" stroke-width="1.7"/>
+        <text x="542" y="411" class="ht" font-size="11" fill="rgba(46,69,33,0.58)">Spending Trend</text>
+
+        <line x1="538" y1="548" x2="720" y2="548" stroke="rgba(46,69,33,0.18)" stroke-width="1.3"/>
+
+        <!-- bars -->
+        <rect x="548" y="490" width="44" height="58" rx="6" fill="#7e92c8" stroke="#2e4521" stroke-width="1.5" class="br1"/>
+        <rect x="604" y="512" width="44" height="36" rx="6" fill="#439a86" stroke="#2e4521" stroke-width="1.5" class="br2"/>
+        <rect x="660" y="526" width="44" height="22" rx="6" fill="#74aa7a" stroke="#2e4521" stroke-width="1.5" class="br3"/>
+
+        <!-- trend line -->
+        <path d="M 570 490 C 592 478, 620 514, 648 510 C 668 508, 694 524, 704 520"
+              stroke="#2e4521" stroke-width="2.1" stroke-linecap="round" fill="none" class="tl"/>
+        <circle cx="570" cy="490" r="4" fill="#2e4521"/>
+        <circle cx="648" cy="510" r="4" fill="#2e4521"/>
+        <circle cx="704" cy="520" r="4" fill="#2e4521"/>
+
+        <!-- legend -->
+        <rect x="538" y="556" width="8" height="8" rx="2" fill="#7e92c8"/>
+        <text x="549" y="563" class="ht" font-size="10" fill="#2e4521">Food</text>
+        <rect x="578" y="556" width="8" height="8" rx="2" fill="#439a86"/>
+        <text x="589" y="563" class="ht" font-size="10" fill="#2e4521">Transit</text>
+        <rect x="632" y="556" width="8" height="8" rx="2" fill="#74aa7a"/>
+        <text x="643" y="563" class="ht" font-size="10" fill="#2e4521">Other</text>
+
+        <!-- BUDGET ROW -->
+        <rect x="530" y="576" width="198" height="74" rx="13"
+              fill="rgba(116,170,122,0.17)" stroke="#74aa7a" stroke-width="1.7" stroke-linecap="round"/>
+        <text x="542" y="594" class="ht" font-size="11" fill="rgba(46,69,33,0.58)">Monthly Budget</text>
+        <rect x="540" y="606" width="180" height="9" rx="4.5" fill="rgba(46,69,33,0.10)"/>
+        <rect x="540" y="606" width="122" height="9" rx="4.5" fill="#74aa7a"/>
+        <text x="542" y="638" class="ht" font-size="11" fill="#2e4521">$868 / $1,280  </text>
+        <text x="636" y="638" class="ht" font-size="13" font-weight="700" fill="#439a86">68%</text>
+
+        <!-- home pill -->
+        <rect x="612" y="656" width="62" height="6" rx="3" fill="rgba(46,69,33,0.18)"/>
+      </g>
+    </g>
+
+    <!-- sketch double-stroke outer -->
+    <polygon points="520,146 756,130 738,694 502,710"
+             fill="none" stroke="rgba(46,69,33,0.16)" stroke-width="1.3"
+             stroke-linejoin="round" stroke-dasharray="10,8"/>
+  </g>
+
+
+  <!-- ─── CARD A — Latest Transaction ─── -->
+  <g id="card-a" filter="url(#f-card)">
+    <path d="M 128 250 C 130 226, 152 212, 178 211 L 434 208 C 460 208, 476 224, 476 248
+             L 478 344 C 478 368, 458 382, 432 383 L 178 387 C 152 387, 132 373, 130 349 Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 128 250 C 130 226, 152 212, 178 211 L 434 208 C 460 208, 476 224, 476 248
+             L 476 272 L 128 276 Z"
+          fill="#7e92c8"/>
+    <path d="M 126 248 C 128 224, 150 210, 176 209 L 434 206 C 462 206, 478 222, 478 248"
+          stroke="rgba(46,69,33,0.20)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+
+    <text x="144" y="265" class="ht" font-size="13" font-weight="700" fill="#ffffff">Latest Transaction</text>
+
+    <circle cx="154" cy="320" r="17" fill="rgba(126,146,200,0.18)" stroke="#7e92c8" stroke-width="1.7"/>
+    <text x="154" y="326" class="ht" font-size="16" text-anchor="middle">☕</text>
+
+    <text x="178" y="312" class="ht" font-size="14" font-weight="700" fill="#2e4521">Blue Bottle Coffee</text>
+    <text x="178" y="332" class="ht" font-size="12" fill="#439a86">Today  ·  10:42 AM</text>
+    <text x="462" y="326" class="ht" font-size="18" font-weight="700" fill="#2e4521" text-anchor="end">-$6.80</text>
+
+    <line x1="140" y1="350" x2="464" y2="352" stroke="rgba(46,69,33,0.13)" stroke-width="1.2" stroke-linecap="round"/>
+    <text x="142" y="369" class="ht" font-size="11" fill="rgba(46,69,33,0.48)">Food &amp; Drink</text>
+    <circle cx="228" cy="364" r="5" fill="#7e92c8" class="pr"/>
+  </g>
+
+
+  <!-- ─── CARD B — Savings Goal ─── -->
+  <g id="card-b" filter="url(#f-card)">
+    <path d="M 768 540 C 770 516, 792 502, 818 501 L 1062 497 C 1088 497, 1104 513, 1104 537
+             L 1106 638 C 1106 662, 1086 676, 1060 677 L 816 681 C 790 681, 770 667, 768 643 Z"
+          fill="#ffffff" stroke="#2e4521" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 768 540 C 770 516, 792 502, 818 501 L 1062 497 C 1088 497, 1104 513, 1104 537
+             L 1104 561 L 768 565 Z"
+          fill="#439a86"/>
+    <path d="M 766 538 C 768 514, 790 500, 816 499 L 1062 495 C 1090 495, 1106 511, 1106 537"
+          stroke="rgba(46,69,33,0.20)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+
+    <text x="784" y="542" class="ht" font-size="13" font-weight="700" fill="#ffffff">Savings Goal  🏖️</text>
+
+    <circle cx="798" cy="614" r="17" fill="rgba(67,154,134,0.18)" stroke="#439a86" stroke-width="1.7"/>
+    <text x="798" y="620" class="ht" font-size="16" text-anchor="middle">✈️</text>
+
+    <text x="822" y="607" class="ht" font-size="14" font-weight="700" fill="#2e4521">Summer Vacation</text>
+    <text x="822" y="627" class="ht" font-size="12" fill="rgba(46,69,33,0.55)">$960 saved of $2,000</text>
+
+    <rect x="784" y="644" width="306" height="10" rx="5" fill="rgba(46,69,33,0.10)"/>
+    <rect x="784" y="644" width="147" height="10" rx="5" fill="#74aa7a"/>
+    <circle cx="931" cy="649" r="7" fill="#2e4521"/>
+    <text x="944" y="655" class="ht" font-size="13" font-weight="700" fill="#439a86">48%</text>
+
+    <line x1="782" y1="667" x2="1094" y2="667" stroke="rgba(46,69,33,0.11)" stroke-width="1.2"/>
+  </g>
+
+
+  <!-- ─── ACCENT ELEMENTS ─── -->
+
+  <!-- Dollar badge -->
+  <g filter="url(#f-sm)" transform="translate(1070,342) rotate(-8)">
+    <circle cx="0" cy="0" r="30" fill="rgba(126,146,200,0.14)" stroke="#7e92c8" stroke-width="2.1"/>
+    <circle cx="0" cy="0" r="30" fill="none" stroke="rgba(126,146,200,0.32)" stroke-width="1.1" stroke-dasharray="4,3" class="pr"/>
+    <text x="0" y="9" class="ht" font-size="26" font-weight="700" fill="#7e92c8" text-anchor="middle">$</text>
+  </g>
+
+  <!-- Mini pie chart -->
+  <g filter="url(#f-sm)" transform="translate(196,642)">
+    <circle cx="0" cy="0" r="32" fill="#ffffff" stroke="#2e4521" stroke-width="2.1"/>
+    <path d="M0,0 L0,-32 A32,32,0,0,1,27.7,-16 Z" fill="#7e92c8"/>
+    <path d="M0,0 L27.7,-16 A32,32,0,0,1,27.7,16 Z" fill="#439a86"/>
+    <path d="M0,0 L27.7,16 A32,32,0,0,1,-32,0 Z" fill="#74aa7a"/>
+    <path d="M0,0 L-32,0 A32,32,0,0,1,0,-32 Z" fill="rgba(46,69,33,0.20)"/>
+    <circle cx="0" cy="0" r="12" fill="#ffffff" stroke="#2e4521" stroke-width="1.8"/>
+  </g>
+
+  <!-- two subtle dots -->
+  <circle cx="1098" cy="488" r="7" fill="#439a86" opacity="0.35"/>
+  <circle cx="374"  cy="685" r="6" fill="#7e92c8"  opacity="0.33"/>
+
+</svg>

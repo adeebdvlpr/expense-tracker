@@ -75,7 +75,7 @@ const AccountPage = () => {
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Account</Typography>
-        <Button variant="text" onClick={() => navigate('/')}>Back</Button>
+        <Button variant="text" onClick={() => navigate('/app')}>Back</Button>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

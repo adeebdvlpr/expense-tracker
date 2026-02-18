@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
+
+import MarketingLandingPage from './pages/MarketingLandingPage';
 import ExpenseTracker from './pages/ExpenseTracker';
 import AuthPage from './pages/AuthPage';
 import AccountPage from './pages/AccountPage';
@@ -14,7 +16,7 @@ const App = () => {
   useEffect(() => {
     const checkAuth = () => {
       const token = sessionStorage.getItem('token');
-      setIsAuthenticated(!!token);
+      setIsAuthenticated(Boolean(token));
       setIsLoading(false);
     };
 
@@ -35,18 +37,28 @@ const App = () => {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          <Route 
-            path="/auth" 
-            element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />} 
-          />
+                {/* PUBLIC ...*/}
           <Route 
             path="/" 
+            element={<MarketingLandingPage />}  
+          />
+                {/* AUTH ...*/}
+          <Route 
+            path="/auth" 
+            element={isAuthenticated ? <Navigate to="/app" replace /> : <AuthPage />} 
+          />
+                {/* PROTECTED ...*/}
+          <Route 
+            path="/app" 
             element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" replace />} 
           />
           <Route
             path="/account"
             element={isAuthenticated ? <AccountPage /> : <Navigate to="/auth" replace />}
           />
+
+                {/* CATCH ALL ...*/}
+          <Route path="*" element={<Navigate to="/" replace />}/> 
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
