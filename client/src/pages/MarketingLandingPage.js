@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ReactComponent as LandingArt } from '../animations/Landing-Page-Animaton.svg';
 import {
   AppBar,
   Toolbar,
@@ -11,7 +12,10 @@ import {
   Paper,
   Grid,
   Chip,
+  alpha
 } from '@mui/material';
+
+
 
 const BrandMark = () => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -49,9 +53,12 @@ const MarketingLandingPage = () => {
       {/* Top Nav */}
       <AppBar
         position="sticky"
-        color="transparent"
         elevation={0}
-        sx={{ borderBottom: (t) => `1px solid ${t.palette.divider}` }}
+        sx={(theme) => ({
+            backgroundColor: alpha(theme.palette.background.default, 0.7),
+            backdropFilter: 'blur(12px)',
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          })}
       >
         <Toolbar>
           <Container
@@ -61,7 +68,7 @@ const MarketingLandingPage = () => {
             <BrandMark />
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <Button color="inherit" onClick={() => navigate('/auth')}>
+              <Button variant="contained" onClick={() => navigate('/auth')}>
                 Sign in
               </Button>
               <Button variant="contained" onClick={() => navigate('/auth')}>
@@ -110,22 +117,31 @@ const MarketingLandingPage = () => {
                 sx={{
                     width: '100%',
                     display: 'grid',
-                    placeItems: { xs: 'center', md: 'end' }, // right-align on desktop
-                    animation: 'floatHero 6s ease-in-out infinite',
-                    '@keyframes floatHero': {
-                        '0%': { transform: 'translateY(0px)' },
-                        '50%': { transform: 'translateY(-10px)' },
-                        '100%': { transform: 'translateY(0px)' },
+                    placeItems: { xs: 'center', md: 'end' },
+
+                    '@keyframes phoneBob': {
+                    '0%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-10px)' },
+                    '100%': { transform: 'translateY(0px)' },
+                    },
+
+                    // target the element inside the inline SVG
+                    '& #Update-Phone-base': {
+                    animation: 'phoneBob 2.8s ease-in-out infinite',
+                    transformOrigin: 'center',
+                    transformBox: 'fill-box',
                     },
                 }}
-            >
+                >
                 <Box sx={{ width: '100%', maxWidth: 620 }}>
-                    <img
-                        src="/ledgic-hero4.svg"
-                        alt="Ledgic dashboard preview"
-                        style={{ width: '100%', height: 'auto', display: 'block' }}
-                    />
+                    <LandingArt style={{ width: '100%', height: 'auto', display: 'block' }} />
                 </Box>
+                
+                {/* <Box sx={{ width: '100%', maxWidth: 620 }}>
+                <Box sx={{ width: '100%', maxWidth: 620 }}>
+                    <LandingArt style={{ width: '100%', height: 'auto', display: 'block' }} />
+                </Box> */}
+
             </Box>
           </Grid>
         </Grid>
