@@ -1,3 +1,4 @@
+const { Uppercase } = require('@sinclair/typebox');
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
@@ -30,9 +31,25 @@ const UserSchema = new mongoose.Schema({
     enum: ['Budgeting', 'Saving', 'Debt', 'Tracking', 'Other']
   },
 
+  monethlyIncome: {
+    type: Number,
+    required: false,  
+    min: 0
+  },
+  currency: {
+    type: String,
+    required: true,
+    default: 'USD',
+    trim: true,
+    uppercase: true,
+    minlength: 3,
+    maxlength:3,
+  },
+
     // for third-party auth later
     // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
     // googleId: { type: String
+    
 }, {timestamps: true});
 
 module.exports = mongoose.model('User', UserSchema);
