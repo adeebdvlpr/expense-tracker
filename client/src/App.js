@@ -8,6 +8,7 @@ import MarketingLandingPage from './pages/MarketingLandingPage';
 import ExpenseTracker from './pages/ExpenseTracker';
 import AuthPage from './pages/AuthPage';
 import AccountPage from './pages/AccountPage';
+import BudgetsPage from './pages/BudgetsPage';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -55,6 +56,10 @@ const App = () => {
           <Route
             path="/account"
             element={isAuthenticated ? <AccountPage /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/budgets"
+            element={isAuthenticated ? <BudgetsPage /> : <Navigate to="/auth" replace />}
           />
 
                 {/* CATCH ALL ...*/}

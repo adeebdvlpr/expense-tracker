@@ -6,6 +6,8 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const expenseRoutes = require('./routes/expenses');
 const userRoutes = require('./routes/users.js');
+const budgetRoutes = require('./routes/budgets');
+const goalRoutes = require('./routes/goals');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -87,6 +89,9 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/budgets', budgetRoutes);
+app.use('/api/goals', goalRoutes);
+
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,

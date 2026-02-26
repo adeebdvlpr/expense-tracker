@@ -60,9 +60,8 @@ const AuthPage = () => {
     >
       <Container maxWidth="sm">
         <Paper sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ display: 'grid', gap: 2 }}>
 
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
               <img
                 src="/blue2_ledgic_logo.png"
                 alt="Ledgic logo"
@@ -74,9 +73,17 @@ const AuthPage = () => {
                   {'Ledgic'}
                 </Typography>
             </Box>
+            <Box sx={{textAlign: 'center' }}>
+                <Typography variant='h3'>
+                  {'Make money one less thing to stress about.'}
+                </Typography>
+            </Box>
 
             <Box mt={10} >
             </Box>
+  {/*  Below is the actual login bow ABOVE is the aesthetucs*/}
+
+          <Box sx={{ display: 'grid', gap: 2 }}>
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h2" component="h1">

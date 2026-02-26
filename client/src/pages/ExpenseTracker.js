@@ -134,6 +134,11 @@ const ExpenseTracker = () => {
     navigate('/account');
   };
 
+  const goBudgets = () => {
+    closeMenu();
+    navigate('/budgets');
+    };
+
   const doLogout = () => {
     closeMenu();
     handleLogout();
@@ -265,6 +270,7 @@ const ExpenseTracker = () => {
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
             <MenuItem onClick={goAccount}>Account</MenuItem>
+            <MenuItem onClick={goBudgets}>Budgets</MenuItem>
             <Divider />
             <MenuItem onClick={doLogout}>Logout</MenuItem>
           </Menu>
