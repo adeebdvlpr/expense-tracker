@@ -23,7 +23,40 @@ const updateMeValidators = [
     .trim()
     .isIn(['Budgeting', 'Saving', 'Debt', 'Tracking', 'Other'])
     .withMessage('Reason must be one of: Budgeting, Saving, Debt, Tracking, Other')
-];
+    ,
+      body('monthlyIncome')
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === '') return true; // allow clearing
+      const num = Number(value);
+      if (!Number.isFinite(num)) throw new Error('Monthly income must be a number');
+      if (num < 0) throw new Error('Monthly income must be 0 or greater');
+      if (num > 1_000_000) throw new Error('Monthly income seems too large');
+      return true;
+    })
+    .toFloat(),
+
+  body('currency')
+    .optional({ checkFalsy: true })
+    .isString().withMessage('Currency must be a string')
+    .trim()
+    .isLength({ min: 3, max: 3 }).withMessage('Currency must be a 3-letter code (e.g., USD)')
+    .toUpperCase(),
+
+  body('dashboardPrefs')
+    .optional()
+    .isObject().withMessage('dashboardPrefs must be an object'),
+  body('dashboardPrefs.showExpenseChart')
+    .optional()
+    .isBoolean().withMessage('showExpenseChart must be boolean'),
+  body('dashboardPrefs.showBudgetWidget')
+    .optional()
+    .isBoolean().withMessage('showBudgetWidget must be boolean'),
+  body('dashboardPrefs.showGoalsWidget')
+    .optional()
+    .isBoolean().withMessage('showGoalsWidget must be boolean'),
+
+  ];
 
 router.get('/me', auth, getMe);
 router.patch('/me', auth, updateMeValidators, validate, updateMe);

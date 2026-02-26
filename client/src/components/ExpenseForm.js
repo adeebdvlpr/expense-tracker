@@ -11,18 +11,20 @@ import {
   Stack,
 } from '@mui/material';
 
-const CATEGORIES = [
-  'Housing',
-  'Food',
-  'Utilities',
-  'Transportation',
-  'Savings & Investments',
-  'Debt Payments',
-  'Health & Personal Care',
-  'Entertainment & Leisure',
-  'Insurance',
-  'Other',
-];
+// const CATEGORIES = [
+//   'Housing',
+//   'Food',
+//   'Utilities',
+//   'Transportation',
+//   'Savings & Investments',
+//   'Debt Payments',
+//   'Health & Personal Care',
+//   'Entertainment & Leisure',
+//   'Insurance',
+//   'Other',
+// ];
+
+import { CATEGORIES } from '../constants/categories';
 
 const ExpenseForm = ({ onAddExpense }) => {
   const [description, setDescription] = useState('');

@@ -14,7 +14,7 @@ exports.getMe = async (req, res) => {
 exports.updateMe = async (req, res) => {
   try {
     // Allow updating only these fields (for now)
-    const { dateOfBirth, reason } = req.body;
+    const { dateOfBirth, reason, monthlyIncome, currency, dashboardPrefs } = req.body;
 
     const $set = {};
     const $unset = {};
@@ -29,6 +29,35 @@ exports.updateMe = async (req, res) => {
       if (!reason) $unset.reason = '';
       else $set.reason = reason;
     }
+
+    
+    
+    // monthlyIncome: allow clearing
+    if ('monthlyIncome' in req.body) {
+        if (monthlyIncome === null || monthlyIncome === '') $unset.monthlyIncome = '';
+        else $set.monthlyIncome = monthlyIncome;
+    }
+    
+     // currency: do not allow clearing; normalize to USD if empty
+    if ('currency' in req.body) {
+      if (!currency) $set.currency = 'USD';
+      else $set.currency = currency;
+    }
+    
+    // dashboardPrefs: merge keys
+    if ('dashboardPrefs' in req.body) {
+      if (!dashboardPrefs) {
+      // allow reset to defaults by unsetting
+        $unset.dashboardPrefs = '';
+      } else {
+        for (const key of ['showExpenseChart', 'showBudgetWidget', 'showGoalsWidget']) {
+          if (Object.prototype.hasOwnProperty.call(dashboardPrefs, key)) {
+             $set[`dashboardPrefs.${key}`] = dashboardPrefs[key];
+          }
+        }
+      }
+    }
+     
 
     const update = {};
     if (Object.keys($set).length) update.$set = $set;

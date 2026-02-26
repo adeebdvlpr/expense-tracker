@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getMe, updateMe } from '../utils/api';
 import {
   Container, Box, Typography, Alert, CircularProgress,
-  TextField, MenuItem, Button
+  TextField, MenuItem, Button,FormControlLabel, Switch, Divider
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,11 +12,20 @@ const AccountPage = () => {
   const [profile, setProfile] = useState(null);
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [reason, setReason] = useState('');
+  const [monthlyIncome, setMonthlyIncome] = useState('');
+  const [currency, setCurrency] = useState('USD');
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+
+  const [prefs, setPrefs] = useState({
+    showExpenseChart: true,
+    showBudgetWidget: true,
+    showGoalsWidget: true,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -29,6 +38,13 @@ const AccountPage = () => {
         // Normalize values for inputs
         setDateOfBirth(me?.dateOfBirth ? new Date(me.dateOfBirth).toISOString().slice(0, 10) : '');
         setReason(me?.reason || '');
+        setMonthlyIncome(typeof me?.monthlyIncome === 'number' ? String(me.monthlyIncome) : ( me?.monthlyIncome ? String(me.monthlyIncome) : ''));
+        setCurrency(me?.currency || 'USD');
+        setPrefs({
+        showExpenseChart: me?.dashboardPrefs?.showExpenseChart ?? true,
+        showBudgetWidget: me?.dashboardPrefs?.showBudgetWidget ?? true,
+        showGoalsWidget: me?.dashboardPrefs?.showGoalsWidget ?? true,
+        })
       } catch (e) {
         setError(e.response?.data?.message || e.message || 'Failed to load profile');
       } finally {
@@ -48,6 +64,9 @@ const AccountPage = () => {
       const payload = {
         dateOfBirth: dateOfBirth || null,
         reason: reason || null,
+        monthlyIncome: monthlyIncome === '' ? null : Number(monthlyIncome),
+        currency: currency || 'USD',
+        dashboardPrefs: prefs,
       };
 
       const updated = await updateMe(payload);
@@ -104,6 +123,54 @@ const AccountPage = () => {
           <MenuItem value="">(None)</MenuItem>
           {REASONS.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
         </TextField>
+
+        <TextField
+          label="Monthly income"
+          value={monthlyIncome}
+          onChange={(e) => setMonthlyIncome(e.target.value)}
+          type="number"
+          inputProps={{ min: 0, step: '0.01' }}
+          helperText="Optional — used for budgets & goals"
+        />
+
+        <TextField
+          label="Currency"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+          helperText="3-letter code (e.g., USD)"
+          inputProps={{ maxLength: 3 }}
+        />
+
+        <Divider sx={{ my: 1 }} />
+
+        <Typography variant="h6">Dashboard widgets</Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={prefs.showExpenseChart}
+              onChange={(e) => setPrefs((p) => ({ ...p, showExpenseChart: e.target.checked }))}
+            />
+          }
+          label="Spending breakdown chart"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={prefs.showBudgetWidget}
+              onChange={(e) => setPrefs((p) => ({ ...p, showBudgetWidget: e.target.checked }))}
+            />
+          }
+          label="Budget overview widget"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={prefs.showGoalsWidget}
+              onChange={(e) => setPrefs((p) => ({ ...p, showGoalsWidget: e.target.checked }))}
+            />
+          }
+          label="Goals widget"
+        />
 
         <Button variant="contained" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving…' : 'Save Changes'}

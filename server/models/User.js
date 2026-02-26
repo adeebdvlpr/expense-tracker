@@ -38,12 +38,19 @@ const UserSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    required: true,
+    required: false,
     default: 'USD',
     trim: true,
     uppercase: true,
     minlength: 3,
     maxlength:3,
+  },
+
+ // Persisted dashboard visibility toggles
+  dashboardPrefs: {
+    showExpenseChart: { type: Boolean, default: true },
+    showBudgetWidget: { type: Boolean, default: true },
+    showGoalsWidget: { type: Boolean, default: true },
   },
 
     // for third-party auth later

@@ -83,5 +83,45 @@ export const updateMe = async (updates) => {
   return response.data;
 };
 
+/// --------- budgets APIs (v1)
+export const getBudgets = async ({ period, includeSpent = true } = {}) => {
+    const response = await api.get('/api/budgets', {
+      params: { period, includeSpent },
+    });
+    return response.data;
+  };
+  
+  // v1: POST is upsert by (period, category)
+  export const upsertBudget = async (payload) => {
+    const response = await api.post('/api/budgets', payload);
+    return response.data;
+  };
+  
+  export const deleteBudget = async (id) => {
+    const response = await api.delete(`/api/budgets/${id}`);
+    return response.data;
+  };
+    
+    /// --------- goals APIs (v1)
+   export const getGoals = async (params = {}) => {
+     const response = await api.get('/api/goals', { params });
+     return response.data;
+    };
+    
+    export const createGoal = async (payload) => {
+      const response = await api.post('/api/goals', payload);
+      return response.data;
+    };
+    
+    export const updateGoal = async (id, payload) => {
+      const response = await api.patch(`/api/goals/${id}`, payload);
+      return response.data;
+    };
+    
+    export const deleteGoal = async (id) => {
+      const response = await api.delete(`/api/goals/${id}`);
+      return response.data;
+    };
+
 
 export default api; 
