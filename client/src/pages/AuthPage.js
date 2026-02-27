@@ -53,34 +53,31 @@ const AuthPage = () => {
     <Box
       sx={{
         minHeight: '100vh',
+        backgroundImage: "url('/Ledgic_authPage_background.png')",
         display: 'grid',
         placeItems: 'center',
         px: 2,
       }}
     >
-      <Container maxWidth="sm">
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+          <img
+            src="/charcoal1_ledgic_symbpol.png" 
+            alt="Ledgic logo"
+            style={{ width: 60, height: 'auto' }}
+          />
+          <Typography variant='h2'>
+            {'Ledgic'}
+          </Typography>
+      </Box>
+      <Box sx={{textAlign: 'center' }}>
+          <Typography variant='h0' color='white'>
+            {'Make money one less thing to stress about.'}
+          </Typography>
+      </Box>
+
+      <Container maxWidth="sm" >
         <Paper sx={{ p: { xs: 3, sm: 4 } }}>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
-              <img
-                src="/blue2_ledgic_logo.png"
-                alt="Ledgic logo"
-                style={{ width: 110, height: 'auto' }}
-              />
-            </Box>
-            <Box sx={{textAlign: 'center' }}>
-                <Typography variant='h0'>
-                  {'Ledgic'}
-                </Typography>
-            </Box>
-            <Box sx={{textAlign: 'center' }}>
-                <Typography variant='h3'>
-                  {'Make money one less thing to stress about.'}
-                </Typography>
-            </Box>
-
-            <Box mt={10} >
-            </Box>
   {/*  Below is the actual login bow ABOVE is the aesthetucs*/}
 
           <Box sx={{ display: 'grid', gap: 2 }}>
