@@ -13,10 +13,9 @@ import {
   Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useNavigate } from 'react-router-dom';
 
 import { getBudgets, upsertBudget, deleteBudget, getMe } from '../utils/api';
+import AppLayout from '../components/AppLayout';
 import BudgetForm from '../components/BudgetForm';
 import BudgetChart from '../components/BudgetChart';
 import { formatMoney } from '../utils/money';
@@ -29,8 +28,6 @@ function getCurrentPeriodYYYYMM() {
 }
 
 export default function BudgetsPage() {
-  const navigate = useNavigate();
-
   const [period, setPeriod] = useState(getCurrentPeriodYYYYMM());
 
   // data
@@ -121,22 +118,16 @@ export default function BudgetsPage() {
   }
 
   return (
+    <AppLayout>
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-        <Tooltip title="Back">
-          <IconButton onClick={() => navigate('/app')} aria-label="Back to dashboard">
-            <ArrowBackIcon />
-          </IconButton>
-        </Tooltip>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            Budgets
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Set monthly category budgets and track progress.
-          </Typography>
-        </Box>
-      </Stack>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800 }}>
+          Budgets
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Set monthly category budgets and track progress.
+        </Typography>
+      </Box>
 
       {/* OVERVIEW NUMBERS */}
       <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, mb: 2, border: '1px solid', borderColor: 'divider' }}>
@@ -183,6 +174,8 @@ export default function BudgetsPage() {
           totalSpent={totals.totalSpent}
           monthlyIncome={me?.monthlyIncome ?? null}
           currency={inferredCurrency}
+          chartType={me?.dashboardPrefs?.chartType ?? 'pie'}
+          budgets={budgets}
         />
       </Box>
 
@@ -289,5 +282,6 @@ export default function BudgetsPage() {
         )}
       </Paper>
     </Container>
+    </AppLayout>
   );
 }

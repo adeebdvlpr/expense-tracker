@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { getMe, updateMe } from '../utils/api';
 import {
   Container, Box, Typography, Alert, CircularProgress,
-  TextField, MenuItem, Button,FormControlLabel, Switch, Divider
+  TextField, MenuItem, Button, FormControlLabel, Switch, Divider,
+  ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+
+import AppLayout from '../components/AppLayout';
 
 const REASONS = ['Budgeting', 'Saving', 'Debt', 'Tracking', 'Other'];
 
@@ -19,12 +21,12 @@ const AccountPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const navigate = useNavigate();
 
   const [prefs, setPrefs] = useState({
     showExpenseChart: true,
     showBudgetWidget: true,
     showGoalsWidget: true,
+    chartType: 'pie',
   });
 
   useEffect(() => {
@@ -35,16 +37,16 @@ const AccountPage = () => {
         const me = await getMe();
         setProfile(me);
 
-        // Normalize values for inputs
         setDateOfBirth(me?.dateOfBirth ? new Date(me.dateOfBirth).toISOString().slice(0, 10) : '');
         setReason(me?.reason || '');
-        setMonthlyIncome(typeof me?.monthlyIncome === 'number' ? String(me.monthlyIncome) : ( me?.monthlyIncome ? String(me.monthlyIncome) : ''));
+        setMonthlyIncome(typeof me?.monthlyIncome === 'number' ? String(me.monthlyIncome) : (me?.monthlyIncome ? String(me.monthlyIncome) : ''));
         setCurrency(me?.currency || 'USD');
         setPrefs({
-        showExpenseChart: me?.dashboardPrefs?.showExpenseChart ?? true,
-        showBudgetWidget: me?.dashboardPrefs?.showBudgetWidget ?? true,
-        showGoalsWidget: me?.dashboardPrefs?.showGoalsWidget ?? true,
-        })
+          showExpenseChart: me?.dashboardPrefs?.showExpenseChart ?? true,
+          showBudgetWidget: me?.dashboardPrefs?.showBudgetWidget ?? true,
+          showGoalsWidget: me?.dashboardPrefs?.showGoalsWidget ?? true,
+          chartType: me?.dashboardPrefs?.chartType ?? 'pie',
+        });
       } catch (e) {
         setError(e.response?.data?.message || e.message || 'Failed to load profile');
       } finally {
@@ -60,7 +62,6 @@ const AccountPage = () => {
     setSaving(true);
 
     try {
-      // Only send fields you want to update; allow clearing by sending null
       const payload = {
         dateOfBirth: dateOfBirth || null,
         reason: reason || null,
@@ -73,7 +74,6 @@ const AccountPage = () => {
       setProfile(updated);
       setSuccess('Profile updated!');
     } catch (e) {
-      // Your validate middleware returns { message, errors: [{field,message}] }
       const apiMsg = e.response?.data?.message;
       const fieldErrors = e.response?.data?.errors?.map(x => `${x.field}: ${x.message}`).join(' | ');
       setError(fieldErrors || apiMsg || e.message || 'Failed to update profile');
@@ -84,99 +84,116 @@ const AccountPage = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <AppLayout>
+        <Container maxWidth="sm" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Container>
+      </AppLayout>
     );
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Account</Typography>
-        <Button variant="text" onClick={() => navigate('/app')}>Back</Button>
-      </Box>
+    <AppLayout>
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Typography variant="h4" sx={{ mb: 2 }}>Account</Typography>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="Username" value={profile?.username || ''} disabled />
-        <TextField label="Email" value={profile?.email || ''} disabled />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="Username" value={profile?.username || ''} disabled />
+          <TextField label="Email" value={profile?.email || ''} disabled />
 
-        <TextField
-          label="Date of Birth"
-          type="date"
-          value={dateOfBirth}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          helperText="Optional"
-        />
+          <TextField
+            label="Date of Birth"
+            type="date"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            helperText="Optional"
+          />
 
-        <TextField
-          select
-          label="Reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          helperText="Optional"
-        >
-          <MenuItem value="">(None)</MenuItem>
-          {REASONS.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-        </TextField>
+          <TextField
+            select
+            label="Reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            helperText="Optional"
+          >
+            <MenuItem value="">(None)</MenuItem>
+            {REASONS.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+          </TextField>
 
-        <TextField
-          label="Monthly income"
-          value={monthlyIncome}
-          onChange={(e) => setMonthlyIncome(e.target.value)}
-          type="number"
-          inputProps={{ min: 0, step: '0.01' }}
-          helperText="Optional — used for budgets & goals"
-        />
+          <TextField
+            label="Monthly income"
+            value={monthlyIncome}
+            onChange={(e) => setMonthlyIncome(e.target.value)}
+            type="number"
+            inputProps={{ min: 0, step: '0.01' }}
+            helperText="Optional — used for budgets & goals"
+          />
 
-        <TextField
-          label="Currency"
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
-          helperText="3-letter code (e.g., USD)"
-          inputProps={{ maxLength: 3 }}
-        />
+          <TextField
+            label="Currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            helperText="3-letter code (e.g., USD)"
+            inputProps={{ maxLength: 3 }}
+          />
 
-        <Divider sx={{ my: 1 }} />
+          <Divider sx={{ my: 1 }} />
 
-        <Typography variant="h6">Dashboard widgets</Typography>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={prefs.showExpenseChart}
-              onChange={(e) => setPrefs((p) => ({ ...p, showExpenseChart: e.target.checked }))}
-            />
-          }
-          label="Spending breakdown chart"
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={prefs.showBudgetWidget}
-              onChange={(e) => setPrefs((p) => ({ ...p, showBudgetWidget: e.target.checked }))}
-            />
-          }
-          label="Budget overview widget"
-        />
-        <FormControlLabel
-          control={
-            <Switch
-              checked={prefs.showGoalsWidget}
-              onChange={(e) => setPrefs((p) => ({ ...p, showGoalsWidget: e.target.checked }))}
-            />
-          }
-          label="Goals widget"
-        />
+          <Typography variant="h6">Dashboard widgets</Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={prefs.showExpenseChart}
+                onChange={(e) => setPrefs((p) => ({ ...p, showExpenseChart: e.target.checked }))}
+              />
+            }
+            label="Spending breakdown chart"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={prefs.showBudgetWidget}
+                onChange={(e) => setPrefs((p) => ({ ...p, showBudgetWidget: e.target.checked }))}
+              />
+            }
+            label="Budget overview widget"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={prefs.showGoalsWidget}
+                onChange={(e) => setPrefs((p) => ({ ...p, showGoalsWidget: e.target.checked }))}
+              />
+            }
+            label="Goals widget"
+          />
 
-        <Button variant="contained" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Changes'}
-        </Button>
-      </Box>
-    </Container>
+          <Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
+              Chart type (spending breakdown)
+            </Typography>
+            <ToggleButtonGroup
+              size="small"
+              value={prefs.chartType}
+              exclusive
+              onChange={(_e, val) => val && setPrefs((p) => ({ ...p, chartType: val }))}
+            >
+              <ToggleButton value="pie">Pie</ToggleButton>
+              <ToggleButton value="bar">Bar</ToggleButton>
+              <ToggleButton value="line">Line</ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+
+          <Button variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Changes'}
+          </Button>
+        </Box>
+      </Container>
+    </AppLayout>
   );
 };
 

@@ -9,6 +9,7 @@ import ExpenseTracker from './pages/ExpenseTracker';
 import AuthPage from './pages/AuthPage';
 import AccountPage from './pages/AccountPage';
 import BudgetsPage from './pages/BudgetsPage';
+import GoalsPage from './pages/GoalsPage';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -60,6 +61,10 @@ const App = () => {
           <Route
             path="/budgets"
             element={isAuthenticated ? <BudgetsPage /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/goals"
+            element={isAuthenticated ? <GoalsPage /> : <Navigate to="/auth" replace />}
           />
 
                 {/* CATCH ALL ...*/}
