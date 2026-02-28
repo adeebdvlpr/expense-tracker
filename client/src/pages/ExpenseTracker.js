@@ -1,27 +1,21 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getExpenses, addExpense, deleteExpense } from '../utils/api';
 
+import AppLayout from '../components/AppLayout';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
 import ExpenseChart from '../components/ExpenseChart';
+import GoalsWidget from '../components/GoalsWidget';
+import BudgetWidget from '../components/BudgetWidget';
 
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Container,
   Alert,
   CircularProgress,
+  Container,
   Paper,
   Grid,
-  IconButton,
-  Menu,
-  MenuItem,
-  Avatar,
-  Divider,
-  Tooltip,
+  Box,
+  Typography,
   Snackbar,
   ToggleButton,
   ToggleButtonGroup,
@@ -51,6 +45,13 @@ function parseExpenseDate(expense) {
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
+const DEFAULT_PREFS = {
+  showExpenseChart: true,
+  showBudgetWidget: true,
+  showGoalsWidget: true,
+  chartType: 'pie',
+};
+
 const ExpenseTracker = () => {
   const [expenses, setExpenses] = useState([]);
   const [error, setError] = useState(null);
@@ -58,15 +59,13 @@ const ExpenseTracker = () => {
 
   const [filter, setFilter] = useState(FILTERS.MONTH);
 
+  // Dashboard preferences loaded from user profile
+  const [dashPrefs, setDashPrefs] = useState(DEFAULT_PREFS);
+
   // Snackbar state
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
   const openSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
-
-  const navigate = useNavigate();
-
-  // optional: derive a display initial from session/local later
-  const userInitial = useMemo(() => 'U', []);
 
   const handleLogout = useCallback(() => {
     sessionStorage.removeItem('token');
@@ -76,17 +75,12 @@ const ExpenseTracker = () => {
   const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
-
-      // Optional: pass dates to backend if it supports it later.
-      // For now we fetch all and filter client-side to avoid breakage.
       const data = await getExpenses();
-      
       setExpenses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError('Failed to fetch expenses. Please try again later.');
       openSnack('Failed to fetch expenses.', 'error');
-
       if (err?.response?.status === 401) {
         handleLogout();
       }
@@ -94,6 +88,23 @@ const ExpenseTracker = () => {
       setLoading(false);
     }
   }, [handleLogout]);
+
+  // Load user prefs on mount (non-blocking — dashboard still works if this fails)
+  useEffect(() => {
+    let cancelled = false;
+    import('../utils/api').then(({ getMe }) =>
+      getMe()
+        .then((me) => {
+          if (!cancelled && me?.dashboardPrefs) {
+            setDashPrefs({ ...DEFAULT_PREFS, ...me.dashboardPrefs });
+          }
+        })
+        .catch(() => {
+          // silently fall back to defaults
+        })
+    );
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     fetchExpenses();
@@ -105,7 +116,7 @@ const ExpenseTracker = () => {
       setExpenses((prev) => [...prev, newExpense]);
       setError(null);
       openSnack('Expense added.', 'success');
-    } catch (err) {
+    } catch {
       setError('Failed to add expense. Please try again.');
       openSnack('Failed to add expense.', 'error');
     }
@@ -117,35 +128,13 @@ const ExpenseTracker = () => {
       setExpenses((prev) => prev.filter((e) => e._id !== id));
       setError(null);
       openSnack('Expense deleted.', 'success');
-    } catch (err) {
+    } catch {
       setError('Failed to delete expense. Please try again.');
       openSnack('Failed to delete expense.', 'error');
     }
   }, []);
 
-    // TopBar menu state
-  const [anchorEl, setAnchorEl] = useState(null);
-  const menuOpen = Boolean(anchorEl);
-  const openMenu = (e) => setAnchorEl(e.currentTarget);
-  const closeMenu = () => setAnchorEl(null);
-
-  const goAccount = () => {
-    closeMenu();
-    navigate('/account');
-  };
-
-  const goBudgets = () => {
-    closeMenu();
-    navigate('/budgets');
-    };
-
-  const doLogout = () => {
-    closeMenu();
-    handleLogout();
-  };
-
-    // Compute filter window
-  const now = useMemo(() => new Date(), []);
+  // Compute filter window
   const filterWindow = useMemo(() => {
     if (filter === FILTERS.ALL) return { from: null, to: null };
 
@@ -166,7 +155,7 @@ const ExpenseTracker = () => {
 
     return expenses.filter((e) => {
       const dt = parseExpenseDate(e);
-      if (!dt) return false; // if you prefer, return true to include undated expenses
+      if (!dt) return false;
       const d = startOfDay(dt);
       return d >= from && d <= to;
     });
@@ -201,7 +190,6 @@ const ExpenseTracker = () => {
       const days = daysBetweenInclusive(from, to);
       avgPerDay = total / days;
     } else {
-      // All time: average per day over days represented by data (fallback)
       const dates = filteredExpenses.map(parseExpenseDate).filter(Boolean);
       if (dates.length >= 2) {
         const min = new Date(Math.min(...dates.map((d) => d.getTime())));
@@ -219,30 +207,21 @@ const ExpenseTracker = () => {
     };
   }, [filteredExpenses, filterWindow]);
 
-
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <AppLayout>
+        <Container maxWidth="lg" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+          <CircularProgress />
+        </Container>
+      </AppLayout>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* TopBar */}
-      <AppBar position="sticky" color="transparent" elevation={0} sx={{ borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
-        <Toolbar sx={{ gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-            <img src="/Ledgic.png" alt="Logo" style={{ width: 138, height: 'auto' }} />
-            {/* <Typography variant="h3" component="div" sx={{ fontWeight: 800 }}>
-              Ledgic
-            </Typography> */}
-          </Box>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-                            {/* Filter control */}
+    <AppLayout>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* Filter control row */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <ToggleButtonGroup
             size="small"
             value={filter}
@@ -253,31 +232,8 @@ const ExpenseTracker = () => {
             <ToggleButton value={FILTERS.LAST_30}>Last 30 days</ToggleButton>
             <ToggleButton value={FILTERS.ALL}>All time</ToggleButton>
           </ToggleButtonGroup>
+        </Box>
 
-
-          <Tooltip title="Account">
-            <IconButton onClick={openMenu} size="small" aria-controls={menuOpen ? 'user-menu' : undefined} aria-haspopup="true">
-              <Avatar sx={{ width: 36, height: 36 }}>{userInitial}</Avatar>
-            </IconButton>
-          </Tooltip>
-
-          <Menu
-            id="user-menu"
-            anchorEl={anchorEl}
-            open={menuOpen}
-            onClose={closeMenu}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem onClick={goAccount}>Account</MenuItem>
-            <MenuItem onClick={goBudgets}>Budgets</MenuItem>
-            <Divider />
-            <MenuItem onClick={doLogout}>Logout</MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" sx={{ py: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -327,17 +283,32 @@ const ExpenseTracker = () => {
                   {filteredExpenses.length} shown
                 </Typography>
               </Box>
-
               <Box sx={{ flex: 1, overflow: 'auto', pr: 0.5 }}>
                 <ExpenseList expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
               </Box>
             </Paper>
           </Grid>
 
-          {/* Spending Breakdown */}
-          <Grid item xs={12}>
-            <ExpenseChart expenses={filteredExpenses} />
-          </Grid>
+          {/* Spending Breakdown Chart (toggled by pref) */}
+          {dashPrefs.showExpenseChart && (
+            <Grid item xs={12}>
+              <ExpenseChart expenses={filteredExpenses} chartType={dashPrefs.chartType ?? 'pie'} />
+            </Grid>
+          )}
+
+          {/* Goals Widget (toggled by pref) */}
+          {dashPrefs.showGoalsWidget && (
+            <Grid item xs={12} md={6}>
+              <GoalsWidget />
+            </Grid>
+          )}
+
+          {/* Budget Widget (toggled by pref) */}
+          {dashPrefs.showBudgetWidget && (
+            <Grid item xs={12} md={6}>
+              <BudgetWidget />
+            </Grid>
+          )}
         </Grid>
       </Container>
 
@@ -352,9 +323,8 @@ const ExpenseTracker = () => {
           {snack.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AppLayout>
   );
 };
-
 
 export default ExpenseTracker;

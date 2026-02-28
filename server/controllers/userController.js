@@ -50,7 +50,7 @@ exports.updateMe = async (req, res) => {
       // allow reset to defaults by unsetting
         $unset.dashboardPrefs = '';
       } else {
-        for (const key of ['showExpenseChart', 'showBudgetWidget', 'showGoalsWidget']) {
+        for (const key of ['showExpenseChart', 'showBudgetWidget', 'showGoalsWidget', 'chartType']) {
           if (Object.prototype.hasOwnProperty.call(dashboardPrefs, key)) {
              $set[`dashboardPrefs.${key}`] = dashboardPrefs[key];
           }
