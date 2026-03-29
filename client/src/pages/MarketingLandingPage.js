@@ -71,7 +71,7 @@ const MarketingLandingPage = () => {
               <Button variant="contained" onClick={() => navigate('/auth')}>
                 Sign in
               </Button>
-              <Button variant="contained" onClick={() => navigate('/auth')}>
+              <Button variant="contained" onClick={() => navigate('/auth?tab=register')}>
                 Get started
               </Button>
             </Stack>
@@ -96,7 +96,7 @@ const MarketingLandingPage = () => {
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 3 }}>
-              <Button size="large" variant="contained" onClick={() => navigate('/auth')}>
+              <Button size="large" variant="contained" onClick={() => navigate('/auth?tab=register')}>
                 Create account
               </Button>
               <Button size="large" variant="outlined" onClick={() => navigate('/auth')}>

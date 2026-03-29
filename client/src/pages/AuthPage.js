@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, register } from '../utils/api';
 import Register from '../components/auth/Register.js';
 import Login from '../components/auth/Login.js';
-import { Typography, Container, Box, Alert, Tab, Tabs, Paper } from '@mui/material';
+import { Typography, Container, Box, Alert, Tab, Tabs, Paper, IconButton } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [isLogin, setIsLogin] = useState(searchParams.get('tab') !== 'register');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -59,15 +63,27 @@ const AuthPage = () => {
         px: 2,
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+      <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <IconButton
+          onClick={() => navigate('/')}
+          sx={{ position: 'absolute', left: 16, color: 'white' }}
+          aria-label="Back to home"
+        >
+          <ArrowBackIcon />
+        </IconButton>
+        <Box
+          onClick={() => navigate('/')}
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }}
+        >
           <img
-            src="/charcoal1_ledgic_symbpol.png" 
+            src="/charcoal1_ledgic_symbpol.png"
             alt="Ledgic logo"
             style={{ width: 60, height: 'auto' }}
           />
           <Typography variant='h2'>
             {'Ledgic'}
           </Typography>
+        </Box>
       </Box>
       <Box sx={{textAlign: 'center' }}>
           <Typography variant='h0' color='white'>
@@ -106,7 +122,7 @@ const AuthPage = () => {
             {isLogin ? (
               <Login onSubmit={handleAuthSubmit} isLoading={isLoading} />
             ) : (
-              <Register onSubmit={handleAuthSubmit} isLoading={isLoading} />
+              <Register onSubmit={handleAuthSubmit} isLoading={isLoading} onCancel={() => navigate('/')} />
             )}
           </Box>
         </Paper>
