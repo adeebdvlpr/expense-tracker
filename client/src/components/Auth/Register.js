@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  TextField, 
-  Button, 
-  Box, 
+import {
+  TextField,
+  Button,
+  Box,
+  Stack,
   FormControl,
   InputLabel,
   OutlinedInput,
@@ -23,7 +24,7 @@ const reasonOptions = [
   { value: 'Other', label: 'Other'}
 ];
 
-const Register = ({ onSubmit, isLoading }) => {
+const Register = ({ onSubmit, isLoading, onCancel }) => {
   const [formData, setFormData] = useState({username: '', email: '', password: '', dateOfBirth: '', reason: '' });
   const { username, email, password, dateOfBirth, reason} = formData;
   const [showPassword, setShowPassword] = React.useState(false);
@@ -132,9 +133,20 @@ const Register = ({ onSubmit, isLoading }) => {
           ))}
         </TextField>
 
-      <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={isLoading}>
-        {isLoading ? 'Processing...' : 'Register'}
-      </Button>
+      <Stack direction="row" spacing={1} sx={{ mt: 3, mb: 2 }}>
+        <Button
+          type="button"
+          variant="text"
+          sx={{ flex: 1, color: 'text.secondary', fontSize: '0.75rem' }}
+          onClick={onCancel}
+          disabled={isLoading}
+        >
+          I'd rather not be financially stable
+        </Button>
+        <Button type="submit" variant="contained" sx={{ flex: 1 }} disabled={isLoading}>
+          {isLoading ? 'Processing...' : 'Register'}
+        </Button>
+      </Stack>
     </Box>
   );
 };
