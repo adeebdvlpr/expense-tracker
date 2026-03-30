@@ -7,24 +7,25 @@ import ExpenseList from '../components/ExpenseList';
 import ExpenseChart from '../components/ExpenseChart';
 import GoalsWidget from '../components/GoalsWidget';
 import BudgetWidget from '../components/BudgetWidget';
+import BudgetDotGrid from '../components/BudgetDotGrid';
 
 import {
   Alert,
   CircularProgress,
   Container,
   Paper,
-  Grid,
   Box,
   Typography,
   Snackbar,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
 
 const FILTERS = {
   MONTH: 'month',
-  LAST_30: 'last30',
   ALL: 'all',
+  CUSTOM: 'custom',
 };
 
 function startOfMonth(d) {
@@ -44,6 +45,11 @@ function parseExpenseDate(expense) {
   const dt = new Date(raw);
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
+function parseDateInput(dateStr) {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
 
 const DEFAULT_PREFS = {
   showExpenseChart: true,
@@ -58,11 +64,12 @@ const ExpenseTracker = () => {
   const [loading, setLoading] = useState(true);
 
   const [filter, setFilter] = useState(FILTERS.MONTH);
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
 
-  // Dashboard preferences loaded from user profile
   const [dashPrefs, setDashPrefs] = useState(DEFAULT_PREFS);
+  const [monthlyIncome, setMonthlyIncome] = useState(null);
 
-  // Snackbar state
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
   const openSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
@@ -89,7 +96,6 @@ const ExpenseTracker = () => {
     }
   }, [handleLogout]);
 
-  // Load user prefs on mount (non-blocking — dashboard still works if this fails)
   useEffect(() => {
     let cancelled = false;
     import('../utils/api').then(({ getMe }) =>
@@ -98,10 +104,11 @@ const ExpenseTracker = () => {
           if (!cancelled && me?.dashboardPrefs) {
             setDashPrefs({ ...DEFAULT_PREFS, ...me.dashboardPrefs });
           }
+          if (!cancelled && me?.monthlyIncome != null) {
+            setMonthlyIncome(Number(me.monthlyIncome) || null);
+          }
         })
-        .catch(() => {
-          // silently fall back to defaults
-        })
+        .catch(() => {})
     );
     return () => { cancelled = true; };
   }, []);
@@ -134,25 +141,24 @@ const ExpenseTracker = () => {
     }
   }, []);
 
-  // Compute filter window
   const filterWindow = useMemo(() => {
     if (filter === FILTERS.ALL) return { from: null, to: null };
 
-    const to = new Date();
-    if (filter === FILTERS.LAST_30) {
-      const from = new Date();
-      from.setDate(from.getDate() - 29);
+    if (filter === FILTERS.CUSTOM) {
+      const from = parseDateInput(customFrom);
+      const to = parseDateInput(customTo);
+      if (!from || !to) return { from: null, to: null };
       return { from: startOfDay(from), to: startOfDay(to) };
     }
 
     // default: this month
+    const to = new Date();
     return { from: startOfDay(startOfMonth(to)), to: startOfDay(to) };
-  }, [filter]);
+  }, [filter, customFrom, customTo]);
 
   const filteredExpenses = useMemo(() => {
     const { from, to } = filterWindow;
     if (!from || !to) return expenses;
-
     return expenses.filter((e) => {
       const dt = parseExpenseDate(e);
       if (!dt) return false;
@@ -161,7 +167,6 @@ const ExpenseTracker = () => {
     });
   }, [expenses, filterWindow]);
 
-  // Summary metrics based on filtered expenses
   const summary = useMemo(() => {
     const total = filteredExpenses.reduce((sum, e) => {
       const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
@@ -184,6 +189,12 @@ const ExpenseTracker = () => {
       }
     }
 
+    let biggestHit = 0;
+    for (const e of filteredExpenses) {
+      const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
+      if (amt > biggestHit) biggestHit = amt;
+    }
+
     let avgPerDay = total;
     const { from, to } = filterWindow;
     if (from && to) {
@@ -199,18 +210,38 @@ const ExpenseTracker = () => {
       }
     }
 
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysToReset = lastDay - now.getDate() + 1;
+
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
     return {
-      totalFmt: fmt.format(total),
       topCategory,
       avgPerDayFmt: fmt.format(avgPerDay),
+      biggestHitFmt: fmt.format(biggestHit),
+      daysToReset,
     };
   }, [filteredExpenses, filterWindow]);
+
+  const thisMonthTotal = useMemo(() => {
+    const now = new Date();
+    const yr = now.getFullYear();
+    const mo = now.getMonth();
+    return expenses
+      .filter((e) => {
+        const dt = parseExpenseDate(e);
+        return dt && dt.getFullYear() === yr && dt.getMonth() === mo;
+      })
+      .reduce((sum, e) => {
+        const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
+        return sum + amt;
+      }, 0);
+  }, [expenses]);
 
   if (loading) {
     return (
       <AppLayout>
-        <Container maxWidth="lg" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+        <Container maxWidth="xl" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
           <CircularProgress />
         </Container>
       </AppLayout>
@@ -219,21 +250,7 @@ const ExpenseTracker = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        {/* Filter control row */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <ToggleButtonGroup
-            size="small"
-            value={filter}
-            exclusive
-            onChange={(_e, next) => next && setFilter(next)}
-          >
-            <ToggleButton value={FILTERS.MONTH}>This month</ToggleButton>
-            <ToggleButton value={FILTERS.LAST_30}>Last 30 days</ToggleButton>
-            <ToggleButton value={FILTERS.ALL}>All time</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
+      <Container maxWidth="xl" sx={{ py: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -241,78 +258,132 @@ const ExpenseTracker = () => {
         )}
 
         {/* Summary row */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">Total spent</Typography>
-              <Typography variant="h2">{summary.totalFmt}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">Top category</Typography>
-              <Typography variant="h2">{summary.topCategory}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">Avg/day</Typography>
-              <Typography variant="h2">{summary.avgPerDayFmt}</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'stretch' }}>
+          {/* 4 stat cards */}
+          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+            <Typography variant="body2" color="text.secondary">Daily Burn</Typography>
+            <Typography variant="h2">{summary.avgPerDayFmt}</Typography>
+          </Paper>
+          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+            <Typography variant="body2" color="text.secondary">Days to Reset</Typography>
+            <Typography variant="h2">{summary.daysToReset}</Typography>
+          </Paper>
+          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+            <Typography variant="body2" color="text.secondary">Biggest Drain</Typography>
+            <Typography variant="h2" noWrap>{summary.topCategory}</Typography>
+          </Paper>
+          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+            <Typography variant="body2" color="text.secondary">Biggest Single Hit</Typography>
+            <Typography variant="h2">{summary.biggestHitFmt}</Typography>
+          </Paper>
 
-        {/* Dashboard cards */}
-        <Grid container spacing={2}>
-          {/* Add Expense */}
-          <Grid item xs={12} md={5}>
-            <Paper sx={{ p: 2.5 }}>
-              <Typography variant="h3" sx={{ mb: 1 }}>
-                Add Expense
-              </Typography>
-              <ExpenseForm onAddExpense={handleAddExpense} />
-            </Paper>
-          </Grid>
-
-          {/* Recent Expenses */}
-          <Grid item xs={12} md={7}>
-            <Paper sx={{ p: 2.5, height: { md: 420 }, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
-                <Typography variant="h3">Recent Expenses</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {filteredExpenses.length} shown
+          {/* Monthly remaining — wider card with dot grid */}
+          <Paper sx={{ p: 2, flex: '2 1 220px' }}>
+            {monthlyIncome ? (
+              <BudgetDotGrid
+                spent={thisMonthTotal}
+                income={monthlyIncome}
+                monthLabel={new Date().toLocaleDateString('en-US', { month: 'long' })}
+              />
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date().toLocaleDateString('en-US', { month: 'long' })} Spending
+                  </Typography>
+                  <Typography variant="h2">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(thisMonthTotal)}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ maxWidth: 160, textAlign: 'right' }}>
+                  Set income in Account settings to track progress.
                 </Typography>
               </Box>
-              <Box sx={{ flex: 1, overflow: 'auto', pr: 0.5 }}>
+            )}
+          </Paper>
+        </Box>
+
+        {/* Combo chart: donut (this month) + bar (last 6 months) */}
+        {dashPrefs.showExpenseChart && (
+          <Box sx={{ mb: 2 }}>
+            <ExpenseChart expenses={expenses} chartType="combo" height={200} />
+          </Box>
+        )}
+
+        {/* Dashboard: list + sidebar, fluid responsive */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* Expense Feed */}
+          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
+            <Paper sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
+              {/* Header: title + filter controls right-aligned */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant="h3">Expense Feed</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <ToggleButtonGroup
+                    size="small"
+                    value={filter}
+                    exclusive
+                    onChange={(_e, next) => next && setFilter(next)}
+                  >
+                    <ToggleButton value={FILTERS.MONTH}>This month</ToggleButton>
+                    <ToggleButton value={FILTERS.ALL}>All time</ToggleButton>
+                    <ToggleButton value={FILTERS.CUSTOM}>Custom</ToggleButton>
+                  </ToggleButtonGroup>
+                  <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                    {filteredExpenses.length} shown
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Custom date range */}
+              {filter === FILTERS.CUSTOM && (
+                <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="From"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ width: 150 }}
+                  />
+                  <TextField
+                    size="small"
+                    type="date"
+                    label="To"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ width: 150 }}
+                  />
+                </Box>
+              )}
+
+              {/* List — always reserves 12-row height, scrollable beyond */}
+              <Box sx={{ overflow: 'auto', minHeight: 520, maxHeight: 520 }}>
                 <ExpenseList expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
-          {/* Spending Breakdown Chart (toggled by pref) */}
-          {dashPrefs.showExpenseChart && (
-            <Grid item xs={12}>
-              <ExpenseChart expenses={filteredExpenses} chartType={dashPrefs.chartType ?? 'pie'} />
-            </Grid>
-          )}
+          {/* Right sidebar — starts at 280px, shrinks to 155px before wrapping */}
+          <Box sx={{ flex: '0 1 280px', minWidth: 155, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
-          {/* Goals Widget (toggled by pref) */}
-          {dashPrefs.showGoalsWidget && (
-            <Grid item xs={12} md={6}>
-              <GoalsWidget />
-            </Grid>
-          )}
+            {dashPrefs.showBudgetWidget && <BudgetWidget />}
 
-          {/* Budget Widget (toggled by pref) */}
-          {dashPrefs.showBudgetWidget && (
-            <Grid item xs={12} md={6}>
-              <BudgetWidget />
-            </Grid>
-          )}
-        </Grid>
+            {dashPrefs.showGoalsWidget && <GoalsWidget />}
+
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h3" sx={{ mb: 1 }}>
+                I spent...
+              </Typography>
+              <ExpenseForm onAddExpense={handleAddExpense} />
+            </Paper>
+
+          </Box>
+        </Box>
       </Container>
 
-      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={2500}

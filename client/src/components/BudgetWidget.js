@@ -75,13 +75,13 @@ const BudgetWidget = () => {
           <Stack direction="row" spacing={2} sx={{ mb: 1.5, flexWrap: 'wrap' }}>
             <Box>
               <Typography variant="caption" color="text.secondary">Budget</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
+              <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
                 {formatMoney(totals.totalBudget, totals.currency)}
               </Typography>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">Spent</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>
+              <Typography variant="body1" sx={{ fontSize: '1.05rem' }}>
                 {formatMoney(totals.totalSpent, totals.currency)}
               </Typography>
             </Box>
@@ -89,7 +89,7 @@ const BudgetWidget = () => {
               <Typography variant="caption" color="text.secondary">Remaining</Typography>
               <Typography
                 variant="body1"
-                sx={{ fontWeight: 700, color: totals.remaining < 0 ? 'error.main' : 'text.primary' }}
+                sx={{ fontSize: '1.05rem', color: totals.remaining < 0 ? 'error.main' : 'text.primary' }}
               >
                 {formatMoney(totals.remaining, totals.currency)}
               </Typography>
