@@ -31,10 +31,10 @@ const theme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
-    h0: { fontSize: '3rem', fontWeight: 700, lineHeight: 1.5 },   
-    h1: { fontSize: '2rem', fontWeight: 700, lineHeight: 1.2 },    // ~32px
-    h2: { fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.25 }, // ~24px
-    h3: { fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.3 }, // ~20px
+    h0: { fontSize: '3.125rem', fontWeight: 400, lineHeight: 1.5 },
+    h1: { fontSize: '2.125rem', fontWeight: 400, lineHeight: 1.2 },
+    h2: { fontSize: '1.625rem', fontWeight: 400, lineHeight: 1.25 },
+    h3: { fontSize: '1.375rem', fontWeight: 400, lineHeight: 1.3 },
     body1: { fontSize: '1rem', lineHeight: 1.6 },                  // 16px
     body2: { fontSize: '0.95rem', lineHeight: 1.55 },
     button: { textTransform: 'none', fontWeight: 600 },

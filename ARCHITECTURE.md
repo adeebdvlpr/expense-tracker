@@ -366,3 +366,12 @@ These rules must be followed in every session that touches the AI feature:
 - 4c: `AuthPage.js` — Witty escape link "I'd rather not be financially stable" added below the form card, styled as muted white text.
 - Files modified: `client/src/pages/MarketingLandingPage.js`, `client/src/pages/AuthPage.js` only.
 - Deviations from plan: none.
+
+**2026-03-29 — Change 2a (Dashboard Layout Restructure):** Layout-only changes to ExpenseTracker.js.
+- `ExpenseList` (Recent Expenses) is now the dominant visual element: `Grid item xs={12} md={8}` (was `md={7}`), with `maxHeight: 560` and `overflow: 'auto'` on the scroll container (replaces the fixed `height: { md: 420 }` on the Paper).
+- Add Expense form, GoalsWidget, and BudgetWidget moved into a right sidebar: `Grid item xs={12} md={4}`, stacked in a `Box flexDirection: 'column' gap: 2`. Widgets no longer have their own `Grid item` wrappers.
+- ExpenseChart remains `Grid item xs={12}` full-width at the bottom, unchanged.
+- Summary row (3 metric cards) unchanged.
+- On mobile: list stacks first (`xs={12}`), then sidebar — natural stacking order preserved.
+- Files modified: `client/src/pages/ExpenseTracker.js` only.
+- Deviations from plan: none.

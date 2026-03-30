@@ -59,7 +59,7 @@ const GoalsWidget = () => {
             return (
               <Box key={goal._id}>
                 <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                  <Typography variant="body2" sx={{ fontSize: '1rem' }} noWrap>
                     {goal.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, ml: 1 }}>

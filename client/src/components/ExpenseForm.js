@@ -78,18 +78,20 @@ const ExpenseForm = ({ onAddExpense }) => {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <Stack spacing={2}>
+      <Stack spacing={1.2}>
         <TextField
+          size="small"
           label="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onBlur={() => setTouched((t) => ({ ...t, description: true }))}
           required
           error={showError('description') && Boolean(errors.description)}
-          helperText={(showError('description') && errors.description) || ' '}
+          helperText={showError('description') && errors.description}
         />
 
         <TextField
+          size="small"
           label="Amount"
           type="number"
           value={amount}
@@ -98,14 +100,15 @@ const ExpenseForm = ({ onAddExpense }) => {
           required
           inputProps={{ min: 0, step: '0.01' }}
           error={showError('amount') && Boolean(errors.amount)}
-          helperText={(showError('amount') && errors.amount) || ' '}
+          helperText={showError('amount') && errors.amount}
           InputProps={{
             startAdornment: <InputAdornment position="start">$</InputAdornment>,
           }}
         />
 
-        <FormControl 
-          required 
+        <FormControl
+          size="small"
+          required
           error={showError('category') && Boolean(errors.category)}
         >
           <InputLabel id="expense-category-label">Category</InputLabel>
@@ -124,11 +127,11 @@ const ExpenseForm = ({ onAddExpense }) => {
             ))}
           </Select>
           <FormHelperText>
-            {(showError('category') && errors.category) || ' '}
+            {showError('category') && errors.category}
           </FormHelperText>
         </FormControl>
 
-        <Button type="submit" variant="contained">
+        <Button size="small" type="submit" variant="contained">
           Add Expense
         </Button>
       </Stack>
