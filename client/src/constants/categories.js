@@ -1,5 +1,5 @@
-//categories used in budegets and expenses
-export const CATEGORIES = [
+//categories used in budgets and expenses
+export const DEFAULT_CATEGORIES = [
     'Housing',
     'Food',
     'Utilities',
@@ -11,4 +11,6 @@ export const CATEGORIES = [
     'Insurance',
     'Other',
   ];
-  
+
+// Backward-compat alias
+export const CATEGORIES = DEFAULT_CATEGORIES;

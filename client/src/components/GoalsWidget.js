@@ -33,7 +33,7 @@ const GoalsWidget = () => {
   }, []);
 
   return (
-    <Paper sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', background:"rgba(247, 249, 252, 0.9)" }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
         <TrackChangesIcon sx={{ color: 'primary.main', fontSize: 20 }} />
         <Typography variant="h3">Goals</Typography>

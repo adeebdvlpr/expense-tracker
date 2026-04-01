@@ -48,7 +48,7 @@ const BudgetWidget = () => {
   const progressColor = totals.pct >= 100 ? 'error' : totals.pct >= 80 ? 'warning' : 'primary';
 
   return (
-    <Paper sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ p: 2.5, height: '100%', display: 'flex', flexDirection: 'column', background:"rgba(247, 249, 252, 0.9)" }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
         <AccountBalanceWalletIcon sx={{ color: 'primary.main', fontSize: 20 }} />
         <Typography variant="h3">Budget</Typography>

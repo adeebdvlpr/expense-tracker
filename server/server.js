@@ -8,6 +8,7 @@ const expenseRoutes = require('./routes/expenses');
 const userRoutes = require('./routes/users.js');
 const budgetRoutes = require('./routes/budgets');
 const goalRoutes = require('./routes/goals');
+const incomeRoutes = require('./routes/income');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -91,6 +92,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/income', incomeRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI, {

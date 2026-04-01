@@ -13,8 +13,11 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
   try {
-    // Allow updating only these fields (for now)
-    const { dateOfBirth, reason, monthlyIncome, currency, dashboardPrefs } = req.body;
+    // Allow updating only these fields
+    const {
+      dateOfBirth, reason, monthlyIncome, currency, dashboardPrefs,
+      selectedTheme, customCategories, incomeType,
+    } = req.body;
 
     const $set = {};
     const $unset = {};
@@ -30,20 +33,18 @@ exports.updateMe = async (req, res) => {
       else $set.reason = reason;
     }
 
-    
-    
     // monthlyIncome: allow clearing
     if ('monthlyIncome' in req.body) {
         if (monthlyIncome === null || monthlyIncome === '') $unset.monthlyIncome = '';
         else $set.monthlyIncome = monthlyIncome;
     }
-    
+
      // currency: do not allow clearing; normalize to USD if empty
     if ('currency' in req.body) {
       if (!currency) $set.currency = 'USD';
       else $set.currency = currency;
     }
-    
+
     // dashboardPrefs: merge keys
     if ('dashboardPrefs' in req.body) {
       if (!dashboardPrefs) {
@@ -57,7 +58,21 @@ exports.updateMe = async (req, res) => {
         }
       }
     }
-     
+
+    // selectedTheme: set if present
+    if ('selectedTheme' in req.body) {
+      $set.selectedTheme = selectedTheme || 'misty-highlands';
+    }
+
+    // customCategories: replace array if present
+    if ('customCategories' in req.body) {
+      $set.customCategories = Array.isArray(customCategories) ? customCategories : [];
+    }
+
+    // incomeType: set if present
+    if ('incomeType' in req.body) {
+      $set.incomeType = incomeType || 'monthly';
+    }
 
     const update = {};
     if (Object.keys($set).length) update.$set = $set;

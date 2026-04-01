@@ -124,4 +124,20 @@ export const getBudgets = async ({ period, includeSpent = true } = {}) => {
     };
 
 
-export default api; 
+/// --------- income APIs (v1)
+export const getIncome = async () => {
+  const response = await api.get('/api/income');
+  return response.data;
+};
+
+export const addIncome = async (payload) => {
+  const response = await api.post('/api/income', payload);
+  return response.data;
+};
+
+export const deleteIncome = async (id) => {
+  const response = await api.delete(`/api/income/${id}`);
+  return response.data;
+};
+
+export default api;

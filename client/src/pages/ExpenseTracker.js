@@ -1,8 +1,12 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
-import { getExpenses, addExpense, deleteExpense } from '../utils/api';
+import React, { useCallback, useState, useEffect, useMemo, useContext } from 'react';
+import { getExpenses, addExpense, deleteExpense, getIncome, addIncome, deleteIncome } from '../utils/api';
+import { useTheme } from '@mui/material/styles';
+import { ThemeContext } from '../App';
+import { DEFAULT_CATEGORIES } from '../constants/categories';
 
 import AppLayout from '../components/AppLayout';
 import ExpenseForm from '../components/ExpenseForm';
+import IncomeForm from '../components/IncomeForm';
 import ExpenseList from '../components/ExpenseList';
 import ExpenseChart from '../components/ExpenseChart';
 import GoalsWidget from '../components/GoalsWidget';
@@ -11,6 +15,7 @@ import BudgetDotGrid from '../components/BudgetDotGrid';
 
 import {
   Alert,
+  Button,
   CircularProgress,
   Container,
   Paper,
@@ -59,6 +64,9 @@ const DEFAULT_PREFS = {
 };
 
 const ExpenseTracker = () => {
+  const theme = useTheme();
+  const { setSelectedTheme } = useContext(ThemeContext);
+
   const [expenses, setExpenses] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +77,13 @@ const ExpenseTracker = () => {
 
   const [dashPrefs, setDashPrefs] = useState(DEFAULT_PREFS);
   const [monthlyIncome, setMonthlyIncome] = useState(null);
+  const [incomeType, setIncomeType] = useState('monthly');
+  const [customCategories, setCustomCategories] = useState([]);
+
+  const [incomeTransactions, setIncomeTransactions] = useState([]);
+
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [incomeDialogOpen, setIncomeDialogOpen] = useState(false);
 
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
   const openSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
@@ -98,7 +113,7 @@ const ExpenseTracker = () => {
 
   useEffect(() => {
     let cancelled = false;
-    import('../utils/api').then(({ getMe }) =>
+    import('../utils/api').then(({ getMe, getIncome: fetchIncome }) => {
       getMe()
         .then((me) => {
           if (!cancelled && me?.dashboardPrefs) {
@@ -107,15 +122,54 @@ const ExpenseTracker = () => {
           if (!cancelled && me?.monthlyIncome != null) {
             setMonthlyIncome(Number(me.monthlyIncome) || null);
           }
+          if (!cancelled && me?.incomeType) {
+            setIncomeType(me.incomeType);
+          }
+          if (!cancelled && Array.isArray(me?.customCategories)) {
+            setCustomCategories(me.customCategories);
+          }
+          if (!cancelled && me?.selectedTheme) {
+            setSelectedTheme(me.selectedTheme);
+          }
         })
-        .catch(() => {})
-    );
+        .catch(() => {});
+
+      fetchIncome()
+        .then((data) => {
+          if (!cancelled) setIncomeTransactions(Array.isArray(data) ? data : []);
+        })
+        .catch(() => {});
+    });
     return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
+
+  // Effective monthly income: rolling = sum this month's income transactions; else compute from monthlyIncome + type
+  const effectiveMonthlyIncome = useMemo(() => {
+    if (incomeType === 'rolling') {
+      const now = new Date();
+      const yr = now.getFullYear();
+      const mo = now.getMonth();
+      return incomeTransactions
+        .filter((t) => {
+          const dt = t.date ? new Date(t.date) : null;
+          return dt && dt.getFullYear() === yr && dt.getMonth() === mo;
+        })
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || null;
+    }
+    if (!monthlyIncome) return null;
+    if (incomeType === 'annual') return monthlyIncome / 12;
+    if (incomeType === 'weekly') return monthlyIncome * 52 / 12;
+    return monthlyIncome; // monthly
+  }, [incomeType, monthlyIncome, incomeTransactions]);
+
+  const allCategories = useMemo(
+    () => [...DEFAULT_CATEGORIES, ...customCategories],
+    [customCategories],
+  );
 
   const handleAddExpense = useCallback(async (expense) => {
     try {
@@ -141,6 +195,26 @@ const ExpenseTracker = () => {
     }
   }, []);
 
+  const handleAddIncome = useCallback(async (incomeData) => {
+    try {
+      const newEntry = await addIncome(incomeData);
+      setIncomeTransactions((prev) => [newEntry, ...prev]);
+      openSnack('Income added.', 'success');
+    } catch {
+      openSnack('Failed to add income.', 'error');
+    }
+  }, []);
+
+  const handleDeleteIncome = useCallback(async (id) => {
+    try {
+      await deleteIncome(id);
+      setIncomeTransactions((prev) => prev.filter((t) => t._id !== id));
+      openSnack('Income deleted.', 'success');
+    } catch {
+      openSnack('Failed to delete income.', 'error');
+    }
+  }, []);
+
   const filterWindow = useMemo(() => {
     if (filter === FILTERS.ALL) return { from: null, to: null };
 
@@ -158,14 +232,47 @@ const ExpenseTracker = () => {
 
   const filteredExpenses = useMemo(() => {
     const { from, to } = filterWindow;
-    if (!from || !to) return expenses;
-    return expenses.filter((e) => {
+    const filtered = (!from || !to) ? expenses : expenses.filter((e) => {
       const dt = parseExpenseDate(e);
       if (!dt) return false;
       const d = startOfDay(dt);
       return d >= from && d <= to;
     });
+    return [...filtered].sort((a, b) => {
+      const da = parseExpenseDate(a);
+      const db = parseExpenseDate(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.getTime() - da.getTime();
+    });
   }, [expenses, filterWindow]);
+
+  const filteredIncome = useMemo(() => {
+    const { from, to } = filterWindow;
+    if (!from || !to) return incomeTransactions;
+    return incomeTransactions.filter((t) => {
+      const dt = parseExpenseDate(t);
+      if (!dt) return false;
+      const d = startOfDay(dt);
+      return d >= from && d <= to;
+    });
+  }, [incomeTransactions, filterWindow]);
+
+  const allTransactions = useMemo(() => {
+    const tagged = [
+      ...filteredExpenses.map((e) => ({ ...e, _type: 'expense' })),
+      ...filteredIncome.map((t) => ({ ...t, _type: 'income' })),
+    ];
+    return tagged.sort((a, b) => {
+      const da = parseExpenseDate(a);
+      const db = parseExpenseDate(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.getTime() - da.getTime();
+    });
+  }, [filteredExpenses, filteredIncome]);
 
   const summary = useMemo(() => {
     const total = filteredExpenses.reduce((sum, e) => {
@@ -250,6 +357,7 @@ const ExpenseTracker = () => {
 
   return (
     <AppLayout>
+      <Box sx={{ flex: 1, bgcolor: theme.palette.dashboardBg }}>
       <Container maxWidth="xl" sx={{ py: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -260,29 +368,40 @@ const ExpenseTracker = () => {
         {/* Summary row */}
         <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'stretch' }}>
           {/* 4 stat cards */}
-          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+          <Paper sx={{ p: 1.5, flex: '0.75 1 110px', background:"rgba(247, 249, 252, 0.9)"}}>
             <Typography variant="body2" color="text.secondary">Daily Burn</Typography>
-            <Typography variant="h2">{summary.avgPerDayFmt}</Typography>
+            <Typography variant="h1">{summary.avgPerDayFmt}</Typography>
           </Paper>
-          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+          <Paper sx={{ p: 1.5, flex: '0.75 1 110px', background:"rgba(247, 249, 252, 0.9)" }}>
             <Typography variant="body2" color="text.secondary">Days to Reset</Typography>
-            <Typography variant="h2">{summary.daysToReset}</Typography>
+            <Typography variant="h1">{summary.daysToReset}</Typography>
           </Paper>
-          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+          <Paper sx={{ p: 1.5, flex: '0.75 1 110px', background:"rgba(247, 249, 252, 0.9)" }}>
             <Typography variant="body2" color="text.secondary">Biggest Drain</Typography>
-            <Typography variant="h2" noWrap>{summary.topCategory}</Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                lineHeight: 1.2,
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {summary.topCategory}
+            </Typography>
           </Paper>
-          <Paper sx={{ p: 2, flex: '1 1 110px' }}>
+          <Paper sx={{ p: 1.5, flex: '0.75 1 110px', background:"rgba(247, 249, 252, 0.9)" }}>
             <Typography variant="body2" color="text.secondary">Biggest Single Hit</Typography>
-            <Typography variant="h2">{summary.biggestHitFmt}</Typography>
+            <Typography variant="h1">{summary.biggestHitFmt}</Typography>
           </Paper>
 
           {/* Monthly remaining — wider card with dot grid */}
-          <Paper sx={{ p: 2, flex: '2 1 220px' }}>
-            {monthlyIncome ? (
+          <Paper sx={{ p: 1.5, flex: '4 1 220px', background:"rgba(247, 249, 252, 0.9)" }}>
+            {effectiveMonthlyIncome ? (
               <BudgetDotGrid
                 spent={thisMonthTotal}
-                income={monthlyIncome}
+                income={effectiveMonthlyIncome}
                 monthLabel={new Date().toLocaleDateString('en-US', { month: 'long' })}
               />
             ) : (
@@ -291,7 +410,7 @@ const ExpenseTracker = () => {
                   <Typography variant="body2" color="text.secondary">
                     {new Date().toLocaleDateString('en-US', { month: 'long' })} Spending
                   </Typography>
-                  <Typography variant="h2">
+                  <Typography variant="h3">
                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(thisMonthTotal)}
                   </Typography>
                 </Box>
@@ -312,12 +431,12 @@ const ExpenseTracker = () => {
 
         {/* Dashboard: list + sidebar, fluid responsive */}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          {/* Expense Feed */}
-          <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-            <Paper sx={{ p: 2.5, display: 'flex', flexDirection: 'column' }}>
+          {/* Money Feed */}
+          <Box sx={{ flex: '1 1 300px', minWidth: 0 , }}>
+            <Paper sx={{ p: 2.5, display: 'flex', flexDirection: 'column', background:"rgba(247, 249, 252, 0.9)" }}>
               {/* Header: title + filter controls right-aligned */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-                <Typography variant="h3">Expense Feed</Typography>
+                <Typography variant="h3">Money Feed</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <ToggleButtonGroup
                     size="small"
@@ -330,7 +449,7 @@ const ExpenseTracker = () => {
                     <ToggleButton value={FILTERS.CUSTOM}>Custom</ToggleButton>
                   </ToggleButtonGroup>
                   <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                    {filteredExpenses.length} shown
+                    {allTransactions.length} shown
                   </Typography>
                 </Box>
               </Box>
@@ -361,28 +480,57 @@ const ExpenseTracker = () => {
 
               {/* List — always reserves 12-row height, scrollable beyond */}
               <Box sx={{ overflow: 'auto', minHeight: 520, maxHeight: 520 }}>
-                <ExpenseList expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
+                <ExpenseList
+                  transactions={allTransactions}
+                  onDeleteExpense={handleDeleteExpense}
+                  onDeleteIncome={handleDeleteIncome}
+                />
               </Box>
             </Paper>
           </Box>
 
           {/* Right sidebar — starts at 280px, shrinks to 155px before wrapping */}
-          <Box sx={{ flex: '0 1 280px', minWidth: 155, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ flex: '0 1 280px', minWidth: 155, display: 'flex', flexDirection: 'column', gap: 1 ,  }}>
 
             {dashPrefs.showBudgetWidget && <BudgetWidget />}
 
             {dashPrefs.showGoalsWidget && <GoalsWidget />}
 
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h3" sx={{ mb: 1 }}>
-                I spent...
-              </Typography>
-              <ExpenseForm onAddExpense={handleAddExpense} />
-            </Paper>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => setExpenseDialogOpen(true)}
+              sx={{ py: 1.5 }}
+            >
+              + Add Expense
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => setIncomeDialogOpen(true)}
+              sx={{ py: 1.5 }}
+            >
+              + Add Income
+            </Button>
 
           </Box>
         </Box>
       </Container>
+      </Box>
+
+      <ExpenseForm
+        open={expenseDialogOpen}
+        onClose={() => setExpenseDialogOpen(false)}
+        onAddExpense={handleAddExpense}
+        categories={allCategories}
+      />
+
+      <IncomeForm
+        open={incomeDialogOpen}
+        onClose={() => setIncomeDialogOpen(false)}
+        onAddIncome={handleAddIncome}
+      />
 
       <Snackbar
         open={snack.open}

@@ -52,6 +52,19 @@ const UserSchema = new mongoose.Schema({
     chartType: { type: String, default: 'pie', enum: ['pie', 'bar', 'line'] },
   },
 
+  // Theme selection
+  selectedTheme: { type: String, default: 'misty-highlands' },
+
+  // Custom expense categories
+  customCategories: [{ type: String, trim: true }],
+
+  // Income tracking type
+  incomeType: {
+    type: String,
+    default: 'monthly',
+    enum: ['monthly', 'annual', 'weekly', 'rolling'],
+  },
+
   // for third-party auth later
   // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
   // googleId: { type: String }
