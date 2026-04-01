@@ -7,7 +7,7 @@ const AppLayout = ({ children }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppHeader />
-      <Box component="main" sx={{ flex: 1 }}>
+      <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {children}
       </Box>
       <AppFooter />

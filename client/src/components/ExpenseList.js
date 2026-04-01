@@ -14,7 +14,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
-const ExpenseList = ({ expenses, onDeleteExpense }) => {
+const INCOME_COLOR = '#66bb6a';
+const EXPENSE_COLOR = '#ef5350';
+
+const ExpenseList = ({ transactions, onDeleteExpense, onDeleteIncome }) => {
   const [expandedId, setExpandedId] = useState(null);
 
   const currency = useMemo(
@@ -22,14 +25,14 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
     []
   );
 
-  if (!expenses || expenses.length === 0) {
+  if (!transactions || transactions.length === 0) {
     return (
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="h3" sx={{ mb: 0.5 }}>
-          No expenses yet
+          No transactions yet
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Add your first expense to see it show up here.
+          Add an expense or income entry to see it here.
         </Typography>
       </Paper>
     );
@@ -37,23 +40,34 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
 
   return (
     <Stack spacing={0.75}>
-      {expenses.map((expense) => {
+      {transactions.map((item) => {
+        const isIncome = item._type === 'income';
+        const typeColor = isIncome ? INCOME_COLOR : EXPENSE_COLOR;
+
         const amount =
-          typeof expense.amount === 'number' && !Number.isNaN(expense.amount)
-            ? currency.format(expense.amount)
+          typeof item.amount === 'number' && !Number.isNaN(item.amount)
+            ? currency.format(item.amount)
             : currency.format(0);
 
-        const isExpanded = expandedId === expense._id;
-        const toggle = () => setExpandedId(isExpanded ? null : expense._id);
+        const isExpanded = expandedId === item._id;
+        const toggle = () => setExpandedId(isExpanded ? null : item._id);
 
-        const rawDate = expense.date || expense.createdAt;
+        const rawDate = item.date || item.createdAt;
         const formattedDate = rawDate
           ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
           : null;
 
+        const handleDelete = () => {
+          if (isIncome) {
+            onDeleteIncome?.(item._id);
+          } else {
+            onDeleteExpense?.(item._id);
+          }
+        };
+
         return (
           <Paper
-            key={expense._id}
+            key={item._id}
             sx={{
               px: 2,
               pt: 1,
@@ -65,19 +79,30 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
           >
             {/* Compact fixed-width row */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              {/* Type indicator dot */}
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: typeColor,
+                  flexShrink: 0,
+                }}
+              />
+
               {/* Description — fills all remaining space, truncates with ellipsis */}
               <Typography
                 variant="body1"
-                sx={{ fontSize: '1.05rem', flex: 1, minWidth: 0 }}
+                sx={{ fontWeight: 600, flex: 1, minWidth: 0 }}
                 noWrap
               >
-                {expense.description?.trim() || 'No description'}
+                {item.description?.trim() || 'No description'}
               </Typography>
 
-              {/* Amount — fixed 80px */}
+              {/* Amount — fixed 80px, colored by type */}
               <Box sx={{ width: 80, flexShrink: 0, textAlign: 'right' }}>
-                <Typography variant="body2" color="text.secondary">
-                  {amount}
+                <Typography variant="body2" sx={{ color: typeColor, fontWeight: 500 }}>
+                  {isIncome ? '+' : ''}{amount}
                 </Typography>
               </Box>
 
@@ -87,7 +112,7 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
               <Box sx={{ width: 230, minWidth: 150, flexShrink: 1 }}>
                 <Chip
                   size="small"
-                  label={expense.category || 'Uncategorized'}
+                  label={item.category || 'Uncategorized'}
                   variant="outlined"
                   sx={{
                     maxWidth: '100%',
@@ -106,11 +131,11 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
               </IconButton>
 
               {/* Delete */}
-              <Tooltip title="Delete expense">
+              <Tooltip title={isIncome ? 'Delete income' : 'Delete expense'}>
                 <IconButton
-                  aria-label="delete"
+                  aria-label={isIncome ? 'delete income' : 'delete expense'}
                   size="small"
-                  onClick={() => onDeleteExpense(expense._id)}
+                  onClick={handleDelete}
                   sx={{ flexShrink: 0 }}
                 >
                   <DeleteIcon fontSize="small" />
@@ -127,21 +152,24 @@ const ExpenseList = ({ expenses, onDeleteExpense }) => {
                   borderTop: (t) => `1px solid ${t.palette.divider}`,
                 }}
               >
-                <Typography variant="body2" sx={{ fontSize: '1rem', mb: 0.5 }}>
-                  {expense.description?.trim() || 'No description'}
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  {item.description?.trim() || 'No description'}
                 </Typography>
                 <Stack direction="row" spacing={3}>
                   <Typography variant="caption" color="text.secondary">
-                    <strong>Amount:</strong> {amount}
+                    <strong>Amount:</strong> {isIncome ? '+' : ''}{amount}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    <strong>Category:</strong> {expense.category || 'Uncategorized'}
+                    <strong>Category:</strong> {item.category || 'Uncategorized'}
                   </Typography>
                   {formattedDate && (
                     <Typography variant="caption" color="text.secondary">
                       <strong>Date:</strong> {formattedDate}
                     </Typography>
                   )}
+                  <Typography variant="caption" sx={{ color: typeColor, fontWeight: 600 }}>
+                    {isIncome ? 'Income' : 'Expense'}
+                  </Typography>
                 </Stack>
               </Box>
             </Collapse>

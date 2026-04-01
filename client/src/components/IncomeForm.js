@@ -18,10 +18,9 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { DEFAULT_CATEGORIES } from '../constants/categories';
+const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Investment Return', 'Gift', 'Inheritance', 'Bonus', 'Other'];
 
-const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
-  const categoryList = Array.isArray(categories) && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+const IncomeForm = ({ open = false, onClose, onAddIncome }) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -61,7 +60,7 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
     setSubmittedOnce(true);
     if (hasErrors) return;
 
-    onAddExpense({
+    onAddIncome({
       description: description.trim(),
       amount: Number(amountNumber.toFixed(2)),
       category,
@@ -92,7 +91,7 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
           pb: 1,
         }}
       >
-        <Typography variant="h3">Add Expense</Typography>
+        <Typography variant="h3">Add Income</Typography>
         <IconButton onClick={handleClose} size="small" edge="end" aria-label="close">
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -126,16 +125,16 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
               error={showError('category') && Boolean(errors.category)}
               sx={{ flex: 1 }}
             >
-              <InputLabel id="expense-category-label">Category</InputLabel>
+              <InputLabel id="income-category-label">Category</InputLabel>
               <Select
-                labelId="expense-category-label"
-                id="expense-category"
+                labelId="income-category-label"
+                id="income-category"
                 label="Category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 onBlur={() => setTouched((t) => ({ ...t, category: true }))}
               >
-                {categoryList.map((c) => (
+                {INCOME_CATEGORIES.map((c) => (
                   <MenuItem key={c} value={c}>{c}</MenuItem>
                 ))}
               </Select>
@@ -165,7 +164,7 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
             Cancel
           </Button>
           <Button type="submit" variant="contained" color="primary">
-            Add Expense
+            Add Income
           </Button>
         </DialogActions>
       </form>
@@ -173,4 +172,4 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
   );
 };
 
-export default ExpenseForm;
+export default IncomeForm;

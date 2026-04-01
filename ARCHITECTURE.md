@@ -170,7 +170,13 @@ expense-tracker/
 - `username`, `email`, `passwordHash`
 - `dateOfBirth`, `reason` (enum), `monthlyIncome`, `currency`
 - `dashboardPrefs`: `{ showExpenseChart, showBudgetWidget, showGoalsWidget, chartType }`
+- `selectedTheme`: String (default `'misty-highlands'`) — 6 theme options
+- `customCategories`: [String] — user-defined expense categories appended to defaults
+- `incomeType`: enum `['monthly','annual','weekly','rolling']` (default `'monthly'`)
 - **Pending additions:** `location: { city, state, country, postalCode }`, `onboardingCompleted: Boolean`
+
+**Income** *(new — 2b session)*
+- `userId` (ref User), `amount`, `description`, `category` (enum: Salary/Freelance/Investment Return/Gift/Inheritance/Bonus/Other), `date`
 
 **Expense**
 - `user`, `description`, `amount`, `category`, `date`
@@ -222,6 +228,7 @@ expense-tracker/
 - `GET /api/users/me`, `PATCH /api/users/me`
 - `GET /api/budgets?period=YYYY-MM`, `POST /api/budgets`, `DELETE /api/budgets/:id`
 - `GET /api/goals?status=`, `POST /api/goals`, `PATCH /api/goals/:id`, `DELETE /api/goals/:id`
+- `GET /api/income`, `POST /api/income`, `DELETE /api/income/:id` *(new — 2b session)*
 
 ### Planned New Endpoints
 
@@ -271,6 +278,16 @@ expense-tracker/
 - Token stored in `sessionStorage` key: `'token'`
 - All protected API calls use `x-auth-token` header (set automatically by axios interceptor)
 - 401 response auto-redirects to `/auth` and clears token (handled in `api.js` interceptor)
+
+---
+
+## Known Issues to Address (Change 2b — in progress)
+
+1. **Income feed not visible in dashboard** — Adding income works server-side but the "Expense Feed" does not display income transactions. The feed needs to be renamed (something like "Transactions" or "Money Feed") and rewired to show both expenses (red/outgoing) and income entries (green/incoming), plus any fixed salary attribution.
+
+2. **Theme change does not update dashboard background color** — `ExpenseTracker.js` hardcodes `bgcolor: '#93A3C4'` and `ExpenseChart.js` hardcodes `#1e2d45` for the combo chart background. These must derive from the active theme. Each theme should define its own `dashboardBg` and `chartBg` color.
+
+3. **Chart colors (donut + bar) do not adapt to theme** — `DONUT_PALETTE` and `DONUT_PALETTE_ON_PRIMARY` are hardcoded Misty Highlands colors. Each theme needs its own palette set; the combo chart background and bar chart "current month" accent color must derive from the active theme's primary/success/info values.
 
 ---
 
@@ -367,6 +384,36 @@ These rules must be followed in every session that touches the AI feature:
 - Files modified: `client/src/pages/MarketingLandingPage.js`, `client/src/pages/AuthPage.js` only.
 - Deviations from plan: none.
 
+**2026-03-31 — Change 2b continued (Dashboard Visual Polish + Feature Additions):** Extended 2b beyond pure visual work. New data model (Income), new API route, new UI features added. This session is NOT yet complete — 3 known issues remain (see "Known Issues to Address" section).
+
+Changes made this session:
+- `client/src/theme.js` — refactored to `createAppTheme(name)` factory. Added 6 named themes: Misty Highlands, Ember Slate, Midnight Plum, Nordic Frost, Golden Hour, Obsidian Rose. Exports `THEMES` array, `DEFAULT_THEME`, `createAppTheme` (named), and default export for backward compat.
+- `client/src/App.js` — added `ThemeContext` (exported). Theme state initialized from `localStorage('appTheme')`. `setSelectedTheme` persists to localStorage, triggers live re-render via `useMemo`.
+- `client/src/pages/AccountPage.js` — added 3 new sections: Theme Picker (6 swatch cards, live preview), Expense Categories (default chips + deletable custom chips + add-new field), Income (type toggle: Monthly/Annual/Weekly/Rolling Income 🌊 + amount field with monthly-equivalent preview).
+- `client/src/constants/categories.js` — added `DEFAULT_CATEGORIES` export; `CATEGORIES` kept as alias.
+- `client/src/components/ExpenseForm.js` — now accepts `categories` prop (falls back to `DEFAULT_CATEGORIES`).
+- `client/src/components/IncomeForm.js` — NEW. MUI Dialog for adding income entries (same pattern as ExpenseForm; income-specific categories).
+- `client/src/components/BudgetDotGrid.js` — full rewrite: replaced CSS circle-dot grid with SVG pointy-top hexagon grid (20×5, 100 hexes). Fill order: bottom-left corner upward at a ~55° diagonal (TILT=1.6). Filled hexes use teal gradient; inactive hexes use muted blue-gray. MUI Tooltip on hover shows `"X% of [Month] budget spent"` styled like x-charts dark card.
+- `client/src/components/ExpenseChart.js` — donut tooltip disabled via `slots={{ tooltip: () => null }}` (combo + standalone). Combo legend moved to LEFT of donut (vertical column). Legend dots 10px, text 0.92rem. "Savings & Investments" wraps naturally via `maxWidth: 78`. Donut section flex `44%`. Added `ComboBarTooltip` module-level component for bar hover: dark card showing month + amount, ↑/↓ vs previous month, ↑/↓ vs next month (non-current bars only).
+- `client/src/pages/ExpenseTracker.js` — loads `customCategories`, `incomeType`, income transactions on mount. Computes `effectiveMonthlyIncome` (rolling = sum this month's income entries). Passes `allCategories` to ExpenseForm. "+ Add Income" button + IncomeForm dialog added to sidebar. Expense feed sorted most-recent-first. Dashboard background `Box bgcolor: '#93A3C4'`.
+- `client/src/components/AppLayout.js` — `<Box component="main">` gains `display: flex, flexDirection: column` so dashboard background fills full height.
+- `server/models/User.js` — added `selectedTheme`, `customCategories`, `incomeType` fields.
+- `server/models/Income.js` — NEW model (userId, amount, description, category enum, date).
+- `server/controllers/userController.js` — handles `selectedTheme`, `customCategories`, `incomeType` in `updateMe`.
+- `server/controllers/incomeController.js` — NEW (getIncome, addIncome, deleteIncome with ownership check).
+- `server/routes/income.js` — NEW (GET / POST / DELETE /:id, all behind auth + express-validator).
+- `server/server.js` — income route registered at `/api/income`.
+- `client/src/utils/api.js` — added `getIncome`, `addIncome`, `deleteIncome`.
+
+Files NOT changed this session: `AppHeader.js`, `AppFooter.js`, `GoalsWidget.js`, `BudgetWidget.js`, `ExpenseList.js`, `GoalsPage.js`, `BudgetsPage.js`, `AuthPage.js`, `MarketingLandingPage.js`, all server models except User/Income, all other server routes/controllers.
+
+**2026-03-30 — Change 2b (Dashboard Visual Polish):** Visual-only changes. No layout, no data model changes.
+- 5b: `ExpenseChart.js` — combo BarChart: custom `CustomBar` slot (top-only rounded corners via SVG path, gradient opacity where higher spending = more opaque, min 0.18 / max 1.0). Horizontal-only grid lines at 0.5px / 9% opacity. Axis lines and ticks removed (`disableLine`, `disableTicks`). Y-axis max padded 22% above tallest bar. Value labels via `barLabel` prop, hidden on mobile. All bar modes (combo, standalone) updated.
+- 5c: `ExpenseChart.js` — combo PieChart (donut): replaced `generateHslPalette` + `basePalette` with fixed 5-color cohesive `DONUT_PALETTE` (`#5a6e9a`, `#74aa7a`, `#439a86`, `#8fa3c7`, `#a8c5a0`). Categories capped at 5 segments (smallest merged into "Other") via `capCategories()`. Center content overlay (absolute Box over PieChart) shows total / "This Month" by default, updates to hovered segment value + label via `onHighlightChange`. Applied to standalone pie mode too.
+- 5d: `ExpenseForm.js` — redesigned as MUI Dialog (`maxWidth="sm"`, `borderRadius: 14px`). Layout: Row 1 — Amount + Category side by side; Row 2 — Description full width. Header: `DialogTitle` + `CloseIcon` button. Footer: Cancel (text) + Add Expense (contained). Data shape, validation logic, and submission handler unchanged. `ExpenseTracker.js` updated: inline Paper/form replaced with a contained "Add Expense" button; `expenseDialogOpen` state drives the Dialog; `ExpenseForm` rendered as portal at component root.
+- Files modified: `client/src/components/ExpenseChart.js`, `client/src/components/ExpenseForm.js`, `client/src/pages/ExpenseTracker.js`.
+- Deviations from plan: none.
+
 **2026-03-29 — Change 2a (Dashboard Layout Restructure):** Layout-only changes to ExpenseTracker.js.
 - `ExpenseList` (Recent Expenses) is now the dominant visual element: `Grid item xs={12} md={8}` (was `md={7}`), with `maxHeight: 560` and `overflow: 'auto'` on the scroll container (replaces the fixed `height: { md: 420 }` on the Paper).
 - Add Expense form, GoalsWidget, and BudgetWidget moved into a right sidebar: `Grid item xs={12} md={4}`, stacked in a `Box flexDirection: 'column' gap: 2`. Widgets no longer have their own `Grid item` wrappers.
@@ -375,3 +422,17 @@ These rules must be followed in every session that touches the AI feature:
 - On mobile: list stacks first (`xs={12}`), then sidebar — natural stacking order preserved.
 - Files modified: `client/src/pages/ExpenseTracker.js` only.
 - Deviations from plan: none.
+
+**2026-04-01 — Change 2b complete (4 known issues resolved):**
+
+1. **Income feed merged into Money Feed** — `ExpenseList.js` rewritten to accept `transactions` prop (unified array with `_type: 'expense' | 'income'`). Each row has a colored indicator dot (red = expense, green = income). Income amounts display with `+` prefix in green. Delete routes to `onDeleteIncome` or `onDeleteExpense` based on type. `ExpenseTracker.js`: added `filteredIncome` + `allTransactions` memos, `handleDeleteIncome` callback, `deleteIncome` import. Feed renamed "Money Feed". Shown count reflects merged total.
+
+2. **Dashboard background theme-aware** — `theme.js`: each theme in `PALETTES` now has `dashboardBg` and `chartBg` color values. `ExpenseTracker.js`: reads `theme.palette.dashboardBg` via `useTheme()`. Hardcoded `'#93A3C4 '` (plus trailing space bug) removed.
+
+3. **Chart palettes theme-aware** — `theme.js`: each theme defines `donutPalette` and `donutPaletteOnPrimary` arrays. `ExpenseChart.js`: module-level `DONUT_PALETTE` / `DONUT_PALETTE_ON_PRIMARY` constants removed. `categoryData` and `currentMonthCategoryData` memos use `theme.palette.donutPalette`. Combo donut remap uses `theme.palette.donutPaletteOnPrimary`. Combo bar `currentBarColor` → `theme.palette.success.main`, `pastBarColor` → `theme.palette.info.main`. Combo bar series default `color` → `theme.palette.info.main`. `ComboBarTooltip` Paper uses `theme.palette.chartBg` via `useTheme()` inside the module-level component.
+
+4. **Theme synced from server on login** — `ExpenseTracker.js` imports `ThemeContext` from `App.js`, destructures `setSelectedTheme`, and calls it after `getMe()` resolves with `me.selectedTheme`. This writes to `localStorage` and triggers a live theme re-render without any new API call.
+
+Files modified: `client/src/theme.js`, `client/src/components/ExpenseList.js`, `client/src/components/ExpenseChart.js`, `client/src/pages/ExpenseTracker.js`.
+Files NOT modified: `App.js`, `AppLayout.js`, `AppHeader.js`, `AppFooter.js`, `IncomeForm.js`, `BudgetWidget.js`, `GoalsWidget.js`, all server files, all test files.
+Deviations from plan: none.
