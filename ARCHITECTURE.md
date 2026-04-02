@@ -122,9 +122,9 @@ expense-tracker/
         │   ├── BudgetWidget.js
         │   ├── GoalForm.js
         │   ├── GoalsWidget.js
-        │   ├── SummaryMetricCard.js  ← [Change 2]
-        │   ├── ExpandableWidget.js   ← [Change 2]
-        │   ├── GoalProgressChart.js  ← [Change 3]
+        │   ├── SummaryMetricCard.js
+        │   ├── ExpandableWidget.js
+        │   ├── GoalProgressChart.js
         │   ├── AssetForm.js          ← [Change 5]
         │   ├── AssetCard.js          ← [Change 5]
         │   ├── PredictionCard.js     ← [Change 5]
@@ -281,16 +281,6 @@ expense-tracker/
 
 ---
 
-## Known Issues to Address (Change 2b — in progress)
-
-1. **Income feed not visible in dashboard** — Adding income works server-side but the "Expense Feed" does not display income transactions. The feed needs to be renamed (something like "Transactions" or "Money Feed") and rewired to show both expenses (red/outgoing) and income entries (green/incoming), plus any fixed salary attribution.
-
-2. **Theme change does not update dashboard background color** — `ExpenseTracker.js` hardcodes `bgcolor: '#93A3C4'` and `ExpenseChart.js` hardcodes `#1e2d45` for the combo chart background. These must derive from the active theme. Each theme should define its own `dashboardBg` and `chartBg` color.
-
-3. **Chart colors (donut + bar) do not adapt to theme** — `DONUT_PALETTE` and `DONUT_PALETTE_ON_PRIMARY` are hardcoded Misty Highlands colors. Each theme needs its own palette set; the combo chart background and bar chart "current month" accent color must derive from the active theme's primary/success/info values.
-
----
-
 ## Known Fixes Applied (do not revert)
 - `User.js`: `monthlyIncome` (was `monethlyIncome`)
 - `User.js`: removed erroneous `@sinclair/typebox` import
@@ -435,4 +425,22 @@ Files NOT changed this session: `AppHeader.js`, `AppFooter.js`, `GoalsWidget.js`
 
 Files modified: `client/src/theme.js`, `client/src/components/ExpenseList.js`, `client/src/components/ExpenseChart.js`, `client/src/pages/ExpenseTracker.js`.
 Files NOT modified: `App.js`, `AppLayout.js`, `AppHeader.js`, `AppFooter.js`, `IncomeForm.js`, `BudgetWidget.js`, `GoalsWidget.js`, all server files, all test files.
+Deviations from plan: none.
+
+**2026-04-01 — Change 2c (ExpandableWidget):** Change 2 fully complete.
+
+- `client/src/components/ExpandableWidget.js` — NEW. Reusable wrapper component. Props: `children`, `expandedContent`, `title`, optional `expandIcon`. Renders children in a `position: relative` Box with a small `OpenInFullIcon` IconButton (opacity 0.45, hover → 1) absolutely positioned top-right. On click, opens a MUI Dialog (`maxWidth="sm"`, `fullWidth`, Paper `borderRadius: 14px`) with DialogTitle + CloseIcon dismiss button and DialogContent showing `expandedContent`. Self-contained open/closed state via `useState` — no modal state needed in parent.
+- `client/src/pages/ExpenseTracker.js` — Added imports: `getBudgets`, `getGoals` (api), `formatMoney` (money.js), `ExpandableWidget`, `LinearProgress`, `Stack`. Added module-level helpers: `getCurrentPeriod()`, `goalProgressPercent()`. Added `BudgetExpandedContent` module-level component: fetches `getBudgets({ period, includeSpent: true })` on mount, renders per-category table (Category / Budget / Spent / Remaining) with remaining in `success.main` or `error.main` based on sign; shows "No budgets set for this month." empty state. Added `GoalsExpandedContent` module-level component: fetches `getGoals({ status: 'active' })` on mount (all active goals, no slice), renders each goal with name, amounts, % complete, target date ("Dec 2026" format), and 4px `LinearProgress` with `success.main` ≥75% / `warning.main` ≥40% / `info.main` <40%; shows "No active goals yet." empty state. Wrapped `<BudgetWidget>` and `<GoalsWidget>` in `<ExpandableWidget>` in the sidebar — no other sidebar/layout/chart/data-fetch changes.
+- `Architecture.md` — "Known Issues to Address" section removed (all issues resolved in prior 2b sessions). `← [Change 2]` markers removed from `SummaryMetricCard.js` and `ExpandableWidget.js`. Change 2 is now fully complete.
+
+Files modified: `client/src/components/ExpandableWidget.js` (new), `client/src/pages/ExpenseTracker.js`, `Architecture.md`.
+Files NOT modified: `BudgetWidget.js`, `GoalsWidget.js`, `SummaryMetricCard.js`, `AppHeader.js`, `theme.js`, `api.js`, all server files, all test files.
+Deviations from plan: none.
+
+**2026-04-01 — Change 3 (Goals Per-Goal Completion Charts):**
+
+- `client/src/components/GoalProgressChart.js` — NEW. Self-contained donut chart component. Props: `currentAmount`, `targetAmount`, `currency`, `size` (default 120). PieChart from `@mui/x-charts` with two segments (filled/remaining), 68% cutout (`innerRadius = outerRadius * 0.68`), `startAngle: -90` / `endAngle: 270` for top-start orientation, `paddingAngle: 0` for continuous ring, `pointerEvents: none` (display-only). Color thresholds: ≥75% → `success.main`, ≥40% → `info.main`, <40% → `primary.main` (all from theme). Remaining segment: `action.disabledBackground`. Minimum arc of 0.5 prevents invisible filled segment at 0%. Capped at 100% when currentAmount ≥ targetAmount. Center overlay (absolutely-positioned Box): percentage in bold + "of goal" muted label — never empty.
+- `client/src/pages/GoalsPage.js` — Modified. Imported `GoalProgressChart`. Inserted `<GoalProgressChart size={110} />` between the info column and edit/delete buttons in each goal card. Updated saved-amount Typography color to `success.main`. Updated target date format from `toLocaleDateString()` to `toLocaleDateString('en-US', { month: 'short', year: 'numeric' })` (renders "Dec 2026"). All existing functionality (add, edit, delete, status tabs, progress overview chart) preserved.
+
+Files NOT modified: `GoalsWidget.js`, `ExpandableWidget.js`, `ExpenseTracker.js`, `ExpenseChart.js`, `BudgetWidget.js`, `theme.js`, `api.js`, all server files, all test files.
 Deviations from plan: none.
