@@ -1,8 +1,9 @@
 import React, { useCallback, useState, useEffect, useMemo, useContext } from 'react';
-import { getExpenses, addExpense, deleteExpense, getIncome, addIncome, deleteIncome } from '../utils/api';
+import { getExpenses, addExpense, deleteExpense, getIncome, addIncome, deleteIncome, getBudgets, getGoals } from '../utils/api';
 import { useTheme } from '@mui/material/styles';
 import { ThemeContext } from '../App';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
+import { formatMoney } from '../utils/money';
 
 import AppLayout from '../components/AppLayout';
 import ExpenseForm from '../components/ExpenseForm';
@@ -12,20 +13,179 @@ import ExpenseChart from '../components/ExpenseChart';
 import GoalsWidget from '../components/GoalsWidget';
 import BudgetWidget from '../components/BudgetWidget';
 import BudgetDotGrid from '../components/BudgetDotGrid';
+import ExpandableWidget from '../components/ExpandableWidget';
 
 import {
   Alert,
   Button,
   CircularProgress,
   Container,
+  LinearProgress,
   Paper,
   Box,
+  Stack,
   Typography,
   Snackbar,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+
+function getCurrentPeriod() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function goalProgressPercent(current, target) {
+  if (!target || target <= 0) return 0;
+  return Math.min(100, Math.max(0, (current / target) * 100));
+}
+
+const BudgetExpandedContent = () => {
+  const theme = useTheme();
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getBudgets({ period: getCurrentPeriod(), includeSpent: true })
+      .then((data) => { if (!cancelled) setBudgets(Array.isArray(data?.budgets) ? data.budgets : []); })
+      .catch(() => { if (!cancelled) setBudgets([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  if (budgets.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+        No budgets set for this month.
+      </Typography>
+    );
+  }
+
+  const currency = budgets.find((b) => b.currency)?.currency || 'USD';
+
+  return (
+    <Box sx={{ pb: 1 }}>
+      {/* Column headers */}
+      <Stack direction="row" sx={{ mb: 1, px: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, minWidth: 0 }}>Category</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ width: 76, textAlign: 'right' }}>Budget</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ width: 76, textAlign: 'right' }}>Spent</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ width: 84, textAlign: 'right' }}>Remaining</Typography>
+      </Stack>
+
+      <Stack spacing={1}>
+        {budgets.map((b) => {
+          const spent = Number(b.spent) || 0;
+          const amount = Number(b.amount) || 0;
+          const remaining = amount - spent;
+          return (
+            <Stack key={b._id} direction="row" alignItems="center" sx={{ px: 0.5 }}>
+              <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }} noWrap>{b.category}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ width: 76, textAlign: 'right', flexShrink: 0 }}>
+                {formatMoney(amount, currency)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ width: 76, textAlign: 'right', flexShrink: 0 }}>
+                {formatMoney(spent, currency)}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  width: 84,
+                  textAlign: 'right',
+                  flexShrink: 0,
+                  color: remaining < 0 ? theme.palette.error.main : theme.palette.success.main,
+                }}
+              >
+                {formatMoney(remaining, currency)}
+              </Typography>
+            </Stack>
+          );
+        })}
+      </Stack>
+    </Box>
+  );
+};
+
+const GoalsExpandedContent = () => {
+  const theme = useTheme();
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getGoals({ status: 'active' })
+      .then((data) => { if (!cancelled) setGoals(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setGoals([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  if (goals.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+        No active goals yet.
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack spacing={2} sx={{ pb: 1 }}>
+      {goals.map((goal) => {
+        const pct = goalProgressPercent(goal.currentAmount, goal.targetAmount);
+        const barColor =
+          pct >= 75 ? theme.palette.success.main
+          : pct >= 40 ? theme.palette.warning.main
+          : theme.palette.info.main;
+        const targetDateStr = goal.targetDate
+          ? new Date(goal.targetDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          : '—';
+        return (
+          <Box key={goal._id}>
+            <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 0.25 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{goal.name}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0, ml: 1 }}>{targetDateStr}</Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {formatMoney(goal.currentAmount || 0, goal.currency)} / {formatMoney(goal.targetAmount || 0, goal.currency)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">{Math.round(pct)}%</Typography>
+            </Stack>
+            <LinearProgress
+              variant="determinate"
+              value={pct}
+              sx={{
+                height: 4,
+                borderRadius: 2,
+                '& .MuiLinearProgress-bar': { backgroundColor: barColor },
+              }}
+            />
+          </Box>
+        );
+      })}
+    </Stack>
+  );
+};
 
 const FILTERS = {
   MONTH: 'month',
@@ -492,9 +652,17 @@ const ExpenseTracker = () => {
           {/* Right sidebar — starts at 280px, shrinks to 155px before wrapping */}
           <Box sx={{ flex: '0 1 280px', minWidth: 155, display: 'flex', flexDirection: 'column', gap: 1 ,  }}>
 
-            {dashPrefs.showBudgetWidget && <BudgetWidget />}
+            {dashPrefs.showBudgetWidget && (
+              <ExpandableWidget title="Budget Details" expandedContent={<BudgetExpandedContent />}>
+                <BudgetWidget />
+              </ExpandableWidget>
+            )}
 
-            {dashPrefs.showGoalsWidget && <GoalsWidget />}
+            {dashPrefs.showGoalsWidget && (
+              <ExpandableWidget title="Active Goals" expandedContent={<GoalsExpandedContent />}>
+                <GoalsWidget />
+              </ExpandableWidget>
+            )}
 
             <Button
               variant="contained"

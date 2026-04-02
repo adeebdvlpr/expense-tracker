@@ -27,6 +27,7 @@ import { getGoals, createGoal, updateGoal, deleteGoal } from '../utils/api';
 import { formatMoney } from '../utils/money';
 import AppLayout from '../components/AppLayout';
 import GoalForm from '../components/GoalForm';
+import GoalProgressChart from '../components/GoalProgressChart';
 
 const STATUS_TABS = ['active', 'completed', 'archived'];
 
@@ -220,7 +221,7 @@ export default function GoalsPage() {
                       </Stack>
 
                       <Stack direction="row" spacing={2} sx={{ mb: 1, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ color: 'success.main' }}>
                           Saved: <strong>{formatMoney(goal.currentAmount || 0, goal.currency)}</strong>
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -233,7 +234,7 @@ export default function GoalsPage() {
                         )}
                         {goal.targetDate && (
                           <Typography variant="body2" color="text.secondary">
-                            Due: <strong>{new Date(goal.targetDate).toLocaleDateString()}</strong>
+                            Due: <strong>{new Date(goal.targetDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</strong>
                           </Typography>
                         )}
                       </Stack>
@@ -256,6 +257,13 @@ export default function GoalsPage() {
                         </>
                       )}
                     </Box>
+
+                    <GoalProgressChart
+                      currentAmount={goal.currentAmount || 0}
+                      targetAmount={goal.targetAmount || 0}
+                      currency={goal.currency}
+                      size={110}
+                    />
 
                     <Stack direction="row" spacing={0.5}>
                       <Tooltip title="Edit">
