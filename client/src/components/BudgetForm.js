@@ -1,12 +1,13 @@
-//Using this in the budgetPage
-
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   FormHelperText,
-  Grid,
   InputAdornment,
   InputLabel,
   MenuItem,
@@ -16,137 +17,180 @@ import {
 } from '@mui/material';
 import { CATEGORIES } from '../constants/categories';
 
-export default function BudgetForm({
-  period,
-  onPeriodChange,
-  onSaveBudget,
-  loading = false,
-}) {
-  const [category, setCategory] = useState('');
-  const [amount, setAmount] = useState('');
+const EMPTY_FORM = { period: '', category: '', amount: '' };
 
-  const [touched, setTouched] = useState({ category: false, amount: false, period: false });
+/**
+ * BudgetForm — MUI Dialog for adding or editing a budget entry.
+ *
+ * Props:
+ *   open          {bool}          — controls Dialog visibility
+ *   onClose       {func}          — called when cancelled or closed
+ *   onSave        {func}          — called with { period, category, amount }
+ *   budget        {object|null}   — null = Add mode, object = Edit mode
+ *   defaultPeriod {string}        — YYYY-MM, initial period value in Add mode
+ */
+export default function BudgetForm({ open, onClose, onSave, budget = null, defaultPeriod = '' }) {
+  const isEdit = Boolean(budget);
+
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [touched, setTouched] = useState({});
   const [submittedOnce, setSubmittedOnce] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const amountNumber = useMemo(() => Number(amount), [amount]);
+  // Reset form state when dialog opens or budget changes
+  useEffect(() => {
+    if (open) {
+      setTouched({});
+      setSubmittedOnce(false);
+      setSaving(false);
+      if (budget) {
+        setForm({
+          period: budget.period || '',
+          category: budget.category || '',
+          amount: budget.amount != null ? String(budget.amount) : '',
+        });
+      } else {
+        setForm({ period: defaultPeriod || '', category: '', amount: '' });
+      }
+    }
+  }, [open, budget, defaultPeriod]);
+
+  const amountNumber = useMemo(() => Number(form.amount), [form.amount]);
 
   const errors = useMemo(() => {
-    const periodErr = !period ? 'Month is required.' : '';
-    const categoryErr = !category ? 'Category is required.' : '';
-    const amountErr =
-      !amount || Number.isNaN(amountNumber) || amountNumber <= 0
-        ? 'Enter a valid amount greater than 0.'
-        : '';
-    return { period: periodErr, category: categoryErr, amount: amountErr };
-  }, [period, category, amount, amountNumber]);
+    const out = {};
+    if (!isEdit && !form.period) out.period = 'Month is required.';
+    if (!isEdit && !form.category) out.category = 'Category is required.';
+    if (!form.amount || Number.isNaN(amountNumber) || amountNumber <= 0) {
+      out.amount = 'Enter a valid amount greater than 0.';
+    }
+    return out;
+  }, [isEdit, form.period, form.category, form.amount, amountNumber]);
 
-  const showError = (field) => submittedOnce || touched[field];
+  const showError = (field) => Boolean(errors[field] && (submittedOnce || touched[field]));
 
-  const hasErrors = Boolean(errors.period || errors.category || errors.amount);
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const blur = (field) => () => setTouched((t) => ({ ...t, [field]: true }));
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setSubmittedOnce(true);
-    if (hasErrors) return;
+    if (Object.keys(errors).length) return;
 
-    onSaveBudget?.({
-      period,
-      category,
-      amount: Number(amountNumber.toFixed(2)),
-    });
-
-    // reset (keep period)
-    setCategory('');
-    setAmount('');
-    setTouched({ category: false, amount: false, period: false });
-    setSubmittedOnce(false);
+    setSaving(true);
+    try {
+      await onSave({
+        period: form.period,
+        category: form.category,
+        amount: Number(amountNumber.toFixed(2)),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-        Add / update a budget
-      </Typography>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: '14px' } }}
+    >
+      <DialogTitle sx={{ fontWeight: 800 }}>
+        {isEdit ? 'Edit Budget' : 'Add Budget'}
+      </DialogTitle>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="Month"
-            type="month"
-            value={period}
-            onChange={(e) => onPeriodChange?.(e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, period: true }))}
-            fullWidth
-            size="small"
-            required
-            error={showError('period') && Boolean(errors.period)}
-            helperText={(showError('period') && errors.period) || ' '}
-          />
-        </Grid>
+      <DialogContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, pt: 0.5 }}>
+          {/* Period */}
+          {isEdit ? (
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="caption" color="text.secondary">Month</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>{form.period}</Typography>
+            </Box>
+          ) : (
+            <TextField
+              label="Month"
+              type="month"
+              value={form.period}
+              onChange={set('period')}
+              onBlur={blur('period')}
+              size="small"
+              required
+              error={showError('period')}
+              helperText={showError('period') ? errors.period : ' '}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          )}
 
-        <Grid item xs={12} sm={4}>
-          <FormControl
-            fullWidth
-            size="small"
-            required
-            error={showError('category') && Boolean(errors.category)}
-          >
-            <InputLabel id="budget-category-label">Category</InputLabel>
-            <Select
-              labelId="budget-category-label"
-              label="Category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              onBlur={() => setTouched((t) => ({ ...t, category: true }))}
+          {/* Category */}
+          {isEdit ? (
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="caption" color="text.secondary">Category</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>{form.category}</Typography>
+            </Box>
+          ) : (
+            <FormControl
+              size="small"
+              required
+              error={showError('category')}
+              fullWidth
+              sx={{ mt: 1 }}
             >
-              {CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {(showError('category') && errors.category) || ' '}
-            </FormHelperText>
-          </FormControl>
-        </Grid>
+              <InputLabel id="budget-form-category-label">Category</InputLabel>
+              <Select
+                labelId="budget-form-category-label"
+                label="Category"
+                value={form.category}
+                onChange={set('category')}
+                onBlur={blur('category')}
+              >
+                {CATEGORIES.map((c) => (
+                  <MenuItem key={c} value={c}>{c}</MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>
+                {showError('category') ? errors.category : ' '}
+              </FormHelperText>
+            </FormControl>
+          )}
 
-        <Grid item xs={12} sm={2}>
+          {/* Amount */}
           <TextField
             label="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, amount: true }))}
             type="number"
-            inputProps={{ min: 0, step: '0.01' }}
-            fullWidth
+            value={form.amount}
+            onChange={set('amount')}
+            onBlur={blur('amount')}
+            slotProps={{ input: { min: 0, step: '0.01' } }}
             size="small"
             required
-            error={showError('amount') && Boolean(errors.amount)}
-            helperText={(showError('amount') && errors.amount) || ' '}
+            error={showError('amount')}
+            helperText={showError('amount') ? errors.amount : ' '}
             InputProps={{
               startAdornment: <InputAdornment position="start">$</InputAdornment>,
             }}
+            sx={{ mt: isEdit ? 0 : 0 }}
           />
-        </Grid>
 
-        <Grid item xs={12} sm={2}>
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            size="medium"
-            sx={{ height: '100%', fontWeight: 800, borderRadius: 2 }}
-            disabled={loading}
-          >
-            Save
-          </Button>
-        </Grid>
-      </Grid>
+          {!isEdit && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+              Tip: saving the same category again will overwrite that month's budget (upsert).
+            </Typography>
+          )}
+        </Box>
+      </DialogContent>
 
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-        Tip: saving the same category again will overwrite that month’s budget (upsert).
-      </Typography>
-    </Box>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
+          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Budget'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

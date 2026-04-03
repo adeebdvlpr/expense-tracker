@@ -16,7 +16,7 @@ exports.updateMe = async (req, res) => {
     // Allow updating only these fields
     const {
       dateOfBirth, reason, monthlyIncome, currency, dashboardPrefs,
-      selectedTheme, customCategories, incomeType,
+      selectedTheme, customCategories, incomeType, overallMonthlyBudget,
     } = req.body;
 
     const $set = {};
@@ -72,6 +72,12 @@ exports.updateMe = async (req, res) => {
     // incomeType: set if present
     if ('incomeType' in req.body) {
       $set.incomeType = incomeType || 'monthly';
+    }
+
+    // overallMonthlyBudget: allow clearing
+    if ('overallMonthlyBudget' in req.body) {
+      if (overallMonthlyBudget === null || overallMonthlyBudget === '') $unset.overallMonthlyBudget = '';
+      else $set.overallMonthlyBudget = overallMonthlyBudget;
     }
 
     const update = {};

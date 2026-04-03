@@ -1,20 +1,29 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Box,
   Button,
   Container,
   Divider,
+  IconButton,
   LinearProgress,
   Paper,
+  Snackbar,
+  Alert,
   Stack,
-  Typography,
-  IconButton,
+  Tab,
+  Tabs,
+  TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import SaveIcon from '@mui/icons-material/Save';
+import { useTheme, alpha } from '@mui/material/styles';
+import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 
-import { getBudgets, upsertBudget, deleteBudget, getMe } from '../utils/api';
+import { getBudgets, upsertBudget, deleteBudget, getMe, updateMe } from '../utils/api';
 import AppLayout from '../components/AppLayout';
 import BudgetForm from '../components/BudgetForm';
 import BudgetChart from '../components/BudgetChart';
@@ -27,64 +36,96 @@ function getCurrentPeriodYYYYMM() {
   return `${y}-${m}`;
 }
 
-export default function BudgetsPage() {
-  const [period, setPeriod] = useState(getCurrentPeriodYYYYMM());
+function getPreviousPeriodYYYYMM() {
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const y = prev.getFullYear();
+  const m = String(prev.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
 
-  // data
+function periodToMonthName(period) {
+  if (!period) return period;
+  return new Date(`${period}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+export default function BudgetsPage() {
+  const theme = useTheme();
+
+  // Tab state: 0 = Active (current month), 1 = Archived
+  const [activeTab, setActiveTab] = useState(0);
+  const [archivedPeriod, setArchivedPeriod] = useState(getPreviousPeriodYYYYMM());
+
+  // Derived active period
+  const activePeriod = activeTab === 0 ? getCurrentPeriodYYYYMM() : archivedPeriod;
+
+  // Data
   const [budgets, setBudgets] = useState([]);
-  const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ui
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  // Overall budget cap
+  const [overallBudget, setOverallBudget] = useState(null);
+  const [overallBudgetInput, setOverallBudgetInput] = useState('');
 
+  // Currency inferred from budgets or user profile
+  const [userCurrency, setUserCurrency] = useState('USD');
   const inferredCurrency = useMemo(() => {
     const any = budgets?.find((b) => b?.currency);
-    return any?.currency || me?.currency || 'USD';
-  }, [budgets, me]);
+    return any?.currency || userCurrency;
+  }, [budgets, userCurrency]);
 
-  async function refreshBudgets(nextPeriod = period) {
+  // Dialog state
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(null);
+
+  // Snackbar
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+  const openSnack = (message, severity = 'success') => setSnack({ open: true, message, severity });
+  const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
+
+  // Totals
+  const totals = useMemo(() => {
+    const totalBudget = budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+    const totalSpent = budgets.reduce((sum, b) => sum + (Number(b.spent) || 0), 0);
+    return { totalBudget, totalSpent };
+  }, [budgets]);
+
+  async function refreshBudgets(period = activePeriod) {
     setLoading(true);
-    setError('');
-    setSuccess('');
     try {
-      const data = await getBudgets({ period: nextPeriod, includeSpent: true });
+      const data = await getBudgets({ period, includeSpent: true });
       setBudgets(Array.isArray(data?.budgets) ? data.budgets : []);
     } catch (e) {
-      setError(e?.response?.data?.message || 'Failed to load budgets.');
+      openSnack(e?.response?.data?.message || 'Failed to load budgets.', 'error');
       setBudgets([]);
     } finally {
       setLoading(false);
     }
   }
 
+  // Load budgets when tab or archived period changes
   useEffect(() => {
-    refreshBudgets(period);
+    refreshBudgets(activePeriod);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period]);
+  }, [activeTab, archivedPeriod]);
 
+  // Load user profile once on mount
   useEffect(() => {
     (async () => {
       try {
         const user = await getMe();
-        setMe(user);
+        setUserCurrency(user?.currency || 'USD');
+        setOverallBudget(user?.overallMonthlyBudget ?? null);
+        setOverallBudgetInput(
+          user?.overallMonthlyBudget != null ? String(user.overallMonthlyBudget) : ''
+        );
       } catch {
-        // ignore – page can work without profile data
+        // page works without profile
       }
     })();
   }, []);
 
-  const totals = useMemo(() => {
-    const totalBudget = budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-    const totalSpent = budgets.reduce((sum, b) => sum + (Number(b.spent) || 0), 0);
-    const remaining = totalBudget - totalSpent;
-    return { totalBudget, totalSpent, remaining };
-  }, [budgets]);
-
   async function handleSaveBudget({ period: p, category, amount }) {
-    setError('');
-    setSuccess('');
     try {
       setLoading(true);
       await upsertBudget({
@@ -93,195 +134,284 @@ export default function BudgetsPage() {
         amount,
         currency: inferredCurrency || 'USD',
       });
-      setSuccess('Budget saved.');
-      await refreshBudgets(p);
-    } catch (e2) {
-      setError(e2?.response?.data?.message || 'Failed to save budget.');
+      openSnack('Budget saved.');
+      await refreshBudgets(activePeriod);
+      setFormOpen(false);
+      setEditingBudget(null);
+    } catch (e) {
+      openSnack(e?.response?.data?.message || 'Failed to save budget.', 'error');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(id) {
-    setError('');
-    setSuccess('');
     try {
       setLoading(true);
       await deleteBudget(id);
-      setSuccess('Budget deleted.');
-      await refreshBudgets(period);
+      openSnack('Budget deleted.');
+      await refreshBudgets(activePeriod);
     } catch (e) {
-      setError(e?.response?.data?.message || 'Failed to delete budget.');
+      openSnack(e?.response?.data?.message || 'Failed to delete budget.', 'error');
     } finally {
       setLoading(false);
     }
   }
 
+  async function handleSaveOverallBudget() {
+    try {
+      const val = overallBudgetInput.trim() === '' ? null : Number(overallBudgetInput);
+      await updateMe({ overallMonthlyBudget: val });
+      setOverallBudget(val);
+      openSnack('Budget cap saved.');
+    } catch {
+      openSnack('Failed to save budget cap.', 'error');
+    }
+  }
+
   return (
     <AppLayout>
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>
-          Budgets
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Set monthly category budgets and track progress.
-        </Typography>
-      </Box>
+      <Container maxWidth="md" sx={{ py: 4 }}>
 
-      {/* OVERVIEW NUMBERS */}
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, mb: 2, border: '1px solid', borderColor: 'divider' }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between">
+        {/* Header */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
           <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800 }}>Budgets</Typography>
             <Typography variant="body2" color="text.secondary">
-              Total budget
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              {formatMoney(totals.totalBudget, inferredCurrency)}
+              Set monthly category budgets and track progress.
             </Typography>
           </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Total spent
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              {formatMoney(totals.totalSpent, inferredCurrency)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Remaining
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                color: totals.remaining < 0 ? 'error.main' : 'text.primary',
-              }}
-            >
-              {formatMoney(totals.remaining, inferredCurrency)}
-            </Typography>
-          </Box>
-        </Stack>
-
-        {loading && <LinearProgress sx={{ mt: 2 }} />}
-      </Paper>
-
-      {/* CHART */}
-      <Box sx={{ mb: 2 }}>
-        <BudgetChart
-          totalBudget={totals.totalBudget}
-          totalSpent={totals.totalSpent}
-          monthlyIncome={me?.monthlyIncome ?? null}
-          currency={inferredCurrency}
-          chartType={me?.dashboardPrefs?.chartType ?? 'pie'}
-          budgets={budgets}
-        />
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
-          {success}
-        </Alert>
-      )}
-
-      {/* FORM */}
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, mb: 2, border: '1px solid', borderColor: 'divider' }}>
-        <BudgetForm
-          period={period}
-          onPeriodChange={setPeriod}
-          onSaveBudget={handleSaveBudget}
-          loading={loading}
-        />
-      </Paper>
-
-      {/* LIST */}
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
-            Budgets for {period}
-          </Typography>
-          <Button variant="text" onClick={() => refreshBudgets(period)} disabled={loading}>
-            Refresh
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => { setEditingBudget(null); setFormOpen(true); }}
+          >
+            Add Budget
           </Button>
         </Stack>
 
-        <Divider sx={{ mb: 2 }} />
-
-        {budgets.length === 0 ? (
-          <Typography color="text.secondary">No budgets for this month yet. Add your first budget above.</Typography>
-        ) : (
-          <Stack spacing={2}>
-            {budgets.map((b) => {
-              const budgetAmt = Number(b.amount) || 0;
-              const spent = Number(b.spent) || 0;
-              const remaining = typeof b.remaining === 'number' ? b.remaining : budgetAmt - spent;
-
-              const progress = budgetAmt > 0 ? Math.min(100, Math.max(0, (spent / budgetAmt) * 100)) : 0;
-              const over = remaining < 0;
-
-              return (
-                <Paper
-                  key={b._id}
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: over ? 'error.light' : 'divider',
-                    backgroundColor: over ? 'rgba(211, 47, 47, 0.04)' : 'transparent',
-                  }}
-                >
-                  <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-                        {b.category}
-                      </Typography>
-
-                      <Stack direction="row" spacing={2} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Budget: <strong>{formatMoney(budgetAmt, b.currency || inferredCurrency)}</strong>
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Spent: <strong>{formatMoney(spent, b.currency || inferredCurrency)}</strong>
-                        </Typography>
-                        <Typography variant="body2" color={over ? 'error.main' : 'text.secondary'} sx={{ fontWeight: 700 }}>
-                          Remaining: {formatMoney(remaining, b.currency || inferredCurrency)}
-                        </Typography>
-                      </Stack>
-
-                      <Box sx={{ mt: 1 }}>
-                        <LinearProgress variant="determinate" value={progress} />
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                          {Math.round(progress)}% used
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Tooltip title="Delete budget">
-                      <span>
-                        <IconButton
-                          onClick={() => handleDelete(b._id)}
-                          disabled={loading}
-                          aria-label={`Delete budget ${b.category}`}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </Stack>
-                </Paper>
-              );
-            })}
+        {/* Overall monthly cap row */}
+        <Paper
+          elevation={0}
+          sx={{ p: 2, mb: 2, background: 'rgba(247, 249, 252, 0.9)' }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+              Monthly cap:
+            </Typography>
+            <TextField
+              type="number"
+              size="small"
+              value={overallBudgetInput}
+              onChange={(e) => setOverallBudgetInput(e.target.value)}
+              placeholder="No cap set"
+              slotProps={{ input: { min: 0, step: '0.01' } }}
+              sx={{ width: 140 }}
+            />
+            <Tooltip title="Save cap">
+              <IconButton size="small" onClick={handleSaveOverallBudget} color="primary">
+                <SaveIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            {overallBudget != null && (
+              <Typography variant="caption" color="text.secondary">
+                Current: {formatMoney(overallBudget, inferredCurrency)}
+              </Typography>
+            )}
           </Stack>
+        </Paper>
+
+        {/* Loading indicator */}
+        {loading && <LinearProgress sx={{ mb: 1, borderRadius: 1 }} />}
+
+        {/* Status tabs */}
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          sx={{ mb: 2 }}
+        >
+          <Tab label="Active" />
+          <Tab label="Archived" />
+        </Tabs>
+
+        {/* Archived period picker */}
+        {activeTab === 1 && (
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              type="month"
+              size="small"
+              value={archivedPeriod}
+              onChange={(e) => setArchivedPeriod(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              label="View month"
+              sx={{ width: 160 }}
+            />
+          </Box>
         )}
-      </Paper>
-    </Container>
+
+        {/* Budget Overview Chart */}
+        <Box sx={{ mb: 2 }}>
+          <BudgetChart
+            budgets={budgets}
+            currency={inferredCurrency}
+            totalBudget={totals.totalBudget}
+            totalSpent={totals.totalSpent}
+            overallBudget={overallBudget}
+          />
+        </Box>
+
+        {/* Budget list */}
+        <Paper elevation={0} sx={{ p: 2.5, border: '1px solid', borderColor: 'divider' }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800 }}>
+              Budgets for {periodToMonthName(activePeriod)}
+            </Typography>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => refreshBudgets(activePeriod)}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </Stack>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {budgets.length === 0 ? (
+            <Typography color="text.secondary">
+              No budgets for this month yet. Add your first budget above.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {budgets.map((b) => {
+                const budgetAmt = Number(b.amount) || 0;
+                const spent = Number(b.spent) || 0;
+                const remaining = typeof b.remaining === 'number' ? b.remaining : budgetAmt - spent;
+                const progress = budgetAmt > 0 ? Math.min(100, Math.max(0, (spent / budgetAmt) * 100)) : 0;
+                const over = remaining < 0;
+
+                let progressColor;
+                if (over) {
+                  progressColor = theme.palette.error.main;
+                } else if (progress >= 80) {
+                  progressColor = theme.palette.warning.main;
+                } else {
+                  progressColor = theme.palette.success.main;
+                }
+
+                return (
+                  <Paper
+                    key={b._id}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: over ? 'error.light' : 'divider',
+                      backgroundColor: over ? alpha(theme.palette.error.main, 0.04) : 'transparent',
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                      {/* Text info */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+                          {b.category}
+                        </Typography>
+                        <Stack direction="row" spacing={2} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Budget: <strong>{formatMoney(budgetAmt, b.currency || inferredCurrency)}</strong>
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Spent: <strong>{formatMoney(spent, b.currency || inferredCurrency)}</strong>
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color={over ? 'error.main' : 'text.secondary'}
+                            sx={{ fontWeight: 700 }}
+                          >
+                            Remaining: {formatMoney(remaining, b.currency || inferredCurrency)}
+                          </Typography>
+                        </Stack>
+                      </Box>
+
+                      {/* Gauge */}
+                      <Gauge
+                        width={80}
+                        height={80}
+                        value={Math.round(progress)}
+                        startAngle={-110}
+                        endAngle={110}
+                        text={({ value }) => `${value}%`}
+                        sx={{
+                          flexShrink: 0,
+                          [`& .${gaugeClasses.valueArc}`]: { fill: progressColor },
+                          [`& .${gaugeClasses.referenceArc}`]: {
+                            fill: theme.palette.action.disabledBackground,
+                          },
+                          [`& .${gaugeClasses.valueText}`]: {
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            fill: theme.palette.text.primary,
+                          },
+                        }}
+                      />
+
+                      {/* Edit + Delete */}
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Tooltip title="Edit budget">
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => { setEditingBudget(b); setFormOpen(true); }}
+                              disabled={loading}
+                              aria-label={`Edit budget ${b.category}`}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Delete budget">
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(b._id)}
+                              disabled={loading}
+                              aria-label={`Delete budget ${b.category}`}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                );
+              })}
+            </Stack>
+          )}
+        </Paper>
+      </Container>
+
+      {/* Budget Form Dialog */}
+      <BudgetForm
+        open={formOpen}
+        onClose={() => { setFormOpen(false); setEditingBudget(null); }}
+        onSave={handleSaveBudget}
+        budget={editingBudget}
+        defaultPeriod={activePeriod}
+      />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={2500}
+        onClose={closeSnack}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={closeSnack} severity={snack.severity} variant="filled" sx={{ width: '100%' }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </AppLayout>
   );
 }

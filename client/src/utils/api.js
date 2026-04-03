@@ -44,16 +44,6 @@ export const register = async (userData) => {
   return response.data;
 };
 
-// export const getExpenses = () => api.get('/expenses');
-// export const getExpenses = async () => {
-//   try {
-//     const response = await api.get('/api/expenses');
-//     return response.data;
-//   } catch (error) {
-//     console.error('Error fetching expenses:', error.response?.data || error.message);
-//     throw error;
-//   }
-// };
 export const getExpenses = async (params = {}) => {
   try {
     const response = await api.get('/api/expenses', { params });
