@@ -60,7 +60,7 @@ const CustomBar = React.forwardRef(function CustomBar(props, ref) {
   if (currentBarIdx >= 0) {
     const isCurrent = dataIndex === currentBarIdx;
     fillColor = isCurrent ? (currentBarColor || color) : (pastBarColor || color);
-    opacity = isCurrent ? 1.0 : 0.32;
+    opacity = isCurrent ? 1.0 : 0.36;
   } else {
     // Gradient opacity mode: more spending → more opaque
     const maxVal = Math.max(...barTotals, 1);
@@ -299,8 +299,8 @@ const ExpenseChart = ({ expenses, chartType = 'pie', height = 320 }) => {
                       paddingAngle: 2,
                       cornerRadius: 4,
                       highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -5 },
-                      highlighted: { outerRadius: 98 },
+                      faded: { additionalRadius: -5, color: 'yellow' },
+                      highlighted: { outerRadius: 98},
                       valueFormatter: (item) => `$${item.value.toFixed(0)}`,
                     }]}
                     onHighlightChange={(item) => setHoveredIdx(item?.dataIndex ?? null)}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -20,7 +20,6 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
-import { PieChart } from '@mui/x-charts/PieChart';
 import { useTheme } from '@mui/material/styles';
 
 import { getGoals, createGoal, updateGoal, deleteGoal } from '../utils/api';
@@ -81,7 +80,6 @@ export default function GoalsPage() {
       openSnack('Goal updated.');
     } else {
       const created = await createGoal(payload);
-      // Refresh the list — new goal might be for a different status tab
       await fetchGoals(activeStatus);
       if (created.status === activeStatus || activeStatus === 'active') {
         openSnack('Goal added.');
@@ -109,24 +107,6 @@ export default function GoalsPage() {
     setFormOpen(false);
     setEditingGoal(null);
   };
-
-  // Chart data — only meaningful for active goals with progress
-  const chartData = useMemo(() => {
-    const palette = [
-      theme.palette.primary.main,
-      theme.palette.secondary.main,
-      theme.palette.success.main,
-      theme.palette.info.main,
-    ];
-    return goals
-      .filter((g) => g.targetAmount > 0)
-      .map((g, i) => ({
-        id: g._id,
-        label: g.name,
-        value: g.currentAmount || 0,
-        color: palette[i % palette.length],
-      }));
-  }, [goals, theme.palette]);
 
   return (
     <AppLayout>
@@ -159,25 +139,85 @@ export default function GoalsPage() {
           ))}
         </Tabs>
 
-        {/* Chart — only for active goals that have any current amount */}
-        {activeStatus === 'active' && chartData.length > 0 && chartData.some((d) => d.value > 0) && (
-          <Paper elevation={0} sx={{ p: 2.5, mb: 2, border: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Progress Overview</Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <PieChart
-                height={260}
-                series={[
-                  {
-                    data: chartData,
-                    innerRadius: 50,
-                    outerRadius: 100,
-                    paddingAngle: 2,
-                    cornerRadius: 5,
-                    valueFormatter: (item) => formatMoney(item.value),
-                  },
-                ]}
-              />
-            </Box>
+        {/* Progress Overview — horizontal bar summary, active goals only */}
+        {activeStatus === 'active' && goals.length > 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              mb: 2,
+              background: 'rgba(247, 249, 252, 0.9)',
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>
+              Progress Overview
+            </Typography>
+            <Stack spacing={1}>
+              {goals.map((goal) => {
+                const pct = Math.round(progressPercent(goal.currentAmount, goal.targetAmount));
+                let barColor;
+                if (pct >= 75) {
+                  barColor = theme.palette.success.main;
+                } else if (pct >= 40) {
+                  barColor = theme.palette.warning.main;
+                } else {
+                  barColor = theme.palette.info.main;
+                }
+
+                return (
+                  <Stack
+                    key={goal._id}
+                    direction="row"
+                    alignItems="center"
+                    spacing={1.5}
+                  >
+                    {/* Goal name */}
+                    <Typography
+                      variant="body2"
+                      noWrap
+                      sx={{ flex: 1, minWidth: 0 }}
+                    >
+                      {goal.name}
+                    </Typography>
+
+                    {/* Progress bar */}
+                    <Box sx={{ flex: 3, minWidth: 0 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={pct}
+                        sx={{
+                          height: 10,
+                          borderRadius: '5px',
+                          backgroundColor: theme.palette.action.disabledBackground,
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: barColor,
+                            borderRadius: '5px',
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    {/* Percentage */}
+                    <Typography
+                      variant="caption"
+                      sx={{ width: 36, textAlign: 'right', flexShrink: 0, fontWeight: 700 }}
+                    >
+                      {pct}%
+                    </Typography>
+
+                    {/* Amounts */}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ width: 130, textAlign: 'right', flexShrink: 0 }}
+                      noWrap
+                    >
+                      {formatMoney(goal.currentAmount || 0, goal.currency)} / {formatMoney(goal.targetAmount || 0, goal.currency)}
+                    </Typography>
+                  </Stack>
+                );
+              })}
+            </Stack>
           </Paper>
         )}
 
@@ -197,7 +237,6 @@ export default function GoalsPage() {
         ) : (
           <Stack spacing={2}>
             {goals.map((goal) => {
-              const pct = progressPercent(goal.currentAmount, goal.targetAmount);
               const remaining = (goal.targetAmount || 0) - (goal.currentAmount || 0);
 
               return (
@@ -238,15 +277,6 @@ export default function GoalsPage() {
                           </Typography>
                         )}
                       </Stack>
-
-                      <LinearProgress
-                        variant="determinate"
-                        value={pct}
-                        color={pct >= 100 ? 'success' : 'primary'}
-                      />
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                        {Math.round(pct)}% complete
-                      </Typography>
 
                       {goal.notes && (
                         <>

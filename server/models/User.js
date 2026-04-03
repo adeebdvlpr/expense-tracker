@@ -65,6 +65,13 @@ const UserSchema = new mongoose.Schema({
     enum: ['monthly', 'annual', 'weekly', 'rolling'],
   },
 
+  // Overall monthly budget cap (optional — stored on user, not period-specific)
+  overallMonthlyBudget: {
+    type: Number,
+    required: false,
+    min: 0,
+  },
+
   // for third-party auth later
   // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
   // googleId: { type: String }

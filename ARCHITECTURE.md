@@ -444,3 +444,101 @@ Deviations from plan: none.
 
 Files NOT modified: `GoalsWidget.js`, `ExpandableWidget.js`, `ExpenseTracker.js`, `ExpenseChart.js`, `BudgetWidget.js`, `theme.js`, `api.js`, all server files, all test files.
 Deviations from plan: none.
+
+---
+
+**2026-04-02 — Change 3.0.2 (UNPLANNED — Revision of Change 3 output + Budget Page Overhaul):**
+
+> **Deviation from build order:** This session was not in the original Change sequence. It was approved by the user after reviewing Change 3 output and requesting revisions to the Goals visualizations and a comprehensive Budget page overhaul. It is documented here as an addendum to Change 3, not as a new numbered change. Change 4 has not yet begun.
+
+### Sub-step 5a — GoalsPage.js: Progress Overview replaced with horizontal bars
+- Removed the `PieChart` import and `chartData` useMemo entirely from `GoalsPage.js`.
+- Replaced the PieChart "Progress Overview" Paper with a scannable horizontal-bar summary. Each row: goal name (noWrap, flex:1) | LinearProgress (flex:3, height 10, borderRadius 5, colored via `'& .MuiLinearProgress-bar'` sx slot) | percentage label (caption, 36px fixed) | current/target amounts (caption, muted, 130px fixed). Color thresholds: `success.main` ≥75%, `warning.main` ≥40%, `info.main` <40%. Paper uses `background: "rgba(247, 249, 252, 0.9)"`, elevation 0, no border — matching GoalsWidget style. Only shown when `activeStatus === 'active' && goals.length > 0`.
+
+### Sub-step 5b — GoalsPage.js: LinearProgress block under goal cards (document-only)
+- The user manually commented out the LinearProgress + "X% complete" caption block beneath each goal card in `GoalsPage.js` prior to this session. No code change was applied in this session. This is documented here for completeness.
+
+### Sub-step 5c — GoalProgressChart.js: PieChart → Gauge radial arc
+- Complete rewrite of `GoalProgressChart.js` in-place. Same props interface: `currentAmount`, `targetAmount`, `currency`, `size` (default 120).
+- Replaced `PieChart` implementation with `Gauge` from `@mui/x-charts/Gauge`. Arc: `startAngle: -110`, `endAngle: 110` (220° open-bottom arc). Center text via `text={({ value }) => \`${value}%\`}` prop — no manual overlay Box needed.
+- Colors via `gaugeClasses.valueArc` sx: `success.main` ≥75%, `info.main` ≥40%, `primary.main` <40%. Track via `gaugeClasses.referenceArc`: `action.disabledBackground`. Text via `gaugeClasses.valueText`: fontWeight 700, fontSize `1rem` (size ≥ 100) or `0.75rem`, fill `text.primary`. All colors from `useTheme()`.
+- Removed PieChart import and center overlay Box. Wrapped Gauge in `Box` with `width: size, height: size, flexShrink: 0`.
+
+### Sub-step 5d — GoalsWidget.js: LinearProgress list → double donut PieChart
+- Removed `.slice(0, 3)` cap — widget now fetches ALL active goals.
+- Replaced the `goals.map(LinearProgress)` Stack with a concentric double-ring `PieChart` (height 200):
+  - Outer ring: `targetAmount` per goal — `innerRadius: 46, outerRadius: 78`.
+  - Inner ring: `currentAmount` per goal — `innerRadius: 16, outerRadius: 40`.
+  - Both: `paddingAngle: 2, cornerRadius: 3`. Colors from `theme.palette.donutPalette[i % len]`; inner ring uses same colors with `'aa'` opacity suffix appended.
+  - Both series: `slots={{ legend: () => null }}` — no legend, no tooltip.
+- Center overlay (absolutely-positioned Box over PieChart): default state shows total progress % + "of total goals" caption; hovered state (via `onHighlightChange`) shows that goal's % + name + saved amount.
+- Added `useState` for `highlighted` and `useTheme` for `donutPalette`. Paper, header, and footer link unchanged.
+
+### Sub-step 5e — BudgetForm.js: inline form → MUI Dialog
+- Complete rewrite as MUI Dialog, modeled after GoalForm.js.
+- Props: `open`, `onClose`, `onSave`, `budget` (null = Add), `defaultPeriod`.
+- Add mode: all fields editable (period, category, amount). Edit mode: period and category displayed as read-only Typography (changing either would create a new entry via upsert key); only amount is editable.
+- `useEffect` on `[open, budget]` resets form state. Validation: period + category required in Add only; amount > 0 always.
+- Dialog: `maxWidth="sm"`, `fullWidth`, `PaperProps: { borderRadius: '14px' }`. DialogActions: Cancel (text) + Submit (contained), disabled while saving. Parent is responsible for closing — form calls `onSave` and parent calls `onClose` on success.
+
+### Sub-step 5f — BudgetChart.js: pie/bar chart → horizontal bar overview
+- Complete redesign. New props: `budgets, currency, totalBudget, totalSpent, overallBudget`. Old props `chartType` and `monthlyIncome` removed.
+- Per-category rows: category name (flex:1) | progress track (flex:3, height 22, borderRadius 6) | spent/budget label (fixed right). Fill color: `success.main` ≤80%, `warning.main` 80–100%, `error.main` over. Dollar amount inside bar when pct > 15, outside when ≤ 15. Over-budget rows: `bgcolor: alpha(error.main, 0.04)`.
+- Summary section (below Divider): overall bar + "Budget • Spent • Remaining" caption. If `overallBudget` is provided, shows cap note below. Empty state if `budgets.length === 0`. Paper: `elevation={0}`, `background: "rgba(247, 249, 252, 0.9)"`.
+- `alpha` imported from `@mui/material/styles` for over-budget row tint.
+
+### Sub-step 5g — BudgetsPage.js: comprehensive overhaul (G1–G12)
+- **G1** (server): `server/models/User.js` — added `overallMonthlyBudget: { type: Number, required: false, min: 0 }`. Stored on User (not period-specific) — deliberate simplification: a monthly cap is a user-level preference, not tied to any individual period.
+- **G2** (server): `server/controllers/userController.js` — added `overallMonthlyBudget` to destructure + $set/$unset logic (same pattern as `monthlyIncome` — clears if null/empty, sets if provided).
+- **G3**: Header row: Stack with title/subtitle Box + "Add Budget" contained Button (`onClick` → `setFormOpen(true)`).
+- **G4**: Monthly cap Paper row (below header): `TextField type="number"` for `overallBudgetInput` + SaveIcon `IconButton`. On save: calls `updateMe({ overallMonthlyBudget })`, updates local state, shows Snackbar. Loaded from `getMe()` on mount.
+- **G5**: Removed "OVERVIEW NUMBERS" Paper (total budget / spent / remaining). This information is now in `BudgetChart`.
+- **G6**: Added MUI Tabs: "Active" (tab 0 = current month) / "Archived" (tab 1 = `archivedPeriod` with month `TextField` picker). `activePeriod` derived from tab. `useEffect` reacts to both `activeTab` and `archivedPeriod`.
+- **G7**: `BudgetChart` updated to new props signature: `budgets, currency, totalBudget, totalSpent, overallBudget`. Removed `chartType` and `monthlyIncome`.
+- **G8**: Removed inline `BudgetForm` Paper entirely.
+- **G9**: Budget list title changed from `"Budgets for {YYYY-MM}"` to `"Budgets for {Month Year}"` via `new Date(\`${period}-01\`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })`.
+- **G10**: Each budget card: replaced LinearProgress + "X% used" caption with inline `Gauge` (width 80, height 80, same `startAngle/endAngle` as GoalProgressChart, `gaugeClasses` sx). Added Edit `IconButton` (left of Delete) → opens BudgetForm in edit mode.
+- **G11**: `<BudgetForm>` Dialog rendered at page root. `handleSaveBudget` closes the dialog (`setFormOpen(false)`) on success.
+- **G12**: Replaced `setError`/`setSuccess` + inline Alert boxes with Snackbar + Alert pattern (same as GoalsPage). Loading `LinearProgress` moved to header area.
+
+### Files modified this session
+- `client/src/pages/GoalsPage.js`
+- `client/src/components/GoalProgressChart.js`
+- `client/src/components/GoalsWidget.js`
+- `client/src/components/BudgetForm.js`
+- `client/src/components/BudgetChart.js`
+- `client/src/pages/BudgetsPage.js`
+- `server/models/User.js`
+- `server/controllers/userController.js`
+
+### Files NOT modified this session
+`GoalForm.js` (reference only), `AppHeader.js`, `theme.js`, `ExpenseTracker.js`, `ExpenseChart.js`, `api.js`, `Budgets.js`, `budgetController.js`, all test files.
+
+### Deviations from plan
+- `overallMonthlyBudget` is stored on the `User` model (not per-period) — deliberate simplification. A monthly budget cap is a user preference, not a period-specific data point.
+- Change 3 is now considered fully complete including 3.0.2 revisions. The original Change 3 GoalProgressChart (PieChart donut) has been superseded by the Gauge implementation.
+
+---
+
+### Post-implementation tweaks — GoalsWidget.js (applied after initial 3.0.2 review)
+
+All changes are to `client/src/components/GoalsWidget.js` only.
+
+**Sizing (user-requested, applied by Claude):**
+- PieChart `height` increased 200 → 260 (+30%) then manually adjusted to 240 by user.
+- Outer ring: `innerRadius 46→60`, `outerRadius 78→91` (radii scaled ×1.3, ring width thinned 25%).
+- Inner ring: initially scaled to `innerRadius 21, outerRadius 44`, then shifted outward to `innerRadius 33, outerRadius 56` to reduce gap to outer ring from 16px to 4px. Outer ring was not modified during gap reduction.
+- Tooltip popup suppressed: `slots={{ legend: () => null, tooltip: () => null }}`.
+
+**Whitespace (user-requested, applied by Claude then refined by user):**
+- Header `mb` reduced from `1.5` → `0.75` → user further adjusted to `0.3`.
+- Footer `mt` reduced from `1.5` → `0.75`. Footer `pt` reduced from `1.5` → `0.3` (user adjusted).
+
+**Hover center-overlay differentiation (user-requested, partially complete):**
+- Intent: hovering outer ring segment shows that goal's **target amount**; hovering inner ring segment shows that goal's **progress (saved) amount**.
+- Claude's implementation used `highlighted.seriesIndex` — incorrect (field does not exist on the `onHighlightChange` payload).
+- User manually assigned `id: 1` to the outer series and `id: 0` to the inner series in the PieChart JSX.
+- Current logic `(highlighted.seriesId ? true : false)` is still broken: `seriesId === 0` (inner ring) is falsy, so `isOuterRing` is always `false`, and both rings show `currentAmount`. A TODO comment is left in the file.
+- **Known outstanding issue:** The correct fix is `const isOuterRing = highlighted.seriesId === 1` — this was not finalised before the session closed.
+
+**Default center label:** changed from `'of total goals'` to `'Total goals'` (user edit).
