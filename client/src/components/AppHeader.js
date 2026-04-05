@@ -25,6 +25,7 @@ const NAV_TABS = [
   { label: 'Dashboard', path: '/app' },
   { label: 'Budgets', path: '/budgets' },
   { label: 'Goals', path: '/goals' },
+  { label: 'Recurring', path: '/recurring' },
   { label: 'Account', path: '/account' },
 ];
 

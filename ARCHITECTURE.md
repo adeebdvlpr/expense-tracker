@@ -52,7 +52,7 @@ expense-tracker/
 │   │   ├── Expense.js
 │   │   ├── Budgets.js
 │   │   ├── Goal.js
-│   │   ├── RecurringPayment.js       ← [Change 4]
+│   │   ├── RecurringPayment.js
 │   │   ├── Asset.js                  ← [Change 5]
 │   │   ├── LifeEvent.js              ← [Change 5]
 │   │   ├── AIPrediction.js           ← [Change 5]
@@ -63,7 +63,7 @@ expense-tracker/
 │   │   ├── expenseController.js
 │   │   ├── budgetController.js
 │   │   ├── goalController.js
-│   │   ├── recurringController.js    ← [Change 4]
+│   │   ├── recurringController.js
 │   │   ├── assetController.js        ← [Change 5]
 │   │   ├── lifeEventController.js    ← [Change 5]
 │   │   ├── predictionController.js   ← [Change 5]
@@ -74,13 +74,13 @@ expense-tracker/
 │   │   ├── users.js
 │   │   ├── budgets.js
 │   │   ├── goals.js
-│   │   ├── recurring.js              ← [Change 4]
+│   │   ├── recurring.js
 │   │   ├── assets.js                 ← [Change 5]
 │   │   ├── lifeEvents.js             ← [Change 5]
 │   │   ├── predictions.js            ← [Change 5]
 │   │   └── notifications.js          ← [Change 5]
 │   ├── services/
-│   │   ├── recurringScheduler.js     ← [Change 4] node-cron job
+│   │   ├── recurringScheduler.js
 │   │   ├── aiService.js              ← [Change 5] SINGLE AI gateway
 │   │   ├── predictionEngine.js       ← [Change 5] business logic
 │   │   └── notificationService.js    ← [Change 5]
@@ -106,7 +106,7 @@ expense-tracker/
         │   ├── AccountPage.js
         │   ├── BudgetsPage.js
         │   ├── GoalsPage.js
-        │   ├── RecurringPage.js      ← [Change 4]
+        │   ├── RecurringPage.js
         │   ├── AssetsPage.js         ← [Change 5]
         │   ├── PredictionsPage.js    ← [Change 5]
         │   └── LifeEventsPage.js     ← [Change 5]
@@ -155,7 +155,7 @@ expense-tracker/
 | `/account` | AccountPage | Protected |
 | `/budgets` | BudgetsPage | Protected |
 | `/goals` | GoalsPage | Protected |
-| `/recurring` | RecurringPage | Protected [Change 4] |
+| `/recurring` | RecurringPage | Protected |
 | `/assets` | AssetsPage | Protected [Change 5] |
 | `/predictions` | PredictionsPage | Protected [Change 5] |
 | `/life-events` | LifeEventsPage | Protected [Change 5] |
@@ -180,7 +180,7 @@ expense-tracker/
 
 **Expense**
 - `user`, `description`, `amount`, `category`, `date`
-- **Pending additions:** `isRecurring: Boolean`, `recurringPaymentId: ObjectId ref RecurringPayment`
+- `isRecurring: Boolean` (default false), `recurringPaymentId: ObjectId ref RecurringPayment` (optional)
 
 **Goal**
 - `user`, `name`, `targetAmount`, `currentAmount`, `targetDate`, `notes`, `currency`, `status`
@@ -189,7 +189,7 @@ expense-tracker/
 **Budgets**
 - `user`, `period` (YYYY-MM), `category`, `amount`, `currency`
 
-### Planned New Models
+### New Models (Change 4)
 
 **RecurringPayment** — defines a repeating expense pattern
 - `user`, `description`, `amount`, `category`, `interval` (daily/weekly/monthly/annual)
@@ -542,3 +542,41 @@ All changes are to `client/src/components/GoalsWidget.js` only.
 - **Known outstanding issue:** The correct fix is `const isOuterRing = highlighted.seriesId === 1` — this was not finalised before the session closed.
 
 **Default center label:** changed from `'of total goals'` to `'Total goals'` (user edit).
+
+---
+
+**2026-04-03 — Change 4 (Recurring Payments):**
+
+### What was built
+
+Full recurring payments feature: backend data model, CRUD API, daily auto-log scheduler, and a complete frontend page with add/edit/delete/manual-trigger UI.
+
+### Backend files
+
+- `server/models/RecurringPayment.js` — NEW. Fields: `user`, `description`, `amount`, `category`, `interval` (enum), `startDate`, `endDate`, `nextDueDate` (indexed), `isActive`, `lastLoggedDate`.
+- `server/models/Expense.js` — Added `isRecurring: Boolean` (default false) and `recurringPaymentId: ObjectId ref RecurringPayment` (optional). Backward-compatible with all existing tests.
+- `server/controllers/recurringController.js` — NEW. Five exports: `listRecurring`, `createRecurring`, `updateRecurring`, `deleteRecurring`, `triggerRecurring`. Includes `computeNextDueDate` helper (walks startDate forward by interval until result is in the future) and `advanceNextDueDate` helper (single interval step). All operations enforce user ownership.
+- `server/routes/recurring.js` — NEW. Express router with express-validator rules. POST validates description/amount/category/interval/startDate. PATCH uses `.optional()` on all fields. DELETE + trigger validate `:id` as MongoId. Route layout: `GET /`, `POST /`, `PATCH /:id`, `DELETE /:id`, `POST /:id/trigger`.
+- `server/services/recurringScheduler.js` — NEW. node-cron job at `'5 0 * * *'` (00:05 daily). Queries `isActive=true AND nextDueDate <= now`. Skips any payment whose `lastLoggedDate` falls on the same UTC calendar day (duplicate guard). Creates an Expense with `isRecurring:true` + `recurringPaymentId` set. Advances `nextDueDate` and sets `lastLoggedDate`. Logs processed/skipped count with ISO timestamp. Exports `startScheduler()`.
+- `server/server.js` — Imports `recurringRoutes` (registered at `/api/recurring`) and `startScheduler`. Calls `startScheduler()` inside the MongoDB `.then()` callback, guarded by `NODE_ENV !== 'test'`.
+
+### Frontend files
+
+- `client/src/utils/api.js` — Added `getRecurring`, `createRecurring`, `updateRecurring`, `deleteRecurring`, `triggerRecurring`.
+- `client/src/components/AppHeader.js` — Added `{ label: 'Recurring', path: '/recurring' }` to `NAV_TABS` between Goals and Account (index 3).
+- `client/src/App.js` — Imported `RecurringPage`, added `/recurring` protected route.
+- `client/src/pages/RecurringPage.js` — NEW. Wrapped in AppLayout. Header with title + "Add Payment" button. MUI Tabs for Active / Inactive sections. Payment cards show description, amount (formatMoney), category, interval Chip, next due date, last logged date. Per-card actions: Edit IconButton, Delete IconButton, "Log Now" IconButton with Tooltip ("Manually log this payment now"). Inline `RecurringForm` Dialog (add/edit) with full validation, same pattern as GoalForm/BudgetForm. Snackbar for success/error feedback. All colors via `useTheme()` — no hardcoded hex values.
+
+### Files NOT modified
+`GoalsWidget.js`, `GoalsPage.js`, `BudgetsPage.js`, `BudgetChart.js`, `BudgetForm.js`, `theme.js`, `ExpenseTracker.js`, all test files.
+
+### Deviations from plan
+None.
+
+### Prerequisite
+`node-cron` is NOT yet in `package.json`. Run `npm install node-cron` in the project root before starting the server. The scheduler import will throw a `Cannot find module 'node-cron'` error at boot until this is installed.
+
+### Known issues carried forward
+
+**GoalsWidget.js — isOuterRing hover logic (carry-forward from Change 3.0.2):**
+`highlighted.seriesId === 1` is the correct fix (series id:1 = outer ring, id:0 = inner ring). Currently `(highlighted.seriesId ? true : false)` always returns false for the inner ring because `seriesId 0` is falsy, so both rings show `currentAmount` on hover instead of target vs. saved. Not fixed in Change 4 — carry forward to next available session.
