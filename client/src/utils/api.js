@@ -130,4 +130,30 @@ export const deleteIncome = async (id) => {
   return response.data;
 };
 
+/// --------- recurring payment APIs (v1)
+export const getRecurring = async () => {
+  const response = await api.get('/api/recurring');
+  return response.data;
+};
+
+export const createRecurring = async (payload) => {
+  const response = await api.post('/api/recurring', payload);
+  return response.data;
+};
+
+export const updateRecurring = async (id, payload) => {
+  const response = await api.patch(`/api/recurring/${id}`, payload);
+  return response.data;
+};
+
+export const deleteRecurring = async (id) => {
+  const response = await api.delete(`/api/recurring/${id}`);
+  return response.data;
+};
+
+export const triggerRecurring = async (id) => {
+  const response = await api.post(`/api/recurring/${id}/trigger`);
+  return response.data;
+};
+
 export default api;

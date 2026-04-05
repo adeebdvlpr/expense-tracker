@@ -10,6 +10,7 @@ import AuthPage from './pages/AuthPage';
 import AccountPage from './pages/AccountPage';
 import BudgetsPage from './pages/BudgetsPage';
 import GoalsPage from './pages/GoalsPage';
+import RecurringPage from './pages/RecurringPage';
 
 export const ThemeContext = createContext({
   selectedTheme: DEFAULT_THEME,
@@ -87,6 +88,10 @@ const App = () => {
             <Route
               path="/goals"
               element={isAuthenticated ? <GoalsPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="/recurring"
+              element={isAuthenticated ? <RecurringPage /> : <Navigate to="/auth" replace />}
             />
 
                   {/* CATCH ALL ...*/}
