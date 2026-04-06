@@ -17,6 +17,7 @@ exports.updateMe = async (req, res) => {
     const {
       dateOfBirth, reason, monthlyIncome, currency, dashboardPrefs,
       selectedTheme, customCategories, incomeType, overallMonthlyBudget,
+      location, onboardingCompleted,
     } = req.body;
 
     const $set = {};
@@ -78,6 +79,25 @@ exports.updateMe = async (req, res) => {
     if ('overallMonthlyBudget' in req.body) {
       if (overallMonthlyBudget === null || overallMonthlyBudget === '') $unset.overallMonthlyBudget = '';
       else $set.overallMonthlyBudget = overallMonthlyBudget;
+    }
+
+    // location: merge provided sub-fields; clear entire sub-doc if null
+    if ('location' in req.body) {
+      if (!location) {
+        $unset.location = '';
+      } else {
+        for (const key of ['city', 'state', 'country', 'postalCode']) {
+          if (Object.prototype.hasOwnProperty.call(location, key)) {
+            $set[`location.${key}`] = location[key];
+          }
+        }
+      }
+    }
+
+    // onboardingCompleted: allow clearing (set to false)
+    if ('onboardingCompleted' in req.body) {
+      if (onboardingCompleted === null || onboardingCompleted === '') $unset.onboardingCompleted = '';
+      else $set.onboardingCompleted = Boolean(onboardingCompleted);
     }
 
     const update = {};

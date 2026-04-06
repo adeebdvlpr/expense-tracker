@@ -10,6 +10,9 @@ const budgetRoutes = require('./routes/budgets');
 const goalRoutes = require('./routes/goals');
 const incomeRoutes = require('./routes/income');
 const recurringRoutes = require('./routes/recurring');
+const assetRoutes = require('./routes/assets');
+const lifeEventRoutes = require('./routes/lifeEvents');
+const notificationRoutes = require('./routes/notifications');
 const { startScheduler } = require('./services/recurringScheduler');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -96,6 +99,9 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/income', incomeRoutes);
 app.use('/api/recurring', recurringRoutes);
+app.use('/api/assets', assetRoutes);
+app.use('/api/life-events', lifeEventRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 mongoose.connect(process.env.MONGO_URI, {

@@ -26,6 +26,8 @@ const NAV_TABS = [
   { label: 'Budgets', path: '/budgets' },
   { label: 'Goals', path: '/goals' },
   { label: 'Recurring', path: '/recurring' },
+  { label: 'Assets', path: '/assets' },
+  { label: 'Life Events', path: '/life-events' },
   { label: 'Account', path: '/account' },
 ];
 

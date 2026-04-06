@@ -24,6 +24,16 @@ const GoalSchema = new mongoose.Schema(
       enum: ['active', 'completed', 'archived'],
       index: true,
     },
+    source: {
+      type: String,
+      enum: ['user', 'ai'],
+      default: 'user',
+    },
+    predictionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AIPrediction',
+      default: null,
+    },
   },
   { timestamps: true }
 );

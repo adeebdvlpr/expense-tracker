@@ -156,4 +156,62 @@ export const triggerRecurring = async (id) => {
   return response.data;
 };
 
+/// --------- assets APIs (stub — implemented in 5b)
+export const getAssets = async () => {
+  const response = await api.get('/api/assets');
+  return response.data;
+};
+
+export const createAsset = async (payload) => {
+  const response = await api.post('/api/assets', payload);
+  return response.data;
+};
+
+export const updateAsset = async (id, payload) => {
+  const response = await api.patch(`/api/assets/${id}`, payload);
+  return response.data;
+};
+
+export const deleteAsset = async (id) => {
+  const response = await api.delete(`/api/assets/${id}`);
+  return response.data;
+};
+
+/// --------- life events APIs (stub — implemented in 5c)
+export const getLifeEvents = async () => {
+  const response = await api.get('/api/life-events');
+  return response.data;
+};
+
+export const createLifeEvent = async (payload) => {
+  const response = await api.post('/api/life-events', payload);
+  return response.data;
+};
+
+export const updateLifeEvent = async (id, payload) => {
+  const response = await api.patch(`/api/life-events/${id}`, payload);
+  return response.data;
+};
+
+export const deleteLifeEvent = async (id) => {
+  const response = await api.delete(`/api/life-events/${id}`);
+  return response.data;
+};
+
+/// --------- notifications APIs (stub — implemented in 5f)
+export const getNotifications = async () => {
+  const response = await api.get('/api/notifications');
+  return response.data;
+};
+
+export const markNotificationRead = async (id) => {
+  const response = await api.patch(`/api/notifications/${id}`);
+  return response.data;
+};
+
+export const markAllNotificationsRead = async () => {
+  const response = await api.patch('/api/notifications/mark-all-read');
+  return response.data;
+};
+
 export default api;

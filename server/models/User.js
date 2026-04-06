@@ -72,6 +72,17 @@ const UserSchema = new mongoose.Schema({
     min: 0,
   },
 
+  // Location (for AI projection regionalisation)
+  location: {
+    city:       { type: String, trim: true },
+    state:      { type: String, trim: true },
+    country:    { type: String, trim: true },
+    postalCode: { type: String, trim: true },
+  },
+
+  // Onboarding completion flag
+  onboardingCompleted: { type: Boolean, default: false },
+
   // for third-party auth later
   // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
   // googleId: { type: String }

@@ -23,7 +23,7 @@ The app is a portfolio-grade production project. Code quality, visual consistenc
 - **Logging:** Morgan (dev/prod format) + correlation IDs (x-request-id)
 - **Password hashing:** bcryptjs
 - **Testing:** Jest + Supertest + mongodb-memory-server (in-band, NODE_ENV=test)
-- **Scheduler (planned):** node-cron (for recurring payments)
+- **Scheduler:** node-cron (for recurring payments)
 - **AI (planned):** @anthropic-ai/sdk, all calls routed through `server/services/aiService.js` — never scattered across controllers
 
 ### Frontend
@@ -53,10 +53,10 @@ expense-tracker/
 │   │   ├── Budgets.js
 │   │   ├── Goal.js
 │   │   ├── RecurringPayment.js
-│   │   ├── Asset.js                  ← [Change 5]
-│   │   ├── LifeEvent.js              ← [Change 5]
-│   │   ├── AIPrediction.js           ← [Change 5]
-│   │   └── Notification.js           ← [Change 5]
+│   │   ├── Asset.js
+│   │   ├── LifeEvent.js
+│   │   ├── AIPrediction.js
+│   │   └── Notification.js
 │   ├── controllers/
 │   │   ├── authController.js
 │   │   ├── userController.js
@@ -64,10 +64,10 @@ expense-tracker/
 │   │   ├── budgetController.js
 │   │   ├── goalController.js
 │   │   ├── recurringController.js
-│   │   ├── assetController.js        ← [Change 5]
-│   │   ├── lifeEventController.js    ← [Change 5]
-│   │   ├── predictionController.js   ← [Change 5]
-│   │   └── notificationController.js ← [Change 5]
+│   │   ├── assetController.js
+│   │   ├── lifeEventController.js
+│   │   ├── predictionController.js   ← [Change 5e]
+│   │   └── notificationController.js
 │   ├── routes/
 │   │   ├── auth.js
 │   │   ├── expenses.js
@@ -75,15 +75,15 @@ expense-tracker/
 │   │   ├── budgets.js
 │   │   ├── goals.js
 │   │   ├── recurring.js
-│   │   ├── assets.js                 ← [Change 5]
-│   │   ├── lifeEvents.js             ← [Change 5]
-│   │   ├── predictions.js            ← [Change 5]
-│   │   └── notifications.js          ← [Change 5]
+│   │   ├── assets.js
+│   │   ├── lifeEvents.js
+│   │   ├── predictions.js            ← [Change 5e]
+│   │   └── notifications.js
 │   ├── services/
 │   │   ├── recurringScheduler.js
-│   │   ├── aiService.js              ← [Change 5] SINGLE AI gateway
-│   │   ├── predictionEngine.js       ← [Change 5] business logic
-│   │   └── notificationService.js    ← [Change 5]
+│   │   ├── aiService.js              ← [Change 5d] SINGLE AI gateway
+│   │   ├── predictionEngine.js       ← [Change 5d] business logic
+│   │   └── notificationService.js    ← [Change 5f]
 │   ├── middleware/
 │   │   ├── auth.js
 │   │   └── validate.js
@@ -107,9 +107,9 @@ expense-tracker/
         │   ├── BudgetsPage.js
         │   ├── GoalsPage.js
         │   ├── RecurringPage.js
-        │   ├── AssetsPage.js         ← [Change 5]
-        │   ├── PredictionsPage.js    ← [Change 5]
-        │   └── LifeEventsPage.js     ← [Change 5]
+        │   ├── AssetsPage.js
+        │   ├── PredictionsPage.js    ← [Change 5e]
+        │   └── LifeEventsPage.js
         ├── components/
         │   ├── AppLayout.js
         │   ├── AppHeader.js
@@ -125,11 +125,11 @@ expense-tracker/
         │   ├── SummaryMetricCard.js
         │   ├── ExpandableWidget.js
         │   ├── GoalProgressChart.js
-        │   ├── AssetForm.js          ← [Change 5]
-        │   ├── AssetCard.js          ← [Change 5]
-        │   ├── PredictionCard.js     ← [Change 5]
-        │   ├── LifeEventForm.js      ← [Change 5]
-        │   ├── NotificationBell.js   ← [Change 5]
+        │   ├── AssetForm.js
+        │   ├── AssetCard.js
+        │   ├── PredictionCard.js     ← [Change 5e]
+        │   ├── LifeEventForm.js      ← [Change 5c]
+        │   ├── NotificationBell.js   ← [Change 5f]
         │   ├── OnboardingWalkthrough.js ← [Change 6]
         │   └── auth/
         │       ├── Login.js
@@ -156,9 +156,9 @@ expense-tracker/
 | `/budgets` | BudgetsPage | Protected |
 | `/goals` | GoalsPage | Protected |
 | `/recurring` | RecurringPage | Protected |
-| `/assets` | AssetsPage | Protected [Change 5] |
-| `/predictions` | PredictionsPage | Protected [Change 5] |
-| `/life-events` | LifeEventsPage | Protected [Change 5] |
+| `/assets` | AssetsPage | Protected |
+| `/predictions` | PredictionsPage | Protected [Change 5e] |
+| `/life-events` | LifeEventsPage | Protected |
 
 ---
 
@@ -229,23 +229,21 @@ expense-tracker/
 - `GET /api/budgets?period=YYYY-MM`, `POST /api/budgets`, `DELETE /api/budgets/:id`
 - `GET /api/goals?status=`, `POST /api/goals`, `PATCH /api/goals/:id`, `DELETE /api/goals/:id`
 - `GET /api/income`, `POST /api/income`, `DELETE /api/income/:id` *(new — 2b session)*
+- `GET /api/recurring`, `POST /api/recurring`, `PATCH /api/recurring/:id`, `DELETE /api/recurring/:id`, `POST /api/recurring/:id/trigger` *(Change 4)*
+- `GET /api/assets`, `POST /api/assets`, `PATCH /api/assets/:id`, `DELETE /api/assets/:id` *(Change 5b)*
+
+### Stub Endpoints (registered, return 501 — full implementation pending)
+
+**Life Events (`/api/life-events`)** — full CRUD in Change 5c
+- `GET`, `POST`, `PATCH /:id`, `DELETE /:id`
+
+**Notifications (`/api/notifications`)** — full implementation in Change 5f
+- `GET`, `PATCH /:id`, `PATCH /mark-all-read`
 
 ### Planned New Endpoints
 
-**Recurring (`/api/recurring`)**
-- `GET`, `POST`, `PATCH /:id`, `DELETE /:id`, `POST /:id/trigger`
-
-**Assets (`/api/assets`)**
-- `GET`, `POST`, `PATCH /:id`, `DELETE /:id`
-
-**Life Events (`/api/life-events`)**
-- `GET`, `POST`, `PATCH /:id`, `DELETE /:id`
-
-**AI Predictions (`/api/predictions`)**
+**AI Predictions (`/api/predictions`)** — Change 5e
 - `GET`, `POST /generate`, `PATCH /:id`, `DELETE /:id`
-
-**Notifications (`/api/notifications`)**
-- `GET`, `PATCH /:id`, `PATCH /mark-all-read`
 
 ---
 
@@ -579,4 +577,91 @@ None.
 ### Known issues carried forward
 
 **GoalsWidget.js — isOuterRing hover logic (carry-forward from Change 3.0.2):**
-`highlighted.seriesId === 1` is the correct fix (series id:1 = outer ring, id:0 = inner ring). Currently `(highlighted.seriesId ? true : false)` always returns false for the inner ring because `seriesId 0` is falsy, so both rings show `currentAmount` on hover instead of target vs. saved. Not fixed in Change 4 — carry forward to next available session.
+`highlighted.seriesId === 1` is the correct fix (series id:1 = outer ring, id:0 = inner ring). Currently `(highlighted.seriesId ? true : false)` always returns false for the inner ring because `seriesId 0` is falsy, so both rings show `currentAmount` on hover instead of target vs. saved. Not fixed in Change 4 or 5a — carry forward to next available session.
+
+---
+
+**2026-04-05 — Change 5a (AI: Data Model Foundations):**
+
+### What was built
+
+All new data models, field additions, stub routes/controllers, skeleton pages, and nav wiring needed before the AI feature can be built. No AI SDK installed. No business logic written.
+
+### New model files
+- `server/models/Asset.js` — NEW. Fields: user, name, type (enum), brand, purchaseYear, purchasePrice, warrantyLengthYears, warrantyExpiryDate, condition, subtype, materialType, mileage, make, vehicleModel.
+- `server/models/LifeEvent.js` — NEW. Fields: user, type (enum), name, isActive, details (Mixed).
+- `server/models/AIPrediction.js` — NEW. Fields: user, sourceType (enum), sourceId, title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence, linkedGoalId, dismissed, aiProvider, rawPrompt, rawResponse.
+- `server/models/Notification.js` — NEW. Fields: user, type (enum), title, message, sourceType, sourceId, read, dismissed, scheduledFor.
+
+### Modified models
+- `server/models/User.js` — Added `location: { city, state, country, postalCode }` sub-document and `onboardingCompleted: Boolean` (default false).
+- `server/models/Goal.js` — Added `source: enum ['user','ai']` (default 'user') and `predictionId: ObjectId ref AIPrediction` (default null).
+
+### Stub backend (3 new route+controller pairs)
+- `server/controllers/assetController.js`, `server/routes/assets.js` — GET/POST/PATCH/:id/DELETE/:id → all return 501.
+- `server/controllers/lifeEventController.js`, `server/routes/lifeEvents.js` — same pattern.
+- `server/controllers/notificationController.js`, `server/routes/notifications.js` — GET / PATCH /:id / PATCH /mark-all-read → all return 501.
+- All three registered in `server/server.js` at `/api/assets`, `/api/life-events`, `/api/notifications`.
+- `server/controllers/userController.js` — Extended `updateMe` to accept and persist `location` (merge via dot-notation, same pattern as dashboardPrefs) and `onboardingCompleted` (Boolean).
+
+### Frontend
+- `client/src/pages/AssetsPage.js` — NEW skeleton (AppLayout + "Coming soon.").
+- `client/src/pages/LifeEventsPage.js` — NEW skeleton (AppLayout + "Coming soon.").
+- `client/src/App.js` — Added `/assets` and `/life-events` protected routes.
+- `client/src/components/AppHeader.js` — Added Assets + Life Events to NAV_TABS (after Recurring, before Account).
+- `client/src/utils/api.js` — Added 11 stub functions: getAssets, createAsset, updateAsset, deleteAsset, getLifeEvents, createLifeEvent, updateLifeEvent, deleteLifeEvent, getNotifications, markNotificationRead, markAllNotificationsRead.
+
+### Files NOT modified
+`GoalsWidget.js`, `ExpenseTracker.js`, `theme.js`, `ExpenseChart.js`, `BudgetWidget.js`, all existing test files.
+
+### Test results
+expenses.test.js — PASS. budgets.test.js — PASS. auth.test.js — 1 pre-existing failure (username `user_${Date.now()}` exceeds 20-char regex limit; unrelated to this session; other auth tests pass).
+
+### Architecture.md corrections this session
+- Tech Stack: removed "planned" label from node-cron (live since Change 4).
+- API Endpoints: moved /api/recurring to Existing; added "Stub Endpoints" section for assets/life-events/notifications; kept /api/predictions under Planned.
+- Directory structure: removed `← [Change 5]` markers from all 5a-complete files; updated remaining markers to specific sub-change (5b/5c/5d/5e/5f).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5a. Carry forward.
+
+### Deviations from plan
+None.
+
+---
+
+**2026-04-05 — Change 5b (AI: Asset Inventory — CRUD + Frontend):**
+
+### What was built
+
+Full Asset Inventory feature: real backend CRUD replacing 4 x 501 stubs, two new frontend components, and a complete AssetsPage replacing the skeleton.
+
+### Backend files modified
+
+- `server/routes/assets.js` — Replaced bare stub routes with express-validator rules (POST: name + type required; all other fields optional with type/enum/range checks; PATCH: all optional + `param('id').isMongoId()`; DELETE: `param('id').isMongoId()`).
+- `server/controllers/assetController.js` — Replaced all four 501 stubs with real implementations: `listAssets` (find by user, sort createdAt desc), `createAsset` (whitelist fields, set user, return 201), `updateAsset` (ownership in query, `$set` only present fields, return updated or 404), `deleteAsset` (ownership in query, return message or 404). Follows goalController.js patterns exactly.
+
+### New backend test file
+
+- `server/tests/assets.test.js` — 5 smoke tests: POST 201 with valid payload, GET 200 returns array, PATCH 200 for owner, DELETE 200 for owner, GET 401 without token. All pass.
+
+### New frontend component files
+
+- `client/src/components/AssetForm.js` — MUI Dialog (`maxWidth="sm"`, `borderRadius: '14px'`, `slotProps`). Props: `open`, `onClose`, `onSave`, `asset`. Always-visible fields: name, type, brand, condition, purchaseYear, purchasePrice, warrantyLengthYears, warrantyExpiryDate. Conditionally visible on `type === 'vehicle'`: make, vehicleModel, mileage. Conditionally visible on `type === 'home_system'`: subtype, materialType. CloseIcon top-right. Cancel + Save (disabled while saving). Client-side validation: name + type required.
+- `client/src/components/AssetCard.js` — Paper `elevation={0}`, `borderRadius: '14px'`, `border: divider`. Shows name (h3), type Chip (outlined primary), condition colored Chip (excellent→success, good→info, fair→warning, poor→error). Brand, purchase year/price (formatMoney). Warranty section with expiry-date color logic (≤90 days → warning.main, expired → error.main). Vehicle-specific: make/model + mileage. Home-system-specific: subtype, materialType. Edit + Delete IconButtons. All colors via useTheme().
+
+### Frontend page modified
+
+- `client/src/pages/AssetsPage.js` — Full replacement of "Coming soon." skeleton. AppLayout wrapper retained. Header row (title + subtitle + "Add Asset" button). LinearProgress under header while loading. MUI Tabs: "All" always present; per-type tabs shown only when ≥2 types are represented. Stack of AssetCard components. Empty state Paper. Snackbar success/error feedback. Full CRUD flow via api.js functions: add, edit (dialog), delete (window.confirm guard).
+
+### Files NOT modified
+`GoalsWidget.js`, `ExpenseTracker.js`, `theme.js`, `LifeEventsPage.js`, `lifeEventController.js`, `notificationController.js`, `api.js` (stub functions were already correct from 5a).
+
+### Test results
+`assets.test.js` — 5 PASS. `expenses.test.js` — 2 PASS. `budgets.test.js` — 1 PASS. Total: 8/8 passed.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix (seriesId 0 = inner ring is falsy, so current `(highlighted.seriesId ? true : false)` always evaluates false, causing both rings to display `currentAmount` on hover). Not fixed in Change 5b. Carry forward.
+
+### Deviations from plan
+None.
