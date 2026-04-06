@@ -21,13 +21,25 @@ const TYPE_LABELS = {
   vehicle_ownership: 'Vehicle Ownership',
   medical:           'Medical',
   eldercare:         'Eldercare',
+  wedding:           'Wedding',
+  home_purchase:     'Home Purchase',
+  home_renovation:   'Home Renovation',
+  new_baby:          'New Baby',
+  retirement:        'Retirement',
+  relocation:        'Relocation',
   other:             'Other',
 };
 
 const CARE_LEVEL_LABELS = {
-  in_home:          'In-Home Care',
-  assisted_living:  'Assisted Living',
-  memory_care:      'Memory Care',
+  in_home:         'In-Home Care',
+  assisted_living: 'Assisted Living',
+  memory_care:     'Memory Care',
+};
+
+const FREQ_SUFFIX = {
+  one_time: ' (one-time)',
+  monthly:  '/mo',
+  annual:   '/yr',
 };
 
 function DetailRow({ label, value }) {
@@ -51,19 +63,19 @@ function TypeDetails({ lifeEvent, currency }) {
           </Typography>
         )}
         <DetailRow label="Age" value={d.age != null ? `${d.age} yr${d.age !== 1 ? 's' : ''}` : null} />
-        <DetailRow label="Est. monthly vet cost" value={d.estimatedMonthlyVetCost != null ? `${formatMoney(d.estimatedMonthlyVetCost, currency)}/mo` : null} />
       </Stack>
     );
   }
 
   if (type === 'college') {
-    const yearRange = d.startYear && d.endYear ? `${d.startYear}–${d.endYear}` : (d.startYear || d.endYear || null);
+    const yearRange = d.startYear && d.endYear
+      ? `${d.startYear}–${d.endYear}`
+      : (d.startYear || d.endYear || null);
     return (
       <Stack spacing={0.25} sx={{ mt: 0.5 }}>
-        <DetailRow label="Student" value={d.studentName} />
+        <DetailRow label="Student"     value={d.studentName} />
         <DetailRow label="Institution" value={d.institution} />
-        <DetailRow label="Years" value={yearRange} />
-        <DetailRow label="Est. annual cost" value={d.estimatedAnnualCost != null ? `${formatMoney(d.estimatedAnnualCost, currency)}/yr` : null} />
+        <DetailRow label="Years"       value={yearRange} />
       </Stack>
     );
   }
@@ -72,7 +84,6 @@ function TypeDetails({ lifeEvent, currency }) {
     return (
       <Stack spacing={0.25} sx={{ mt: 0.5 }}>
         <DetailRow label="Vehicle" value={d.vehicleDescription} />
-        <DetailRow label="Est. annual cost" value={d.estimatedAnnualCost != null ? `${formatMoney(d.estimatedAnnualCost, currency)}/yr` : null} />
       </Stack>
     );
   }
@@ -81,7 +92,6 @@ function TypeDetails({ lifeEvent, currency }) {
     return (
       <Stack spacing={0.25} sx={{ mt: 0.5 }}>
         <DetailRow label="Condition" value={d.condition} />
-        <DetailRow label="Est. monthly cost" value={d.estimatedMonthlyCost != null ? `${formatMoney(d.estimatedMonthlyCost, currency)}/mo` : null} />
       </Stack>
     );
   }
@@ -89,9 +99,8 @@ function TypeDetails({ lifeEvent, currency }) {
   if (type === 'eldercare') {
     return (
       <Stack spacing={0.25} sx={{ mt: 0.5 }}>
-        <DetailRow label="Person" value={d.personName} />
-        <DetailRow label="Care level" value={d.careLevel ? CARE_LEVEL_LABELS[d.careLevel] || d.careLevel : null} />
-        <DetailRow label="Est. monthly cost" value={d.estimatedMonthlyCost != null ? `${formatMoney(d.estimatedMonthlyCost, currency)}/mo` : null} />
+        <DetailRow label="Person"     value={d.personName} />
+        <DetailRow label="Care level" value={d.careLevel ? (CARE_LEVEL_LABELS[d.careLevel] || d.careLevel) : null} />
       </Stack>
     );
   }
@@ -101,6 +110,15 @@ function TypeDetails({ lifeEvent, currency }) {
 
 const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, onDelete }) => {
   const theme = useTheme();
+  const d = lifeEvent.details || {};
+
+  const costDisplay = d.estimatedCost != null
+    ? `${formatMoney(d.estimatedCost, currency)}${FREQ_SUFFIX[d.costFrequency] || ''}`
+    : null;
+
+  const targetDisplay = d.targetDate
+    ? new Date(d.targetDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : null;
 
   return (
     <Paper
@@ -133,6 +151,12 @@ const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, on
               color={lifeEvent.isActive ? 'success' : 'default'}
               sx={{ flexShrink: 0 }}
             />
+          </Stack>
+
+          {/* Universal fields */}
+          <Stack spacing={0.25}>
+            <DetailRow label="Est. cost" value={costDisplay} />
+            <DetailRow label="Target"    value={targetDisplay} />
           </Stack>
 
           {/* Type-specific details */}

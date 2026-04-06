@@ -31,7 +31,17 @@ describe('Life Events CRUD (basic)', () => {
     const res = await request(app)
       .post('/api/life-events')
       .set('x-auth-token', token)
-      .send({ name: 'Buddy the Dog', type: 'pet', details: { petName: 'Buddy', species: 'Dog' } })
+      .send({
+        name: 'Buddy the Dog',
+        type: 'pet',
+        details: {
+          petName: 'Buddy',
+          species: 'Dog',
+          estimatedCost: 150,
+          costFrequency: 'monthly',
+          targetDate: '2026-06-01',
+        },
+      })
       .expect(201);
 
     expect(res.body).toHaveProperty('_id');
@@ -39,6 +49,30 @@ describe('Life Events CRUD (basic)', () => {
     expect(res.body.type).toBe('pet');
     expect(res.body.isActive).toBe(true);
     expect(res.body.details.petName).toBe('Buddy');
+    expect(res.body.details.estimatedCost).toBe(150);
+    expect(res.body.details.costFrequency).toBe('monthly');
+  });
+
+  test('POST /api/life-events with type wedding returns 201', async () => {
+    const token = await getToken();
+
+    const res = await request(app)
+      .post('/api/life-events')
+      .set('x-auth-token', token)
+      .send({
+        name: 'Our Wedding',
+        type: 'wedding',
+        details: {
+          estimatedCost: 30000,
+          costFrequency: 'one_time',
+          targetDate: '2027-06-15',
+        },
+      })
+      .expect(201);
+
+    expect(res.body.type).toBe('wedding');
+    expect(res.body.details.estimatedCost).toBe(30000);
+    expect(res.body.details.costFrequency).toBe('one_time');
   });
 
   test('GET /api/life-events returns 200 with array', async () => {
@@ -74,12 +108,12 @@ describe('Life Events CRUD (basic)', () => {
     const res = await request(app)
       .patch(`/api/life-events/${id}`)
       .set('x-auth-token', token)
-      .send({ isActive: false, details: { personName: 'Dad', careLevel: 'in_home', estimatedMonthlyCost: 2000 } })
+      .send({ isActive: false, details: { personName: 'Dad', careLevel: 'in_home', estimatedCost: 2000, costFrequency: 'monthly' } })
       .expect(200);
 
     expect(res.body.isActive).toBe(false);
     expect(res.body.details.personName).toBe('Dad');
-    expect(res.body.details.estimatedMonthlyCost).toBe(2000);
+    expect(res.body.details.estimatedCost).toBe(2000);
   });
 
   test('DELETE /api/life-events/:id returns 200 for owner', async () => {

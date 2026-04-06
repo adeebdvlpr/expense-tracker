@@ -6,7 +6,10 @@ const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { listLifeEvents, createLifeEvent, updateLifeEvent, deleteLifeEvent } = require('../controllers/lifeEventController');
 
-const LIFE_EVENT_TYPES = ['pet', 'college', 'vehicle_ownership', 'medical', 'eldercare', 'other'];
+const LIFE_EVENT_TYPES = [
+  'pet', 'college', 'vehicle_ownership', 'medical', 'eldercare',
+  'wedding', 'home_purchase', 'home_renovation', 'new_baby', 'retirement', 'relocation', 'other',
+];
 
 router.get('/', auth, listLifeEvents);
 
