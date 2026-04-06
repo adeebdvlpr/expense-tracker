@@ -128,7 +128,8 @@ expense-tracker/
         │   ├── AssetForm.js
         │   ├── AssetCard.js
         │   ├── PredictionCard.js     ← [Change 5e]
-        │   ├── LifeEventForm.js      ← [Change 5c]
+        │   ├── LifeEventForm.js
+        │   ├── LifeEventCard.js
         │   ├── NotificationBell.js   ← [Change 5f]
         │   ├── OnboardingWalkthrough.js ← [Change 6]
         │   └── auth/
@@ -231,11 +232,9 @@ expense-tracker/
 - `GET /api/income`, `POST /api/income`, `DELETE /api/income/:id` *(new — 2b session)*
 - `GET /api/recurring`, `POST /api/recurring`, `PATCH /api/recurring/:id`, `DELETE /api/recurring/:id`, `POST /api/recurring/:id/trigger` *(Change 4)*
 - `GET /api/assets`, `POST /api/assets`, `PATCH /api/assets/:id`, `DELETE /api/assets/:id` *(Change 5b)*
+- `GET /api/life-events`, `POST /api/life-events`, `PATCH /api/life-events/:id`, `DELETE /api/life-events/:id` *(Change 5c)*
 
 ### Stub Endpoints (registered, return 501 — full implementation pending)
-
-**Life Events (`/api/life-events`)** — full CRUD in Change 5c
-- `GET`, `POST`, `PATCH /:id`, `DELETE /:id`
 
 **Notifications (`/api/notifications`)** — full implementation in Change 5f
 - `GET`, `PATCH /:id`, `PATCH /mark-all-read`
@@ -662,6 +661,44 @@ Full Asset Inventory feature: real backend CRUD replacing 4 x 501 stubs, two new
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix (seriesId 0 = inner ring is falsy, so current `(highlighted.seriesId ? true : false)` always evaluates false, causing both rings to display `currentAmount` on hover). Not fixed in Change 5b. Carry forward.
+
+### Deviations from plan
+None.
+
+---
+
+**2026-04-06 — Change 5c (AI: Life Events Module — CRUD + Frontend):**
+
+### What was built
+
+Full Life Events feature: real backend CRUD replacing 4 × 501 stubs, two new frontend components, and a complete LifeEventsPage replacing the skeleton.
+
+### Backend files modified
+
+- `server/routes/lifeEvents.js` — Replaced bare stub routes with express-validator rules (POST: name + type required; isActive optional boolean; details optional object; PATCH: all optional + `param('id').isMongoId()`; DELETE: `param('id').isMongoId()`). Follows assets.js pattern exactly.
+- `server/controllers/lifeEventController.js` — Replaced all four 501 stubs with real implementations: `listLifeEvents` (find by user, sort createdAt desc), `createLifeEvent` (whitelist name/type/isActive/details, set user, return 201), `updateLifeEvent` (ownership in query, `'field' in req.body` guard, `$set` update, 404 if not found), `deleteLifeEvent` (ownership in query, 404 if not found). `details` field replaced wholesale on PATCH — client always sends the full details object for the selected type; no dot-notation sub-field merge needed.
+
+### New backend test file
+
+- `server/tests/lifeEvents.test.js` — 5 smoke tests: POST 201 with valid payload (includes details sub-fields), GET 200 returns array, PATCH 200 for owner (isActive + details update), DELETE 200 for owner + confirms gone, GET 401 without token. All pass.
+
+### New frontend component files
+
+- `client/src/components/LifeEventForm.js` — MUI Dialog (`maxWidth="sm"`, `borderRadius: '14px'`, `slotProps`). Props: `open`, `onClose`, `onSave`, `lifeEvent`. Always-visible fields: name (required), type select (6 options, required), isActive Switch (default true). Type-specific detail fields conditionally rendered: pet (petName, species, age, estimatedMonthlyVetCost), college (studentName, institution, startYear, endYear, estimatedAnnualCost), vehicle_ownership (vehicleDescription, estimatedAnnualCost), medical (condition, estimatedMonthlyCost), eldercare (personName, careLevel select, estimatedMonthlyCost), other (no extra fields). Details assembled into `details` object before onSave — only non-empty values included.
+- `client/src/components/LifeEventCard.js` — Paper `elevation={0}`, `borderRadius: '14px'`, `border: divider`. Shows name (h3), type Chip (outlined primary), isActive Chip (success/default). Type-specific detail rows rendered only when values are present, cost fields formatted with formatMoney. Actions: Edit (EditIcon), Toggle Active (PauseIcon/PlayArrowIcon), Delete (DeleteIcon error color). All colors via useTheme().
+
+### Frontend page modified
+
+- `client/src/pages/LifeEventsPage.js` — Full replacement of "Coming soon." skeleton. AppLayout wrapper retained. Header row (title + subtitle + "Add Life Event" button). LinearProgress while loading. MUI Tabs: "Active (N)" / "Inactive (N)". Stack of LifeEventCard per tab. Empty state Paper with contextual message. Full CRUD flow: add, edit (dialog), toggle active (inline update), delete (window.confirm guard). Snackbar success/error feedback.
+
+### Files NOT modified
+`GoalsWidget.js`, `ExpenseTracker.js`, `theme.js`, `AssetsPage.js`, `assetController.js`, `notificationController.js`, `predictionController.js`, `api.js` (stub functions already correct from 5a).
+
+### Test results
+`lifeEvents.test.js` — 5 PASS. `assets.test.js` — 5 PASS. `expenses.test.js` — 2 PASS. `budgets.test.js` — 1 PASS. Total: 13/13 passed.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix (seriesId 0 = inner ring is falsy, so current `(highlighted.seriesId ? true : false)` always evaluates false, causing both rings to display `currentAmount` on hover instead of target vs. saved). Not fixed in Change 5c. Carry forward to next available session.
 
 ### Deviations from plan
 None.
