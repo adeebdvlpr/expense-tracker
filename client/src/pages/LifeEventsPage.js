@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 
 import { getLifeEvents, createLifeEvent, updateLifeEvent, deleteLifeEvent } from '../utils/api';
 import AppLayout from '../components/AppLayout';
@@ -20,6 +21,7 @@ import LifeEventCard from '../components/LifeEventCard';
 import LifeEventForm from '../components/LifeEventForm';
 
 export default function LifeEventsPage() {
+  const navigate = useNavigate();
   const [events, setEvents]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [activeTab, setActiveTab]   = useState(0); // 0 = Active, 1 = Inactive
@@ -27,9 +29,21 @@ export default function LifeEventsPage() {
   const [formOpen, setFormOpen]               = useState(false);
   const [editingEvent, setEditingEvent]       = useState(null);
 
-  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
-  const openSnack  = (message, severity = 'success') => setSnack({ open: true, message, severity });
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success', action: null });
+  const openSnack  = (message, severity = 'success', action = null) => setSnack({ open: true, message, severity, action });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
+
+  const handlePredictSuccess = () => {
+    openSnack(
+      'Prediction generated!',
+      'success',
+      <Button size="small" color="inherit" onClick={() => navigate('/predictions')}>View</Button>,
+    );
+  };
+
+  const handlePredictError = (message) => {
+    openSnack(message, 'error');
+  };
 
   const currency = 'USD';
 
@@ -176,6 +190,8 @@ export default function LifeEventsPage() {
                 onEdit={handleOpenEdit}
                 onToggleActive={handleToggleActive}
                 onDelete={handleDelete}
+                onPredictSuccess={handlePredictSuccess}
+                onPredictError={handlePredictError}
               />
             ))}
           </Stack>
@@ -194,11 +210,11 @@ export default function LifeEventsPage() {
       {/* Snackbar */}
       <Snackbar
         open={snack.open}
-        autoHideDuration={4000}
+        autoHideDuration={snack.action ? 6000 : 4000}
         onClose={closeSnack}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={closeSnack} severity={snack.severity} variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={closeSnack} severity={snack.severity} variant="filled" action={snack.action} sx={{ width: '100%' }}>
           {snack.message}
         </Alert>
       </Snackbar>

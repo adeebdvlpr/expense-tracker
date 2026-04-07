@@ -890,12 +890,40 @@ None.
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
 
+--
 
 **2026-04-06 — UNPLANNED CHANGE - Claude model change:**
 
-## In the aiService.js file: set the model from 'sonnet 4.6' TO 'claude-3-haiku-20240307' 
+## In the aiService.js file: set the model from 'sonnet 4.6' TO 'claude-haiku-4-5-20251001' 
 
--- I made this change to save on credits and get more usuage at a lower price. DO NOT CHANGE IT BACK to 'sonnet'. 
--- After April 19th (04/19/2026) haiku-3 is being depreciated and 
-I will need to swtich to Haiku-4.5 but NOT yet. 
--- Once time comes to upgrade model --> "claude-haiku-4-5-20251001"
+## I made this change to save on credits and get more usuage at a lower price. DO NOT CHANGE IT BACK to 'sonnet'.
+
+---
+
+**2026-04-06 — Change 5f (UI Integration & Navigation):**
+
+### What was built
+Connected the AI features to the user interface. Users can now trigger projections directly from Assets and Life Events and navigate to results via the sidebar.
+
+### Files modified
+- `client/src/components/AssetCard.js` — Added "Generate AI Prediction" IconButton (AutoAwesome icon) with local `predicting` loading state. On click: calls `predictions.generateForAsset(asset._id)` from `api.js`, shows `CircularProgress` (size 18) while in-flight, reports result via `onPredictSuccess` / `onPredictError` callbacks. Button wrapped in `<span>` to allow Tooltip on disabled state.
+- `client/src/components/LifeEventCard.js` — Same pattern using `predictions.generateForLifeEvent(lifeEvent._id)`.
+- `client/src/pages/AssetsPage.js` — Added `useNavigate` import. Extended `snack` state with optional `action` field. Added `handlePredictSuccess` (opens snack with "View" Button that navigates to `/predictions`) and `handlePredictError` handlers. Passes callbacks to `AssetCard`. Snackbar `autoHideDuration` extended to 6000ms when an action button is present.
+- `client/src/pages/LifeEventsPage.js` — Same pattern as AssetsPage.
+
+### New files
+None.
+
+### Files NOT modified
+- `client/src/components/layout/Sidebar.js` / `AppHeader.js` — "Predictions" nav link was already present in `NAV_TABS` (added in a prior session). No change required.
+- `server/services/aiService.js` — Verified: model remains `claude-haiku-4-5-20251001`. Not touched.
+- `client/src/pages/PredictionsPage.js` — Not touched.
+- `client/src/components/GoalsWidget.js` — Not touched (carry-forward bug).
+
+### Test results
+All 27 backend tests pass. 1 pre-existing failure in `auth.test.js` (username length — documented in 5a notes, unrelated to 5f).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5f. Carry forward.
+## i have  tested the API connection...we are connected to Claude. 
+

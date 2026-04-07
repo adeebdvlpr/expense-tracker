@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 
 import { getAssets, createAsset, updateAsset, deleteAsset } from '../utils/api';
 import AppLayout from '../components/AppLayout';
@@ -33,6 +34,7 @@ const TYPE_LABELS = {
 const TYPE_ORDER = ['home_system', 'appliance', 'vehicle', 'electronics', 'real_estate', 'investment', 'business', 'other'];
 
 export default function AssetsPage() {
+  const navigate = useNavigate();
   const [assets, setAssets]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [activeTab, setActiveTab]   = useState(0); // 0 = All
@@ -40,9 +42,21 @@ export default function AssetsPage() {
   const [formOpen, setFormOpen]         = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
 
-  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
-  const openSnack  = (message, severity = 'success') => setSnack({ open: true, message, severity });
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success', action: null });
+  const openSnack  = (message, severity = 'success', action = null) => setSnack({ open: true, message, severity, action });
   const closeSnack = () => setSnack((s) => ({ ...s, open: false }));
+
+  const handlePredictSuccess = () => {
+    openSnack(
+      'Prediction generated!',
+      'success',
+      <Button size="small" color="inherit" onClick={() => navigate('/predictions')}>View</Button>,
+    );
+  };
+
+  const handlePredictError = (message) => {
+    openSnack(message, 'error');
+  };
 
   const currency = 'USD';
 
@@ -187,6 +201,8 @@ export default function AssetsPage() {
                 currency={currency}
                 onEdit={handleOpenEdit}
                 onDelete={handleDelete}
+                onPredictSuccess={handlePredictSuccess}
+                onPredictError={handlePredictError}
               />
             ))}
           </Stack>
@@ -205,11 +221,11 @@ export default function AssetsPage() {
       {/* Snackbar */}
       <Snackbar
         open={snack.open}
-        autoHideDuration={4000}
+        autoHideDuration={snack.action ? 6000 : 4000}
         onClose={closeSnack}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={closeSnack} severity={snack.severity} variant="filled" sx={{ width: '100%' }}>
+        <Alert onClose={closeSnack} severity={snack.severity} variant="filled" action={snack.action} sx={{ width: '100%' }}>
           {snack.message}
         </Alert>
       </Snackbar>

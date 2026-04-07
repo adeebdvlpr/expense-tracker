@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Chip,
+  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -10,8 +11,10 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useTheme } from '@mui/material/styles';
 import { formatMoney } from '../utils/money';
+import { predictions } from '../utils/api';
 
 const TYPE_LABELS = {
   home_system: 'Home System',
@@ -76,8 +79,22 @@ function WarrantyLine({ warrantyExpiryDate, warrantyLengthYears, theme }) {
   );
 }
 
-const AssetCard = ({ asset, currency = 'USD', onEdit, onDelete }) => {
+const AssetCard = ({ asset, currency = 'USD', onEdit, onDelete, onPredictSuccess, onPredictError }) => {
   const theme = useTheme();
+  const [predicting, setPredicting] = useState(false);
+
+  const handlePredict = async () => {
+    setPredicting(true);
+    try {
+      await predictions.generateForAsset(asset._id);
+      if (onPredictSuccess) onPredictSuccess();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to generate prediction.';
+      if (onPredictError) onPredictError(message);
+    } finally {
+      setPredicting(false);
+    }
+  };
 
   return (
     <Paper
@@ -236,6 +253,15 @@ const AssetCard = ({ asset, currency = 'USD', onEdit, onDelete }) => {
 
         {/* Actions */}
         <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+          <Tooltip title="Generate AI Prediction">
+            <span>
+              <IconButton size="small" color="primary" onClick={handlePredict} disabled={predicting}>
+                {predicting
+                  ? <CircularProgress size={18} color="inherit" />
+                  : <AutoAwesomeIcon fontSize="small" />}
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title="Edit">
             <IconButton size="small" onClick={() => onEdit(asset)}>
               <EditIcon fontSize="small" />

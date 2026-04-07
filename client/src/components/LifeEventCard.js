@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Chip,
+  CircularProgress,
   IconButton,
   Paper,
   Stack,
@@ -12,8 +13,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useTheme } from '@mui/material/styles';
 import { formatMoney } from '../utils/money';
+import { predictions } from '../utils/api';
 
 const TYPE_LABELS = {
   pet:               'Pet',
@@ -108,9 +111,23 @@ function TypeDetails({ lifeEvent, currency }) {
   return null;
 }
 
-const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, onDelete }) => {
+const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, onDelete, onPredictSuccess, onPredictError }) => {
   const theme = useTheme();
+  const [predicting, setPredicting] = useState(false);
   const d = lifeEvent.details || {};
+
+  const handlePredict = async () => {
+    setPredicting(true);
+    try {
+      await predictions.generateForLifeEvent(lifeEvent._id);
+      if (onPredictSuccess) onPredictSuccess();
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to generate prediction.';
+      if (onPredictError) onPredictError(message);
+    } finally {
+      setPredicting(false);
+    }
+  };
 
   const costDisplay = d.estimatedCost != null
     ? `${formatMoney(d.estimatedCost, currency)}${FREQ_SUFFIX[d.costFrequency] || ''}`
@@ -165,6 +182,15 @@ const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, on
 
         {/* Actions */}
         <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+          <Tooltip title="Generate AI Prediction">
+            <span>
+              <IconButton size="small" color="primary" onClick={handlePredict} disabled={predicting}>
+                {predicting
+                  ? <CircularProgress size={18} color="inherit" />
+                  : <AutoAwesomeIcon fontSize="small" />}
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title="Edit">
             <IconButton size="small" onClick={() => onEdit(lifeEvent)}>
               <EditIcon fontSize="small" />

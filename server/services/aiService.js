@@ -25,7 +25,7 @@ async function callAI({ systemPrompt, userPrompt, model, maxTokens }) {
     throw new Error('ANTHROPIC_API_KEY is not set');
   }
 
-  const resolvedModel = model || "claude-haiku-4-5-20251001";
+  const resolvedModel = "claude-haiku-4-5-20251001";
   const resolvedMaxTokens = maxTokens || 1024;
 
   // Instantiate per-call so tests can stub process.env without module-level caching.
