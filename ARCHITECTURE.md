@@ -24,7 +24,7 @@ The app is a portfolio-grade production project. Code quality, visual consistenc
 - **Password hashing:** bcryptjs
 - **Testing:** Jest + Supertest + mongodb-memory-server (in-band, NODE_ENV=test)
 - **Scheduler:** node-cron (for recurring payments)
-- **AI (planned):** @anthropic-ai/sdk, all calls routed through `server/services/aiService.js` — never scattered across controllers
+- **AI:** @anthropic-ai/sdk (installed Change 5d), all calls routed through `server/services/aiService.js` — never scattered across controllers
 
 ### Frontend
 - **Framework:** React 18
@@ -68,7 +68,7 @@ expense-tracker/
 │   │   ├── incomeController.js
 │   │   ├── assetController.js
 │   │   ├── lifeEventController.js
-│   │   ├── predictionController.js   ← [Change 5e]
+│   │   ├── predictionController.js
 │   │   └── notificationController.js
 │   ├── routes/
 │   │   ├── auth.js
@@ -80,12 +80,12 @@ expense-tracker/
 │   │   ├── recurring.js
 │   │   ├── assets.js
 │   │   ├── lifeEvents.js
-│   │   ├── predictions.js            ← [Change 5e]
+│   │   ├── predictions.js
 │   │   └── notifications.js
 │   ├── services/
 │   │   ├── recurringScheduler.js
-│   │   ├── aiService.js              ← [Change 5d] SINGLE AI gateway
-│   │   ├── predictionEngine.js       ← [Change 5d] business logic
+│   │   ├── aiService.js              ← SINGLE AI gateway
+│   │   ├── predictionEngine.js
 │   │   └── notificationService.js    ← [Change 5f]
 │   ├── middleware/
 │   │   ├── auth.js
@@ -96,7 +96,8 @@ expense-tracker/
 │       ├── budgets.test.js
 │       ├── expenses.test.js
 │       ├── assets.test.js
-│       └── lifeEvents.test.js
+│       ├── lifeEvents.test.js
+│       └── predictionEngine.test.js
 │
 └── client/
     ├── package.json
@@ -113,7 +114,7 @@ expense-tracker/
         │   ├── GoalsPage.js
         │   ├── RecurringPage.js
         │   ├── AssetsPage.js
-        │   ├── PredictionsPage.js    ← [Change 5e]
+        │   ├── PredictionsPage.js
         │   └── LifeEventsPage.js
         ├── components/
         │   ├── AppLayout.js
@@ -134,7 +135,7 @@ expense-tracker/
         │   ├── GoalProgressChart.js
         │   ├── AssetForm.js
         │   ├── AssetCard.js
-        │   ├── PredictionCard.js     ← [Change 5e]
+        │   ├── PredictionCard.js
         │   ├── LifeEventForm.js
         │   ├── LifeEventCard.js
         │   ├── NotificationBell.js   ← [Change 5f]
@@ -260,16 +261,12 @@ expense-tracker/
 - `GET /api/recurring`, `POST /api/recurring`, `PATCH /api/recurring/:id`, `DELETE /api/recurring/:id`, `POST /api/recurring/:id/trigger` *(Change 4)*
 - `GET /api/assets`, `POST /api/assets`, `PATCH /api/assets/:id`, `DELETE /api/assets/:id` *(Change 5b)*
 - `GET /api/life-events`, `POST /api/life-events`, `PATCH /api/life-events/:id`, `DELETE /api/life-events/:id` *(Change 5c)*
+- `GET /api/predictions`, `POST /api/predictions/asset/:assetId`, `POST /api/predictions/life-event/:eventId` *(Change 5e)*
 
 ### Stub Endpoints (registered, return 501 — full implementation pending)
 
 **Notifications (`/api/notifications`)** — full implementation in Change 5f
 - `GET`, `PATCH /:id`, `PATCH /mark-all-read`
-
-### Planned New Endpoints
-
-**AI Predictions (`/api/predictions`)** — Change 5e
-- `GET`, `POST /generate`, `PATCH /:id`, `DELETE /:id`
 
 ---
 
@@ -810,3 +807,95 @@ None.
 **Session notes — VERIFIED.** All files mentioned in session notes confirmed to exist on disk. No session note references a nonexistent file (files annotated with future change markers are expected to be absent).
 
 ### Architecture.md status after audit: CORRECTED — see findings above. No application files were modified in this session.
+
+---
+
+**2026-04-06 — Change 5d (AI: Service Layer):**
+
+### What was built
+
+The AI service infrastructure layer. No HTTP endpoints added this session.
+No frontend changes.
+
+### New files
+
+- `server/services/aiService.js` — Single Anthropic SDK gateway. Exports
+  `callAI({ systemPrompt, userPrompt, model, maxTokens })`. Instantiates
+  the Anthropic client per-call (no module-level singleton) so tests can stub
+  the API key without caching side effects. Throws `'ANTHROPIC_API_KEY is not
+  set'` if the env var is absent; re-throws SDK errors prefixed with
+  `'AI call failed: '`. Returns `{ text, rawResponse }`.
+
+- `server/services/predictionEngine.js` — Domain logic layer. Exports
+  `generateForAsset(userId, assetId)` and
+  `generateForLifeEvent(userId, lifeEventId)`. Each function: fetches the
+  source document (ownership-verified), fetches the user (currency + location),
+  fetches recent expenses (last 90 days, max 20, for context), builds system
+  and user prompts, calls aiService, parses the JSON response (graceful fallback
+  on parse failure: projectedCost=0, confidence='low'), saves and returns an
+  AIPrediction document. No req/res/next — pure domain logic.
+
+- `server/tests/predictionEngine.test.js` — 5 tests. callAI mocked via
+  jest.mock — no real API calls. Covers: successful asset prediction, asset not
+  found, successful life event prediction, life event not found, unparseable
+  AI response fallback.
+
+### Package change
+
+- `@anthropic-ai/sdk` added to root `package.json` dependencies (version ^0.82.0).
+
+### Files NOT modified
+
+All client-side files. All existing server models, controllers, routes.
+GoalsWidget.js hover bug not addressed (carry-forward).
+
+### Test results
+
+`predictionEngine.test.js` — 5 PASS. `assets.test.js` — 6 PASS.
+`lifeEvents.test.js` — 5 PASS. `expenses.test.js` — 2 PASS.
+`budgets.test.js` — 1 PASS. Total: 19 passed.
+`auth.test.js` — 1 pre-existing failure (username length, unrelated to 5d; documented in 5a notes).
+
+### Known issues carried forward
+
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1`
+is the correct fix. Not addressed in 5d. Carry forward.
+
+### Deviations from plan
+
+None.
+
+---
+
+**2026-04-06 — Change 5e (Predictions API & Frontend):**
+
+### What was built
+Connected the prediction engine to the frontend. Built Express controllers with graceful error handling and React UI to display generated financial projections.
+
+### New files
+- `server/routes/predictions.js` & `server/controllers/predictionController.js` — HTTP wrapper for predictionEngine. Includes robust 500 error catching to prevent server crashes on API failure.
+- `server/tests/predictions.test.js` — 3 passing tests mapping HTTP routes to mocked engine calls.
+- `client/src/pages/PredictionsPage.js` — Grid dashboard for projections. Wrapped in AppLayout.
+- `client/src/components/PredictionCard.js` — MUI component displaying AI output. Uses formatMoney and useTheme.
+
+### Package change
+None.
+
+### Files NOT modified
+`aiService.js` and `predictionEngine.js` remained untouched. GoalsWidget.js hover bug not addressed (carry-forward).
+
+### Test results
+`predictions.test.js` — 3 PASS. Total existing tests: 27 PASS. No regressions.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+
+**2026-04-06 — UNPLANNED CHANGE - Claude model change:**
+
+## In the aiService.js file: set the model from 'sonnet 4.6' TO 'claude-3-haiku-20240307' 
+
+-- I made this change to save on credits and get more usuage at a lower price. DO NOT CHANGE IT BACK to 'sonnet'. 
+-- After April 19th (04/19/2026) haiku-3 is being depreciated and 
+I will need to swtich to Haiku-4.5 but NOT yet. 
+-- Once time comes to upgrade model --> "claude-haiku-4-5-20251001"

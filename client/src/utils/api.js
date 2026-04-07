@@ -198,6 +198,13 @@ export const deleteLifeEvent = async (id) => {
   return response.data;
 };
 
+/// --------- predictions APIs (Change 5e)
+export const predictions = {
+  getAll: () => api.get('/api/predictions'),
+  generateForAsset: (assetId) => api.post(`/api/predictions/asset/${assetId}`),
+  generateForLifeEvent: (eventId) => api.post(`/api/predictions/life-event/${eventId}`),
+};
+
 /// --------- notifications APIs (stub — implemented in 5f)
 export const getNotifications = async () => {
   const response = await api.get('/api/notifications');

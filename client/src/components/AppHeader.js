@@ -28,6 +28,7 @@ const NAV_TABS = [
   { label: 'Recurring', path: '/recurring' },
   { label: 'Assets', path: '/assets' },
   { label: 'Life Events', path: '/life-events' },
+  { label: 'Predictions', path: '/predictions' },
   { label: 'Account', path: '/account' },
 ];
 

@@ -13,6 +13,7 @@ import GoalsPage from './pages/GoalsPage';
 import RecurringPage from './pages/RecurringPage';
 import AssetsPage from './pages/AssetsPage';
 import LifeEventsPage from './pages/LifeEventsPage';
+import PredictionsPage from './pages/PredictionsPage';
 
 export const ThemeContext = createContext({
   selectedTheme: DEFAULT_THEME,
@@ -102,6 +103,10 @@ const App = () => {
             <Route
               path="/life-events"
               element={isAuthenticated ? <LifeEventsPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="/predictions"
+              element={isAuthenticated ? <PredictionsPage /> : <Navigate to="/auth" replace />}
             />
 
                   {/* CATCH ALL ...*/}
