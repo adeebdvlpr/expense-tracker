@@ -34,10 +34,34 @@ async function fetchRecentExpenses(userId) {
     .select('description amount category date');
 }
 
-/** Summarise unique expense categories for a prompt. */
-function summariseCategories(expenses) {
-  const cats = [...new Set(expenses.map((e) => e.category).filter(Boolean))];
-  return cats.length ? cats.join(', ') : '(none)';
+/**
+ * Calculate monthly average spend per category from recent expenses.
+ * Groups by category, sums amounts, divides by number of distinct months covered.
+ */
+function spendingAveragesSummary(expenses) {
+  if (!expenses.length) return '(no recent expense data)';
+
+  // Find the date range to compute how many months are covered
+  const dates = expenses.map((e) => new Date(e.date));
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+  const monthsSpan = Math.max(
+    1,
+    (maxDate.getFullYear() - minDate.getFullYear()) * 12 +
+      (maxDate.getMonth() - minDate.getMonth()) +
+      1
+  );
+
+  const totals = {};
+  for (const e of expenses) {
+    const cat = e.category || 'Uncategorized';
+    totals[cat] = (totals[cat] || 0) + (e.amount || 0);
+  }
+
+  return Object.entries(totals)
+    .sort(([, a], [, b]) => b - a)
+    .map(([cat, total]) => `  ${cat}: ~$${(total / monthsSpan).toFixed(0)}/mo`)
+    .join('\n');
 }
 
 /** Location string for prompt — falls back gracefully. */
@@ -48,10 +72,28 @@ function locationString(user) {
   return parts.length ? parts.join(', ') : '(location not set)';
 }
 
+/**
+ * Strip markdown code fences (```json ... ``` or ``` ... ```) before parsing.
+ * Claude sometimes wraps JSON in markdown even when instructed not to.
+ */
+
+/*
+ More robust sanitization is needed: This function now will find the first '{' and the last '}'
+ To ignore any markedown fences or conversational preamble
+*/ 
+function sanitizeAIJson(text) {
+  const start = text.indexOf('{');
+  const end = text.indexOf('}');
+
+  if (start === -1 || end === -1) return text;
+
+  return text.substring(start, end +1).trim();
+}
+
 /** Parse AI JSON response; return null on failure. */
 function parseAIJson(text) {
   try {
-    return JSON.parse(text);
+    return JSON.parse(sanitizeAIJson(text));
   } catch (_) {
     return null;
   }
@@ -66,12 +108,12 @@ function safeProjectedCost(value) {
 // Shared system prompt shape
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT_BASE = `You are a financial planning assistant. Analyze the information and user financial context provided, then generate a cost projection.
+const SYSTEM_PROMPT_BASE = `You are a Senior Financial Advisor providing conservative, actionable financial guidance. Your role is to assess a client's financial situation and generate a realistic cost projection based on their actual spending behavior and asset data.
 
-You must respond with a single valid JSON object — no markdown, no explanation, no text outside the JSON. Use this exact shape:
+You must respond with a single valid JSON object — no markdown, no code fences, no explanation, no text outside the JSON. Use this exact shape:
 {
-  "title": "string (max 80 chars) — concise name for this prediction",
-  "summary": "string — 2 to 3 sentences explaining the projection and key assumptions",
+  "title": "string (max 80 chars) — concise advisory name for this projection",
+  "summary": "string — 3 to 4 sentences of professional advisor guidance. Reference the client's actual spending averages where relevant. Be conservative and specific.",
   "projectedCost": number,
   "projectedDate": "ISO 8601 date string or null",
   "monthlySavingsTarget": number or null,
@@ -81,7 +123,10 @@ You must respond with a single valid JSON object — no markdown, no explanation
 
 Rules:
 - projectedCost must be a number >= 0, never null or a string.
-- confidence is "low" if key data is missing; "medium" if partial data is available; "high" if comprehensive.`;
+- monthlySavingsTarget must be a number if projectedDate is set, otherwise null.
+- confidence is "low" if key data is missing; "medium" if partial data is available; "high" if comprehensive.
+- Tone: professional, measured, and actionable — not speculative or alarmist.
+- Base your projections on the client's actual monthly spending averages provided.`;
 
 // ---------------------------------------------------------------------------
 // generateForAsset
@@ -136,7 +181,7 @@ Additional rules for asset projections:
   if (asset.notes) lines.push(`Notes: ${asset.notes}`);
   lines.push(`User currency: ${(user && user.currency) || 'USD'}`);
   lines.push(`User location: ${locationString(user)}`);
-  lines.push(`Recent expense categories (last 90 days): ${summariseCategories(recentExpenses)}`);
+  lines.push(`Client monthly spending averages by category (last 90 days):\n${spendingAveragesSummary(recentExpenses)}`);
 
   const userPrompt = lines.join('\n');
 
@@ -144,8 +189,7 @@ Additional rules for asset projections:
   const { text, rawResponse } = await callAI({
     systemPrompt,
     userPrompt,
-    model: 'claude-sonnet-4-6',
-    maxTokens: 512,
+    maxTokens: 1024,
   });
 
   // Step 7 — parse response
@@ -154,7 +198,7 @@ Additional rules for asset projections:
   let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence;
 
   if (!parsed) {
-    title = `Asset Projection: ${asset.name}`;
+    title = `Advisory Insight: ${asset.name}`;
     summary = text.slice(0, 500);
     projectedCost = 0;
     confidence = 'low';
@@ -227,6 +271,7 @@ Additional rules for life event projections:
   lines.push(`Life event: ${event.name}`);
   lines.push(`Type: ${event.type}`);
   lines.push(`Active: ${event.isActive ? 'yes' : 'no'}`);
+  lines.push(`Todays date: ${new Date().toLocaleDateString()}`);
 
   // Universal details fields
   const d = event.details || {};
@@ -250,7 +295,7 @@ Additional rules for life event projections:
 
   lines.push(`User currency: ${(user && user.currency) || 'USD'}`);
   lines.push(`User location: ${locationString(user)}`);
-  lines.push(`Recent expense categories (last 90 days): ${summariseCategories(recentExpenses)}`);
+  lines.push(`Client monthly spending averages by category (last 90 days):\n${spendingAveragesSummary(recentExpenses)}`);
 
   const userPrompt = lines.join('\n');
 
@@ -258,8 +303,7 @@ Additional rules for life event projections:
   const { text, rawResponse } = await callAI({
     systemPrompt,
     userPrompt,
-    model: 'claude-sonnet-4-6',
-    maxTokens: 512,
+    maxTokens: 1024,
   });
 
   // Step 7 — parse response
@@ -268,7 +312,7 @@ Additional rules for life event projections:
   let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence;
 
   if (!parsed) {
-    title = `Life Event Projection: ${event.name}`;
+    title = `Advisory Insight: ${event.name}`;
     summary = text.slice(0, 500);
     projectedCost = 0;
     confidence = 'low';

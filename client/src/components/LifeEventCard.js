@@ -182,7 +182,7 @@ const LifeEventCard = ({ lifeEvent, currency = 'USD', onEdit, onToggleActive, on
 
         {/* Actions */}
         <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
-          <Tooltip title="Generate AI Prediction">
+          <Tooltip title="Consult AI Advisor">
             <span>
               <IconButton size="small" color="primary" onClick={handlePredict} disabled={predicting}>
                 {predicting

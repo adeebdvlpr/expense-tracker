@@ -253,7 +253,7 @@ const AssetCard = ({ asset, currency = 'USD', onEdit, onDelete, onPredictSuccess
 
         {/* Actions */}
         <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
-          <Tooltip title="Generate AI Prediction">
+          <Tooltip title="Consult AI Advisor">
             <span>
               <IconButton size="small" color="primary" onClick={handlePredict} disabled={predicting}>
                 {predicting

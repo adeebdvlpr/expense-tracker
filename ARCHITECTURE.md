@@ -927,3 +927,33 @@ All 27 backend tests pass. 1 pre-existing failure in `auth.test.js` (username le
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5f. Carry forward.
 ## i have  tested the API connection...we are connected to Claude. 
 
+---
+
+**2026-04-07 — Change 5g (AI: Financial Advisory & Auto-Goals):**
+
+### What was built
+Pivoted the AI feature set from "Predictions" to "Financial Advisory." Fixed truncation and JSON formatting issues. Added auto-goal generation.
+
+### Key Logic
+- `predictionEngine.js` now performs a "Spending Analysis" (averaging recent expenses by category) to provide contextual advice injected into every user prompt.
+- `sanitizeAIJson()` strips markdown code fences (` ```json ``` `) before `JSON.parse()` — fixes the raw-JSON display bug.
+- `maxTokens` raised from 512 → 1024 in both `generateForAsset` and `generateForLifeEvent` calls — fixes truncation.
+- System prompt rewritten as "Senior Financial Advisor" with conservative, actionable guidance tone.
+- UI terminology updated: "Generate AI Prediction" → "Consult AI Advisor" (AssetCard, LifeEventCard), "AI Predictions" → "Financial Advisory" (PredictionsPage, AppHeader nav).
+- `PredictionCard.js` (now AdvisoryCard in function): "Commit to this Goal" button calls `createGoal` with `projectedCost` as `targetAmount`, `source: 'ai'`, and `predictionId` reference. Includes a 0% `LinearProgress` bar to show savings haven't started.
+- `goalController.js`: `createGoal` now accepts and persists `source` and `predictionId` fields.
+
+### Files Modified
+- `server/services/predictionEngine.js` (sanitizer, spending averages, system prompt rewrite, maxTokens 512→1024)
+- `server/controllers/goalController.js` (`source` + `predictionId` fields in createGoal)
+- `client/src/pages/PredictionsPage.js` (title + subtitle + empty state text)
+- `client/src/components/PredictionCard.js` ("Commit to Goal" button, LinearProgress, label updates)
+- `client/src/components/AssetCard.js` (tooltip label)
+- `client/src/components/LifeEventCard.js` (tooltip label)
+- `client/src/components/AppHeader.js` (nav tab label)
+
+### Test results
+All 27 backend tests pass. 1 pre-existing failure in `auth.test.js` (username length — documented since 5a, unrelated). Manual verification of the "Commit to Goal" workflow successful.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5g. Carry forward.

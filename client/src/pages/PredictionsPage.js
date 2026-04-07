@@ -20,10 +20,10 @@ const PredictionsPage = () => {
     <AppLayout>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 0.5 }}>
-          AI Predictions
+          Financial Advisory
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Financial projections generated from your assets and life events.
+          AI-powered advisory insights generated from your assets and life events.
         </Typography>
 
         {loading ? (
@@ -32,7 +32,7 @@ const PredictionsPage = () => {
           </Box>
         ) : predictionsList.length === 0 ? (
           <Typography variant="body1" color="text.secondary">
-            No predictions generated yet. Navigate to Assets or Life Events to run a projection.
+            No advisory insights yet. Navigate to Assets or Life Events and click "Consult AI Advisor" to get started.
           </Typography>
         ) : (
           <Grid container spacing={2}>

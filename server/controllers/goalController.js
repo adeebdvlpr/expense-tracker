@@ -15,7 +15,7 @@ exports.listGoals = async (req, res, next) => {
 
 exports.createGoal = async (req, res, next) => {
   try {
-    const { name, targetAmount, currentAmount, targetDate, notes, currency } = req.body;
+    const { name, targetAmount, currentAmount, targetDate, notes, currency, source, predictionId } = req.body;
 
     const created = await Goal.create({
       user: req.user.id,
@@ -26,6 +26,8 @@ exports.createGoal = async (req, res, next) => {
       notes: notes || undefined,
       currency: currency || 'USD',
       status: 'active',
+      source: source || 'user',
+      predictionId: predictionId || null,
     });
 
     res.status(201).json(created);
