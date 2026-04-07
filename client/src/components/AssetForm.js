@@ -11,6 +11,10 @@ import {
   Alert,
   IconButton,
   Typography,
+  Stack,
+  Divider,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -19,6 +23,9 @@ const ASSET_TYPES = [
   { value: 'appliance',   label: 'Appliance' },
   { value: 'vehicle',     label: 'Vehicle' },
   { value: 'electronics', label: 'Electronics' },
+  { value: 'real_estate', label: 'Real Estate' },
+  { value: 'investment',  label: 'Investment Account' },
+  { value: 'business',    label: 'Business / Equipment' },
   { value: 'other',       label: 'Other' },
 ];
 
@@ -43,6 +50,14 @@ const EMPTY_FORM = {
   mileage: '',
   subtype: '',
   materialType: '',
+  estimatedCurrentValue:   '',
+  annualOwnershipCost:     '',
+  depreciationModel:       'none',
+  annualDepreciationRate:  '',
+  generatesIncome:         false,
+  monthlyIncomeAmount:     '',
+  expectedReplacementYear: '',
+  notes:                   '',
 };
 
 const AssetForm = ({ open, onClose, onSave, asset = null }) => {
@@ -73,6 +88,14 @@ const AssetForm = ({ open, onClose, onSave, asset = null }) => {
           mileage:      asset.mileage      != null ? String(asset.mileage) : '',
           subtype:      asset.subtype      || '',
           materialType: asset.materialType || '',
+          estimatedCurrentValue:   asset.estimatedCurrentValue   != null ? String(asset.estimatedCurrentValue)   : '',
+          annualOwnershipCost:     asset.annualOwnershipCost     != null ? String(asset.annualOwnershipCost)     : '',
+          depreciationModel:       asset.depreciationModel       || 'none',
+          annualDepreciationRate:  asset.annualDepreciationRate  != null ? String(asset.annualDepreciationRate)  : '',
+          generatesIncome:         asset.generatesIncome         !== undefined ? asset.generatesIncome           : false,
+          monthlyIncomeAmount:     asset.monthlyIncomeAmount     != null ? String(asset.monthlyIncomeAmount)     : '',
+          expectedReplacementYear: asset.expectedReplacementYear != null ? String(asset.expectedReplacementYear) : '',
+          notes:                   asset.notes                   || '',
         });
       } else {
         setForm(EMPTY_FORM);
@@ -120,6 +143,18 @@ const AssetForm = ({ open, onClose, onSave, asset = null }) => {
         if (form.subtype.trim())      payload.subtype      = form.subtype.trim();
         if (form.materialType.trim()) payload.materialType = form.materialType.trim();
       }
+
+      if (form.estimatedCurrentValue !== '')   payload.estimatedCurrentValue   = Number(form.estimatedCurrentValue);
+      if (form.annualOwnershipCost !== '')      payload.annualOwnershipCost     = Number(form.annualOwnershipCost);
+      payload.depreciationModel = form.depreciationModel;
+      if (form.annualDepreciationRate !== '' && form.depreciationModel !== 'none')
+        payload.annualDepreciationRate = Number(form.annualDepreciationRate);
+      payload.generatesIncome = form.generatesIncome;
+      if (form.generatesIncome && form.monthlyIncomeAmount !== '')
+        payload.monthlyIncomeAmount = Number(form.monthlyIncomeAmount);
+      if (form.expectedReplacementYear !== '')
+        payload.expectedReplacementYear = Number(form.expectedReplacementYear);
+      if (form.notes.trim()) payload.notes = form.notes.trim();
 
       await onSave(payload);
       onClose();
@@ -307,6 +342,118 @@ const AssetForm = ({ open, onClose, onSave, asset = null }) => {
             />
           </>
         )}
+
+        {/* Financial details */}
+        <Divider sx={{ mt: 0.5 }}>
+          <Typography variant="caption" color="text.secondary">Financial details</Typography>
+        </Divider>
+
+        {/* Row 1: estimated value + annual ownership cost */}
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <TextField
+            size="small"
+            label="Current estimated value"
+            type="number"
+            value={form.estimatedCurrentValue}
+            onChange={set('estimatedCurrentValue')}
+            slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+            helperText="What it's worth today"
+            sx={{ flex: 1 }}
+          />
+          <TextField
+            size="small"
+            label="Annual ownership cost"
+            type="number"
+            value={form.annualOwnershipCost}
+            onChange={set('annualOwnershipCost')}
+            slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+            helperText="Insurance + maintenance + fees/yr"
+            sx={{ flex: 1 }}
+          />
+        </Box>
+
+        {/* Row 2: depreciation model + annual rate */}
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <TextField
+            size="small"
+            select
+            label="Depreciation model"
+            value={form.depreciationModel}
+            onChange={set('depreciationModel')}
+            helperText="Optional"
+            sx={{ flex: 1 }}
+          >
+            <MenuItem value="none">None / Unknown</MenuItem>
+            <MenuItem value="straight_line">Straight line (steady)</MenuItem>
+            <MenuItem value="accelerated">Accelerated (fast early)</MenuItem>
+            <MenuItem value="appreciating">Appreciating</MenuItem>
+          </TextField>
+          <TextField
+            size="small"
+            label="Annual rate (%)"
+            type="number"
+            value={form.annualDepreciationRate}
+            onChange={set('annualDepreciationRate')}
+            slotProps={{ htmlInput: { min: 0, max: 100, step: '0.1' } }}
+            helperText="e.g. 15 for 15%/yr"
+            disabled={form.depreciationModel === 'none'}
+            sx={{ flex: 1 }}
+          />
+        </Box>
+
+        {/* Row 3: generates income switch */}
+        <Stack direction="row" alignItems="center">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={form.generatesIncome}
+                onChange={(e) => setForm((f) => ({ ...f, generatesIncome: e.target.checked }))}
+                color="success"
+              />
+            }
+            label="This asset generates income"
+          />
+        </Stack>
+
+        {/* Row 4: monthly income (conditional) */}
+        {form.generatesIncome && (
+          <TextField
+            size="small"
+            label="Monthly income amount"
+            type="number"
+            value={form.monthlyIncomeAmount}
+            onChange={set('monthlyIncomeAmount')}
+            slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+            fullWidth
+          />
+        )}
+
+        {/* Row 5: expected replacement year */}
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <TextField
+            size="small"
+            label="Expected replacement year"
+            type="number"
+            value={form.expectedReplacementYear}
+            onChange={set('expectedReplacementYear')}
+            slotProps={{ htmlInput: { min: new Date().getFullYear(), max: 2100, step: 1 } }}
+            helperText="e.g. 2031"
+            sx={{ flex: 1 }}
+          />
+          <Box sx={{ flex: 1 }} />
+        </Box>
+
+        {/* Row 6: notes */}
+        <TextField
+          size="small"
+          label="Notes"
+          value={form.notes}
+          onChange={set('notes')}
+          multiline
+          rows={2}
+          fullWidth
+          helperText="Any context the AI should know about this asset"
+        />
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>

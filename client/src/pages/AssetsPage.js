@@ -24,10 +24,13 @@ const TYPE_LABELS = {
   appliance:   'Appliances',
   vehicle:     'Vehicles',
   electronics: 'Electronics',
+  real_estate: 'Real Estate',
+  investment:  'Investment Accounts',
+  business:    'Business / Equipment',
   other:       'Other',
 };
 
-const TYPE_ORDER = ['home_system', 'appliance', 'vehicle', 'electronics', 'other'];
+const TYPE_ORDER = ['home_system', 'appliance', 'vehicle', 'electronics', 'real_estate', 'investment', 'business', 'other'];
 
 export default function AssetsPage() {
   const [assets, setAssets]         = useState([]);

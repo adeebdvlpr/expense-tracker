@@ -15,6 +15,9 @@ exports.createAsset = async (req, res, next) => {
       name, type, brand, purchaseYear, purchasePrice,
       warrantyLengthYears, warrantyExpiryDate, condition,
       subtype, materialType, mileage, make, vehicleModel,
+      estimatedCurrentValue, annualOwnershipCost, depreciationModel,
+      annualDepreciationRate, generatesIncome, monthlyIncomeAmount,
+      expectedReplacementYear, notes,
     } = req.body;
 
     const created = await Asset.create({
@@ -32,6 +35,14 @@ exports.createAsset = async (req, res, next) => {
       mileage:             mileage             != null ? mileage             : undefined,
       make:                make                || undefined,
       vehicleModel:        vehicleModel        || undefined,
+      estimatedCurrentValue:   estimatedCurrentValue   != null ? estimatedCurrentValue   : undefined,
+      annualOwnershipCost:     annualOwnershipCost      != null ? annualOwnershipCost     : undefined,
+      depreciationModel:       depreciationModel        || undefined,
+      annualDepreciationRate:  annualDepreciationRate   != null ? annualDepreciationRate  : undefined,
+      generatesIncome:         generatesIncome          !== undefined ? generatesIncome   : undefined,
+      monthlyIncomeAmount:     monthlyIncomeAmount      != null ? monthlyIncomeAmount     : undefined,
+      expectedReplacementYear: expectedReplacementYear  != null ? expectedReplacementYear : undefined,
+      notes:                   notes                   || undefined,
     });
 
     res.status(201).json(created);
@@ -47,6 +58,9 @@ exports.updateAsset = async (req, res, next) => {
       'name', 'type', 'brand', 'purchaseYear', 'purchasePrice',
       'warrantyLengthYears', 'warrantyExpiryDate', 'condition',
       'subtype', 'materialType', 'mileage', 'make', 'vehicleModel',
+      'estimatedCurrentValue', 'annualOwnershipCost', 'depreciationModel',
+      'annualDepreciationRate', 'generatesIncome', 'monthlyIncomeAmount',
+      'expectedReplacementYear', 'notes',
     ];
     for (const field of fields) {
       if (field in req.body) update[field] = req.body[field];

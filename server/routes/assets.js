@@ -8,7 +8,7 @@ const { listAssets, createAsset, updateAsset, deleteAsset } = require('../contro
 
 const currentYear = new Date().getFullYear();
 
-const ASSET_TYPES = ['home_system', 'appliance', 'vehicle', 'electronics', 'other'];
+const ASSET_TYPES = ['home_system', 'appliance', 'vehicle', 'electronics', 'real_estate', 'investment', 'business', 'other'];
 const CONDITIONS  = ['excellent', 'good', 'fair', 'poor'];
 
 // Shared optional field validators (used by both POST and PATCH)
@@ -24,6 +24,30 @@ const optionalFields = [
   body('mileage').optional().isFloat({ min: 0 }).withMessage('mileage must be >= 0').toFloat(),
   body('make').optional().trim(),
   body('vehicleModel').optional().trim(),
+  body('estimatedCurrentValue')
+    .optional({ nullable: true }).isFloat({ min: 0 }).toFloat(),
+  body('annualOwnershipCost')
+    .optional({ nullable: true }).isFloat({ min: 0 }).toFloat(),
+  body('depreciationModel')
+    .optional()
+    .isIn(['none', 'straight_line', 'accelerated', 'appreciating'])
+    .withMessage('depreciationModel must be one of: none, straight_line, accelerated, appreciating'),
+  body('annualDepreciationRate')
+    .optional({ nullable: true })
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('annualDepreciationRate must be between 0 and 100')
+    .toFloat(),
+  body('generatesIncome')
+    .optional().isBoolean().toBoolean(),
+  body('monthlyIncomeAmount')
+    .optional({ nullable: true }).isFloat({ min: 0 }).toFloat(),
+  body('expectedReplacementYear')
+    .optional({ nullable: true })
+    .isInt({ min: new Date().getFullYear(), max: 2100 })
+    .withMessage(`expectedReplacementYear must be between ${new Date().getFullYear()} and 2100`)
+    .toInt(),
+  body('notes')
+    .optional().trim(),
 ];
 
 router.get('/', auth, listAssets);

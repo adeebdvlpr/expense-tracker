@@ -31,12 +31,48 @@ describe('Assets CRUD (basic)', () => {
     const res = await request(app)
       .post('/api/assets')
       .set('x-auth-token', token)
-      .send({ name: 'HVAC Unit', type: 'home_system', brand: 'Carrier', condition: 'good' })
+      .send({
+        name: 'Toyota Camry 2020', type: 'vehicle', brand: 'Toyota', condition: 'good',
+        estimatedCurrentValue: 14000,
+        annualOwnershipCost: 1800,
+        depreciationModel: 'straight_line',
+        annualDepreciationRate: 15,
+        generatesIncome: false,
+        expectedReplacementYear: 2031,
+        notes: 'Test vehicle note',
+      })
       .expect(201);
 
     expect(res.body).toHaveProperty('_id');
-    expect(res.body.name).toBe('HVAC Unit');
-    expect(res.body.type).toBe('home_system');
+    expect(res.body.name).toBe('Toyota Camry 2020');
+    expect(res.body.type).toBe('vehicle');
+    expect(res.body.estimatedCurrentValue).toBe(14000);
+    expect(res.body.annualOwnershipCost).toBe(1800);
+    expect(res.body.depreciationModel).toBe('straight_line');
+    expect(res.body.annualDepreciationRate).toBe(15);
+    expect(res.body.generatesIncome).toBe(false);
+    expect(res.body.expectedReplacementYear).toBe(2031);
+    expect(res.body.notes).toBe('Test vehicle note');
+  });
+
+  test('POST /api/assets returns 201 for real_estate with income fields', async () => {
+    const token = await getToken();
+
+    const res = await request(app)
+      .post('/api/assets')
+      .set('x-auth-token', token)
+      .send({
+        name: 'Rental Property', type: 'real_estate',
+        generatesIncome: true,
+        monthlyIncomeAmount: 1200,
+        depreciationModel: 'appreciating',
+      })
+      .expect(201);
+
+    expect(res.body).toHaveProperty('_id');
+    expect(res.body.generatesIncome).toBe(true);
+    expect(res.body.monthlyIncomeAmount).toBe(1200);
+    expect(res.body.depreciationModel).toBe('appreciating');
   });
 
   test('GET /api/assets returns 200 with array', async () => {

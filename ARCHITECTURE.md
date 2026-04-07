@@ -49,6 +49,7 @@ expense-tracker/
 │   ├── server.js                     ← Express app + middleware + route registration
 │   ├── models/
 │   │   ├── User.js
+│   │   ├── Income.js
 │   │   ├── Expense.js
 │   │   ├── Budgets.js
 │   │   ├── Goal.js
@@ -64,6 +65,7 @@ expense-tracker/
 │   │   ├── budgetController.js
 │   │   ├── goalController.js
 │   │   ├── recurringController.js
+│   │   ├── incomeController.js
 │   │   ├── assetController.js
 │   │   ├── lifeEventController.js
 │   │   ├── predictionController.js   ← [Change 5e]
@@ -74,6 +76,7 @@ expense-tracker/
 │   │   ├── users.js
 │   │   ├── budgets.js
 │   │   ├── goals.js
+│   │   ├── income.js
 │   │   ├── recurring.js
 │   │   ├── assets.js
 │   │   ├── lifeEvents.js
@@ -91,7 +94,9 @@ expense-tracker/
 │       ├── jest.setup.js
 │       ├── auth.test.js
 │       ├── budgets.test.js
-│       └── expenses.test.js
+│       ├── expenses.test.js
+│       ├── assets.test.js
+│       └── lifeEvents.test.js
 │
 └── client/
     ├── package.json
@@ -117,12 +122,14 @@ expense-tracker/
         │   ├── ExpenseForm.js
         │   ├── ExpenseList.js
         │   ├── ExpenseChart.js
+        │   ├── IncomeForm.js
+        │   ├── BudgetDotGrid.js
         │   ├── BudgetForm.js
         │   ├── BudgetChart.js
         │   ├── BudgetWidget.js
         │   ├── GoalForm.js
         │   ├── GoalsWidget.js
-        │   ├── SummaryMetricCard.js
+        │   ├── SummaryMetricCard.js  ← MISSING (marker removed in 2c; file not found on disk)
         │   ├── ExpandableWidget.js
         │   ├── GoalProgressChart.js
         │   ├── AssetForm.js
@@ -169,12 +176,14 @@ expense-tracker/
 
 **User**
 - `username`, `email`, `passwordHash`
-- `dateOfBirth`, `reason` (enum), `monthlyIncome`, `currency`
-- `dashboardPrefs`: `{ showExpenseChart, showBudgetWidget, showGoalsWidget, chartType }`
+- `dateOfBirth`, `reason` (enum: Budgeting/Saving/Debt/Tracking/Other), `monthlyIncome`, `currency`
+- `dashboardPrefs`: `{ showExpenseChart, showBudgetWidget, showGoalsWidget, chartType (enum: pie/bar/line) }`
 - `selectedTheme`: String (default `'misty-highlands'`) — 6 theme options
 - `customCategories`: [String] — user-defined expense categories appended to defaults
 - `incomeType`: enum `['monthly','annual','weekly','rolling']` (default `'monthly'`)
-- **Pending additions:** `location: { city, state, country, postalCode }`, `onboardingCompleted: Boolean`
+- `overallMonthlyBudget`: Number (optional, min: 0) — user-level monthly cap, not period-specific
+- `location`: `{ city, state, country, postalCode }` — all String, optional (added Change 5a)
+- `onboardingCompleted`: Boolean (default: false) — (added Change 5a)
 
 **Income** *(new — 2b session)*
 - `userId` (ref User), `amount`, `description`, `category` (enum: Salary/Freelance/Investment Return/Gift/Inheritance/Bonus/Other), `date`
@@ -184,8 +193,10 @@ expense-tracker/
 - `isRecurring: Boolean` (default false), `recurringPaymentId: ObjectId ref RecurringPayment` (optional)
 
 **Goal**
-- `user`, `name`, `targetAmount`, `currentAmount`, `targetDate`, `notes`, `currency`, `status`
-- **Pending additions:** `source: enum ['user', 'ai']`, `predictionId: ObjectId ref AIPrediction`
+- `user`, `name`, `targetAmount`, `currentAmount`, `targetDate`, `notes`, `currency`
+- `status`: enum `['active','completed','archived']` (default: `'active'`)
+- `source`: enum `['user','ai']` (default: `'user'`) — (added Change 5a)
+- `predictionId`: ObjectId ref AIPrediction (default: null) — (added Change 5a)
 
 **Budgets**
 - `user`, `period` (YYYY-MM), `category`, `amount`, `currency`
@@ -196,16 +207,32 @@ expense-tracker/
 - `user`, `description`, `amount`, `category`, `interval` (daily/weekly/monthly/annual)
 - `startDate`, `endDate` (optional), `nextDueDate` (indexed), `isActive`, `lastLoggedDate`
 
-**Asset** — home systems, vehicles, appliances
-- `user`, `name`, `type` (home_system/appliance/vehicle/electronics/other)
+**Asset** — home systems, vehicles, appliances, real estate, investments
+- `user`, `name`, `type` (enum: home_system/appliance/vehicle/electronics/real_estate/investment/business/other)
 - `brand`, `purchaseYear`, `purchasePrice`
-- `warrantyLengthYears`, `warrantyExpiryDate`, `condition`
-- `subtype` (e.g. 'roof', 'hvac'), `materialType`
-- `mileage`, `make`, `vehicleModel` (vehicle-specific)
+- `warrantyLengthYears`, `warrantyExpiryDate`, `condition` (enum: excellent/good/fair/poor)
+- `subtype` (e.g. 'roof', 'hvac'), `materialType` — home_system-specific
+- `mileage`, `make`, `vehicleModel` — vehicle-specific
+- `estimatedCurrentValue`: Number (optional, default: null)
+- `annualOwnershipCost`: Number (optional, default: null)
+- `depreciationModel`: enum `['none','straight_line','accelerated','appreciating']` (default: `'none'`)
+- `annualDepreciationRate`: Number 0–100 (optional, default: null)
+- `generatesIncome`: Boolean (default: false)
+- `monthlyIncomeAmount`: Number (optional, default: null)
+- `expectedReplacementYear`: Number (optional, default: null)
+- `notes`: String (default: `''`)
+*(Financial fields added in 5b revision; types real_estate/investment/business added in 5b revision)*
 
 **LifeEvent** — ongoing circumstances that generate future costs
-- `user`, `type` (pet/college/vehicle_ownership/medical/eldercare/other)
-- `name`, `isActive`, `details: Mixed` (type-specific JSON payload)
+- `user`, `type` (enum: pet/college/vehicle_ownership/medical/eldercare/wedding/home_purchase/home_renovation/new_baby/retirement/relocation/other)
+- `name`, `isActive` (Boolean, default: true)
+- `details`: structured sub-document (not Mixed — expanded in 5c revision):
+  - Universal: `description`, `estimatedCost`, `costFrequency` (enum: one_time/monthly/annual), `targetDate`
+  - Pet-specific: `petName`, `species`, `age`
+  - College-specific: `studentName`, `institution`, `startYear`, `endYear`
+  - Vehicle-specific: `vehicleDescription`, `condition`
+  - Eldercare-specific: `personName`, `careLevel` (enum: in_home/assisted_living/memory_care)
+*(6 additional types and structured details schema added in 5c revision)*
 
 **AIPrediction** — stored AI projection result
 - `user`, `sourceType` (asset/lifeEvent/expense/manual), `sourceId`
@@ -666,6 +693,42 @@ Full Asset Inventory feature: real backend CRUD replacing 4 x 501 stubs, two new
 None.
 
 ---
+### 2026-04-06 — Change 5b revision (Asset model: financial fields + depreciation + type expansion)
+
+- Deviation from original plan: Asset model expanded with 8 universal financial
+  fields and 3 new asset types before AI service layer (Change 5d) is built.
+- Reason: Original model captured ownership metadata but not the financial
+  dimensions the AI needs for projections. Specifically missing:
+  (1) current estimated value vs. purchase price — needed for depreciation baseline;
+  (2) annual ownership cost — needed for total cost of ownership projections;
+  (3) depreciation model + rate — needed for future value projections and
+  inflation-adjusted replacement cost planning;
+  (4) income generation — needed for net cost vs. net gain projections on
+  rental/investment/business assets.
+  Without these fields, the prediction engine would receive insufficient data
+  to project depreciation, plan for replacement, or account for inflation.
+- New fields added (all optional, all types): estimatedCurrentValue,
+  annualOwnershipCost, depreciationModel (enum), annualDepreciationRate,
+  generatesIncome, monthlyIncomeAmount, expectedReplacementYear, notes.
+- depreciationModel enum: none / straight_line / accelerated / appreciating.
+  AI will use depreciationModel + annualDepreciationRate to project future
+  asset value at any date, and apply CPI inflation multipliers to annualOwnershipCost.
+- New type enum entries (8 total): real_estate, investment, business added
+  to existing home_system, appliance, vehicle, electronics, other.
+- AssetForm: new "Financial details" section on all types. annualDepreciationRate
+  field only enabled when depreciationModel !== 'none'. generatesIncome Switch
+  toggles monthlyIncomeAmount field visibility.
+- AssetCard: financial summary block shows set fields only — est. value with
+  depreciation hint, annual cost, income chip, replacement year, notes (2-line clamp).
+- Anticipated improvement: AI prediction engine (Change 5d) will have the data
+  needed to: (a) project asset value at a future date using chosen depreciation
+  model; (b) project inflation-adjusted ownership cost over 5-10 year horizon;
+  (c) calculate net cost vs. income on income-generating assets; (d) generate
+  replacement cost savings goals anchored to expectedReplacementYear.
+- Files modified: Asset.js, assets.js (routes), assetController.js, AssetForm.js,
+  AssetCard.js, AssetsPage.js, assets.test.js.
+
+---
 
 **2026-04-06 — Change 5c (AI: Life Events Module — CRUD + Frontend):**
 
@@ -702,3 +765,48 @@ Full Life Events feature: real backend CRUD replacing 4 × 501 stubs, two new fr
 
 ### Deviations from plan
 None.
+
+---
+
+**2026-04-06 — Technical Audit Session:**
+
+- **Trigger:** Previous session failed to locate ARCHITECTURE.md and overwrote it with a self-generated version. File was reverted. This session audits the restored file for accuracy against the actual codebase.
+- **Audit method:** Every file listed in the directory tree was checked for existence on disk (Glob). Every model schema was read and compared field-by-field. Every route file was read and endpoints extracted. App.js routes verified against the route table. AppHeader.js NAV_TABS verified. api.js exports enumerated. GoalsWidget.js hover bug confirmed still present.
+
+### Findings
+
+**Tech Stack — VERIFIED ACCURATE.** node-cron ^4.2.1 is installed in root package.json. @anthropic-ai/sdk is correctly listed as planned (absent from package.json). All MUI/React/axios versions match.
+
+**Directory Structure — CORRECTIONS MADE:**
+- `server/models/Income.js` — existed on disk, not listed → added
+- `server/controllers/incomeController.js` — existed on disk, not listed → added
+- `server/routes/income.js` — existed on disk, not listed → added
+- `server/tests/assets.test.js` — existed on disk (added in 5b), not listed → added
+- `server/tests/lifeEvents.test.js` — existed on disk (added in 5c), not listed → added
+- `client/src/components/IncomeForm.js` — existed on disk (added in 2b), not listed → added
+- `client/src/components/BudgetDotGrid.js` — existed on disk (added in 2b), not listed → added
+- `client/src/components/SummaryMetricCard.js` — listed without a change marker but does not exist on disk → marked ← MISSING
+- All [Change 5d/5e/5f/6] planned files verified absent from disk as expected — markers retained.
+
+**Current Routes — VERIFIED ACCURATE.** App.js contains exactly: /, /auth, /app, /account, /budgets, /goals, /recurring, /assets, /life-events, plus catch-all. The `/predictions` row is correctly annotated [Change 5e] and not yet in App.js.
+
+**Data Models — CORRECTIONS MADE:**
+- **User:** Removed "Pending additions" line — `location` and `onboardingCompleted` are fully implemented in the schema. Added `overallMonthlyBudget` field (added in Change 3.0.2; was absent from this section).
+- **Goal:** Removed "Pending additions" line — `source` and `predictionId` are fully implemented in the schema.
+- **Asset:** Updated `type` enum from 5 to 8 values (real_estate/investment/business added in 5b revision). Added 8 financial fields (estimatedCurrentValue, annualOwnershipCost, depreciationModel, annualDepreciationRate, generatesIncome, monthlyIncomeAmount, expectedReplacementYear, notes) — all added in 5b revision, previously undocumented in this section.
+- **LifeEvent:** Updated `type` enum from 6 to 12 values (wedding/home_purchase/home_renovation/new_baby/retirement/relocation added in 5c revision). Updated `details` from "Mixed (type-specific JSON payload)" to document the actual structured sub-document schema — reflects 5c revision.
+- AIPrediction, Notification, Expense, Income, Budgets, RecurringPayment — VERIFIED ACCURATE.
+
+**API Endpoints — VERIFIED ACCURATE.** All routes confirmed against route files on disk. Assets and life-events correctly in "Existing"; notifications correctly in "Stub Endpoints" (controller confirmed 501 stubs). No predictions.js on disk; "Planned" section correct.
+
+**AppHeader NAV_TABS — VERIFIED ACCURATE.** 7 tabs in order: Dashboard/Budgets/Goals/Recurring/Assets/Life Events/Account.
+
+**api.js exports — VERIFIED ACCURATE.** All 31 exported functions present. Comment in api.js calling assets/life-events "stubs" is stale but is a code comment issue, not an Architecture.md issue.
+
+**Test files — CORRECTIONS MADE (directory listing only):** 6 test files exist: jest.setup.js, auth.test.js, budgets.test.js, expenses.test.js, assets.test.js, lifeEvents.test.js. The latter two were added in 5b/5c but not reflected in the directory tree. Note: assets.test.js now contains 6 tests (a second POST test for real_estate was added in the 5b revision); the 5c session note count of "5 PASS" for assets.test.js reflects the pre-revision state and is not corrected (session notes preserved verbatim).
+
+**GoalsWidget.js isOuterRing hover bug — CONFIRMED STILL PRESENT.** Line 76: `const isOuterRing = (highlighted.seriesId ? true : false)`. The correct fix `highlighted.seriesId === 1` has not been applied. Architecture.md description accurate.
+
+**Session notes — VERIFIED.** All files mentioned in session notes confirmed to exist on disk. No session note references a nonexistent file (files annotated with future change markers are expected to be absent).
+
+### Architecture.md status after audit: CORRECTED — see findings above. No application files were modified in this session.

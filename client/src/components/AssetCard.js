@@ -18,6 +18,9 @@ const TYPE_LABELS = {
   appliance:   'Appliance',
   vehicle:     'Vehicle',
   electronics: 'Electronics',
+  real_estate: 'Real Estate',
+  investment:  'Investment Account',
+  business:    'Business / Equipment',
   other:       'Other',
 };
 
@@ -140,6 +143,63 @@ const AssetCard = ({ asset, currency = 'USD', onEdit, onDelete }) => {
             warrantyLengthYears={asset.warrantyLengthYears}
             theme={theme}
           />
+
+          {/* Financial summary */}
+          {(asset.estimatedCurrentValue != null ||
+            asset.annualOwnershipCost != null ||
+            asset.generatesIncome ||
+            asset.expectedReplacementYear != null ||
+            asset.notes) && (
+            <Box sx={{ mt: 0.5 }}>
+              {asset.estimatedCurrentValue != null && (
+                <Typography variant="body2" color="text.secondary">
+                  {'Est. value: '}
+                  <strong>{formatMoney(asset.estimatedCurrentValue, currency)}</strong>
+                  {asset.depreciationModel === 'appreciating'
+                    ? ' · appreciating'
+                    : asset.depreciationModel !== 'none' && asset.annualDepreciationRate != null
+                    ? ` · depreciates ~${asset.annualDepreciationRate}%/yr`
+                    : null}
+                </Typography>
+              )}
+              {asset.annualOwnershipCost != null && (
+                <Typography variant="body2" color="text.secondary">
+                  {'Annual cost: '}
+                  <strong>{formatMoney(asset.annualOwnershipCost, currency)}/yr</strong>
+                </Typography>
+              )}
+              {asset.generatesIncome && (
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.25 }}>
+                  {asset.monthlyIncomeAmount != null && (
+                    <Typography variant="body2" color="text.secondary">
+                      Generates <strong>{formatMoney(asset.monthlyIncomeAmount, currency)}/mo</strong>
+                    </Typography>
+                  )}
+                  <Chip label="Income" size="small" color="success" variant="outlined" />
+                </Stack>
+              )}
+              {asset.expectedReplacementYear != null && (
+                <Typography variant="body2" color="text.secondary">
+                  Replace by: <strong>{asset.expectedReplacementYear}</strong>
+                </Typography>
+              )}
+              {asset.notes && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    fontStyle: 'italic',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {asset.notes}
+                </Typography>
+              )}
+            </Box>
+          )}
 
           {/* Vehicle-specific */}
           {asset.type === 'vehicle' && (asset.make || asset.vehicleModel || asset.mileage != null) && (
