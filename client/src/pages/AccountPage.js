@@ -60,9 +60,16 @@ const AccountPage = () => {
 
         setDateOfBirth(me?.dateOfBirth ? new Date(me.dateOfBirth).toISOString().slice(0, 10) : '');
         setReason(me?.reason || '');
-        setMonthlyIncome(typeof me?.monthlyIncome === 'number' ? String(me.monthlyIncome) : (me?.monthlyIncome ? String(me.monthlyIncome) : ''));
+        const storedMonthly = me?.monthlyIncome;
+        const loadedType = me?.incomeType || 'monthly';
+        let displayIncome = storedMonthly;
+        if (typeof storedMonthly === 'number') {
+          if (loadedType === 'annual') displayIncome = storedMonthly * 12;
+          else if (loadedType === 'weekly') displayIncome = storedMonthly / 4;
+        }
+        setMonthlyIncome(typeof displayIncome === 'number' ? String(displayIncome) : '');
         setCurrency(me?.currency || 'USD');
-        setIncomeType(me?.incomeType || 'monthly');
+        setIncomeType(loadedType);
         setCustomCategories(Array.isArray(me?.customCategories) ? me.customCategories : []);
         setPrefs({
           showExpenseChart: me?.dashboardPrefs?.showExpenseChart ?? true,

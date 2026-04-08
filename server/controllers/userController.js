@@ -34,10 +34,17 @@ exports.updateMe = async (req, res) => {
       else $set.reason = reason;
     }
 
-    // monthlyIncome: allow clearing
+    // monthlyIncome: convert to monthly equivalent based on incomeType before storing
     if ('monthlyIncome' in req.body) {
-        if (monthlyIncome === null || monthlyIncome === '') $unset.monthlyIncome = '';
-        else $set.monthlyIncome = monthlyIncome;
+        if (monthlyIncome === null || monthlyIncome === '') {
+          $unset.monthlyIncome = '';
+        } else {
+          const rawIncome = Number(monthlyIncome);
+          let stored = rawIncome;
+          if (incomeType === 'annual') stored = rawIncome / 12;
+          else if (incomeType === 'weekly') stored = rawIncome * 4;
+          $set.monthlyIncome = stored;
+        }
     }
 
      // currency: do not allow clearing; normalize to USD if empty

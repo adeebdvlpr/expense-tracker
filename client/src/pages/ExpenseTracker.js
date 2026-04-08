@@ -322,8 +322,8 @@ const ExpenseTracker = () => {
         .reduce((sum, t) => sum + (Number(t.amount) || 0), 0) || null;
     }
     if (!monthlyIncome) return null;
-    if (incomeType === 'annual') return monthlyIncome / 12;
-    if (incomeType === 'weekly') return monthlyIncome * 52 / 12;
+    // if (incomeType === 'annual') return monthlyIncome / 12;
+    // if (incomeType === 'weekly') return monthlyIncome * 52 / 12;
     return monthlyIncome; // monthly
   }, [incomeType, monthlyIncome, incomeTransactions]);
 
