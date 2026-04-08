@@ -37,6 +37,7 @@ const AccountPage = () => {
   const [incomeType, setIncomeType] = useState('monthly');
   const [customCategories, setCustomCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
+  const [location, setLocation] = useState({ city: '', state: '', country: '', postalCode: '' });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,6 +72,12 @@ const AccountPage = () => {
         setCurrency(me?.currency || 'USD');
         setIncomeType(loadedType);
         setCustomCategories(Array.isArray(me?.customCategories) ? me.customCategories : []);
+        setLocation({
+          city:       me?.location?.city       || '',
+          state:      me?.location?.state      || '',
+          country:    me?.location?.country    || '',
+          postalCode: me?.location?.postalCode || '',
+        });
         setPrefs({
           showExpenseChart: me?.dashboardPrefs?.showExpenseChart ?? true,
           showBudgetWidget: me?.dashboardPrefs?.showBudgetWidget ?? true,
@@ -114,6 +121,7 @@ const AccountPage = () => {
     setSaving(true);
 
     try {
+      const hasLocation = location.city || location.state || location.country || location.postalCode;
       const payload = {
         dateOfBirth: dateOfBirth || null,
         reason: reason || null,
@@ -123,6 +131,7 @@ const AccountPage = () => {
         selectedTheme,
         customCategories,
         incomeType,
+        location: hasLocation ? location : null,
       };
 
       const updated = await updateMe(payload);
@@ -186,6 +195,46 @@ const AccountPage = () => {
             helperText="3-letter code (e.g., USD)"
             inputProps={{ maxLength: 3 }}
           />
+
+          <Divider sx={{ my: 1 }} />
+
+          {/* ── Location ── */}
+          <Typography variant="h6">Location</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Used for AI regional cost projections. If unset, projections will not be location-specific.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="City"
+              value={location.city}
+              onChange={(e) => setLocation((l) => ({ ...l, city: e.target.value }))}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="State / Province"
+              value={location.state}
+              onChange={(e) => setLocation((l) => ({ ...l, state: e.target.value }))}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label="Country"
+              value={location.country}
+              onChange={(e) => setLocation((l) => ({ ...l, country: e.target.value }))}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Postal Code"
+              value={location.postalCode}
+              onChange={(e) => setLocation((l) => ({ ...l, postalCode: e.target.value }))}
+              size="small"
+              sx={{ flex: 1 }}
+            />
+          </Box>
 
           <Divider sx={{ my: 1 }} />
 
