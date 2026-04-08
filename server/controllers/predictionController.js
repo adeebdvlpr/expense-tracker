@@ -38,3 +38,13 @@ exports.generateForLifeEvent = async (req, res) => {
     });
   }
 };
+
+exports.deletePrediction = async (req, res, next) => {
+  try {
+    const deleted = await AIPrediction.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+    if (!deleted) return res.status(404).json({ message: 'Prediction not found' });
+    res.json({ message: 'Prediction deleted' });
+  } catch (err) {
+    next(err);
+  }
+};

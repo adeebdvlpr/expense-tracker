@@ -78,16 +78,18 @@ function locationString(user) {
  */
 
 /*
- More robust sanitization is needed: This function now will find the first '{' and the last '}'
- To ignore any markedown fences or conversational preamble
-*/ 
+ Bracket-boundary sanitization: find the first '{' and the last '}'
+ to ignore any markdown fences or conversational preamble.
+ Uses lastIndexOf for the closing brace so the entire JSON object is captured,
+ not just up to the first nested field's closing brace.
+*/
 function sanitizeAIJson(text) {
   const start = text.indexOf('{');
-  const end = text.indexOf('}');
+  const end = text.lastIndexOf('}');
 
   if (start === -1 || end === -1) return text;
 
-  return text.substring(start, end +1).trim();
+  return text.substring(start, end + 1).trim();
 }
 
 /** Parse AI JSON response; return null on failure. */
@@ -108,25 +110,29 @@ function safeProjectedCost(value) {
 // Shared system prompt shape
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT_BASE = `You are a Senior Financial Advisor providing conservative, actionable financial guidance. Your role is to assess a client's financial situation and generate a realistic cost projection based on their actual spending behavior and asset data.
+const SYSTEM_PROMPT_BASE = `You are a Senior Financial Advisor. Today's date is {{CURRENT_DATE}}.
+Your goal is to provide a "Strategic Financial Audit" for data in <client_data>.
 
-You must respond with a single valid JSON object — no markdown, no code fences, no explanation, no text outside the JSON. Use this exact shape:
+ADVISORY LOGIC RULES:
+1. Estimate Stress-Testing: Do not take the client's "Estimated Cost" at face value. Based on your general knowledge of global costs (inflation, travel, luxury vs. economy), provide a "Stress Test." If their estimate is aggressively low, suggest a 20% "Correction Buffer."
+2. Financial Gap Analysis: Compare the required monthly savings to the client's current spending.
+3. Trade-off Advice: Identify one specific category (e.g., 'Entertainment') to trim to fund this goal.
+4. Opportunity Cost: Briefly state what this capital could achieve if invested in a low-cost index fund instead.
+5. Accuracy: Perform all date math relative to {{CURRENT_DATE}}.
+
+RESPONSE FORMAT:
+Respond ONLY with a valid JSON object. No markdown. No preamble. Start with '{'.
+
 {
-  "title": "string (max 80 chars) — concise advisory name for this projection",
-  "summary": "string — 3 to 4 sentences of professional advisor guidance. Reference the client's actual spending averages where relevant. Be conservative and specific.",
+  "title": "string",
+  "summary": "3-4 sentences. Include the Stress Test (e.g. 'While $3,500 is a lean budget for France, we suggest a 15% buffer for peak-season flight volatility'). Identify the trade-off.",
   "projectedCost": number,
-  "projectedDate": "ISO 8601 date string or null",
-  "monthlySavingsTarget": number or null,
-  "timelineLabel": "string or null",
-  "confidence": "low" | "medium" | "high"
-}
-
-Rules:
-- projectedCost must be a number >= 0, never null or a string.
-- monthlySavingsTarget must be a number if projectedDate is set, otherwise null.
-- confidence is "low" if key data is missing; "medium" if partial data is available; "high" if comprehensive.
-- Tone: professional, measured, and actionable — not speculative or alarmist.
-- Base your projections on the client's actual monthly spending averages provided.`;
+  "projectedDate": "ISO 8601 date",
+  "monthlySavingsTarget": number,
+  "opportunityCost": "string (e.g. 'This represents 4 months of your current transportation spend')",
+  "riskRating": "low | medium | high",
+  "confidence": "low | medium | high"
+}`;
 
 // ---------------------------------------------------------------------------
 // generateForAsset
@@ -150,8 +156,9 @@ async function generateForAsset(userId, assetId) {
   // Step 3 — fetch recent expenses
   const recentExpenses = await fetchRecentExpenses(userId);
 
-  // Step 4 — system prompt
-  const systemPrompt = `${SYSTEM_PROMPT_BASE}
+  // Step 4 — system prompt (inject current date for accurate timeline math)
+  const currentDate = new Date().toLocaleDateString();
+  const systemPrompt = `${SYSTEM_PROMPT_BASE.replace(/\{\{CURRENT_DATE\}\}/g, currentDate)}
 
 Additional rules for asset projections:
 - If the user's location is not set, explicitly state in the summary that this projection is not location-specific and may vary significantly by region.
@@ -160,6 +167,7 @@ Additional rules for asset projections:
 
   // Step 5 — build user prompt
   const lines = [];
+  lines.push(`<client_data>`);
   lines.push(`Asset: ${asset.name}`);
   lines.push(`Type: ${asset.type}`);
   if (asset.brand) lines.push(`Brand: ${asset.brand}`);
@@ -182,6 +190,7 @@ Additional rules for asset projections:
   lines.push(`User currency: ${(user && user.currency) || 'USD'}`);
   lines.push(`User location: ${locationString(user)}`);
   lines.push(`Client monthly spending averages by category (last 90 days):\n${spendingAveragesSummary(recentExpenses)}`);
+  lines.push(`</client_data>`);
 
   const userPrompt = lines.join('\n');
 
@@ -195,7 +204,7 @@ Additional rules for asset projections:
   // Step 7 — parse response
   const parsed = parseAIJson(text);
 
-  let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence;
+  let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence, riskRating, opportunityCost;
 
   if (!parsed) {
     title = `Advisory Insight: ${asset.name}`;
@@ -205,6 +214,8 @@ Additional rules for asset projections:
     projectedDate = null;
     monthlySavingsTarget = null;
     timelineLabel = null;
+    riskRating = null;
+    opportunityCost = null;
   } else {
     title = parsed.title;
     summary = parsed.summary;
@@ -213,6 +224,8 @@ Additional rules for asset projections:
     monthlySavingsTarget = parsed.monthlySavingsTarget || null;
     timelineLabel = parsed.timelineLabel || null;
     confidence = parsed.confidence || 'low';
+    riskRating = parsed.riskRating || null;
+    opportunityCost = parsed.opportunityCost || null;
   }
 
   // Step 8 — save and return
@@ -227,6 +240,8 @@ Additional rules for asset projections:
     monthlySavingsTarget,
     timelineLabel,
     confidence,
+    riskRating,
+    opportunityCost,
     aiProvider: 'anthropic',
     rawPrompt: userPrompt,
     rawResponse,
@@ -257,8 +272,9 @@ async function generateForLifeEvent(userId, lifeEventId) {
   // Step 3 — fetch recent expenses
   const recentExpenses = await fetchRecentExpenses(userId);
 
-  // Step 4 — system prompt
-  const systemPrompt = `${SYSTEM_PROMPT_BASE}
+  // Step 4 — system prompt (inject current date for accurate timeline math)
+  const currentDate = new Date().toLocaleDateString();
+  const systemPrompt = `${SYSTEM_PROMPT_BASE.replace(/\{\{CURRENT_DATE\}\}/g, currentDate)}
 
 Additional rules for life event projections:
 - If the user's location is not set, explicitly state in the summary that this projection is not location-specific and may vary significantly by region.
@@ -268,6 +284,7 @@ Additional rules for life event projections:
 
   // Step 5 — build user prompt
   const lines = [];
+  lines.push(`<client_data>`);
   lines.push(`Life event: ${event.name}`);
   lines.push(`Type: ${event.type}`);
   lines.push(`Active: ${event.isActive ? 'yes' : 'no'}`);
@@ -296,6 +313,7 @@ Additional rules for life event projections:
   lines.push(`User currency: ${(user && user.currency) || 'USD'}`);
   lines.push(`User location: ${locationString(user)}`);
   lines.push(`Client monthly spending averages by category (last 90 days):\n${spendingAveragesSummary(recentExpenses)}`);
+  lines.push(`</client_data>`);
 
   const userPrompt = lines.join('\n');
 
@@ -309,7 +327,7 @@ Additional rules for life event projections:
   // Step 7 — parse response
   const parsed = parseAIJson(text);
 
-  let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence;
+  let title, summary, projectedCost, projectedDate, monthlySavingsTarget, timelineLabel, confidence, riskRating, opportunityCost;
 
   if (!parsed) {
     title = `Advisory Insight: ${event.name}`;
@@ -319,6 +337,8 @@ Additional rules for life event projections:
     projectedDate = null;
     monthlySavingsTarget = null;
     timelineLabel = null;
+    riskRating = null;
+    opportunityCost = null;
   } else {
     title = parsed.title;
     summary = parsed.summary;
@@ -327,6 +347,8 @@ Additional rules for life event projections:
     monthlySavingsTarget = parsed.monthlySavingsTarget || null;
     timelineLabel = parsed.timelineLabel || null;
     confidence = parsed.confidence || 'low';
+    riskRating = parsed.riskRating || null;
+    opportunityCost = parsed.opportunityCost || null;
   }
 
   // Step 8 — save and return
@@ -341,6 +363,8 @@ Additional rules for life event projections:
     monthlySavingsTarget,
     timelineLabel,
     confidence,
+    riskRating,
+    opportunityCost,
     aiProvider: 'anthropic',
     rawPrompt: userPrompt,
     rawResponse,

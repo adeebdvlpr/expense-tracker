@@ -6,14 +6,18 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  IconButton,
   LinearProgress,
   Snackbar,
   Alert,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useTheme } from '@mui/material/styles';
 import { formatMoney } from '../utils/money';
-import { createGoal } from '../utils/api';
+import { createGoal, predictions as predictionsApi } from '../utils/api';
 
 function confidenceColor(confidence, theme) {
   switch (confidence) {
@@ -24,13 +28,15 @@ function confidenceColor(confidence, theme) {
   }
 }
 
-const PredictionCard = ({ prediction }) => {
+const PredictionCard = ({ prediction, onDelete }) => {
   const theme = useTheme();
-  const { _id, title, summary, projectedCost, projectedDate, monthlySavingsTarget, confidence, currency } = prediction;
+  const { _id, title, summary, projectedCost, projectedDate, monthlySavingsTarget, confidence, riskRating, opportunityCost, currency } = prediction;
   const chipColor = confidenceColor(confidence, theme);
+  const isHighRisk = riskRating === 'high';
 
   const [committing, setCommitting] = useState(false);
   const [committed, setCommitted] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
 
   const handleCommitGoal = async () => {
@@ -61,29 +67,73 @@ const PredictionCard = ({ prediction }) => {
     }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await predictionsApi.delete(_id);
+      if (onDelete) onDelete(_id);
+    } catch (err) {
+      setSnack({ open: true, message: 'Failed to delete insight.', severity: 'error' });
+      setDeleting(false);
+    }
+  };
+
   return (
     <>
       <Card
         elevation={0}
-        sx={{ borderRadius: '14px', border: `1px solid ${theme.palette.divider}`, height: '100%', display: 'flex', flexDirection: 'column' }}
+        sx={{
+          borderRadius: '14px',
+          border: isHighRisk
+            ? `2px solid ${theme.palette.error.main}`
+            : `1px solid ${theme.palette.divider}`,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Header: title + confidence chip */}
+          {/* Header: title + risk/confidence chips + delete */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-            <Typography variant="h3" sx={{ flex: 1, mr: 1 }}>
-              {title}
-            </Typography>
-            <Chip
-              label={confidence}
-              size="small"
-              sx={{
-                backgroundColor: chipColor,
-                color: theme.palette.getContrastText(chipColor),
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                flexShrink: 0,
-              }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flex: 1, mr: 1, gap: 0.5 }}>
+              {isHighRisk && (
+                <WarningAmberIcon sx={{ color: theme.palette.error.main, fontSize: 18, mt: 0.25, flexShrink: 0 }} />
+              )}
+              <Typography variant="h3" sx={{ flex: 1 }}>
+                {title}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+              {riskRating && (
+                <Chip
+                  label={`${riskRating} risk`}
+                  size="small"
+                  sx={{
+                    backgroundColor: isHighRisk ? theme.palette.error.main : riskRating === 'medium' ? theme.palette.warning.main : theme.palette.success.main,
+                    color: theme.palette.getContrastText(isHighRisk ? theme.palette.error.main : riskRating === 'medium' ? theme.palette.warning.main : theme.palette.success.main),
+                    fontWeight: 600,
+                    textTransform: 'capitalize',
+                  }}
+                />
+              )}
+              <Chip
+                label={confidence}
+                size="small"
+                sx={{
+                  backgroundColor: chipColor,
+                  color: theme.palette.getContrastText(chipColor),
+                  fontWeight: 600,
+                  textTransform: 'capitalize',
+                }}
+              />
+              <Tooltip title="Delete insight">
+                <span>
+                  <IconButton size="small" onClick={handleDelete} disabled={deleting} sx={{ color: theme.palette.error.main }}>
+                    {deleting ? <CircularProgress size={14} color="inherit" /> : <DeleteIcon fontSize="small" />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
           </Box>
 
           {/* Advisor's Guidance */}
@@ -106,6 +156,13 @@ const PredictionCard = ({ prediction }) => {
           {monthlySavingsTarget != null && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Suggested monthly savings: <strong>{formatMoney(monthlySavingsTarget, currency || 'USD')}/mo</strong>
+            </Typography>
+          )}
+
+          {/* Opportunity cost */}
+          {opportunityCost && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
+              {opportunityCost}
             </Typography>
           )}
 

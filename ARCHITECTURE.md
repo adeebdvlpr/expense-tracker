@@ -326,6 +326,7 @@ expense-tracker/
 | 5e | AI: Predictions API + PredictionsPage | High | 5d |
 | 5f | AI: Notification system | Medium | 5e |
 | 5g | AI: Auto-goal generation from predictions | Medium | 5e + Change 3 |
+| 5h | AI: Advisory Polish — Stress-Testing, Red Flags & Global Insights | Medium | 5g |
 | 6 | Onboarding Walkthrough | Medium | All of the above |
 
 ---
@@ -957,3 +958,43 @@ All 27 backend tests pass. 1 pre-existing failure in `auth.test.js` (username le
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5g. Carry forward.
+
+---
+
+**2026-04-07 — Change 5h (AI Advisory: Stress-Testing & Red Flags):**
+
+### What was built
+Finalized the "Professional Advisor" pivot. Implemented "Stress-Test" logic where the AI audits user estimates against economic benchmarks.
+
+### Key Logic
+- Added `riskRating` and `opportunityCost` fields to Advisory output (`AIPrediction` model + `predictionEngine.js`).
+- Fixed "Date Math" by injecting system date into the system prompt via `{{CURRENT_DATE}}` placeholder replacement in both `generateForAsset` and `generateForLifeEvent`.
+- Improved JSON sanitization using bracket-boundary detection: `sanitizeAIJson` now uses `lastIndexOf('}')` (was `indexOf('}')` — a bug that caused all multi-field JSON to be truncated after the first closing brace).
+- Replaced `SYSTEM_PROMPT_BASE` with a "Strategic Financial Audit" prompt that enforces Stress-Test, Gap Analysis, Trade-off Advice, and Opportunity Cost rules.
+- Client data is now wrapped in `<client_data>` tags in the user prompt for clearer AI parsing.
+- Added a "Sober Dashboard" (`PredictionsPage.js`): **Total Projected Burden** (sum of all `projectedCost`) and **Burden vs. Annual Income** (% of `monthlyIncome × 12`), fetched via `getMe()`.
+- Added risk filter `ToggleButtonGroup` to `PredictionsPage.js` — filters cards by `riskRating`.
+- `PredictionCard.js`: High-risk cards get a red `2px` border + `WarningAmberIcon`. All cards show a `riskRating` Chip and `opportunityCost` text. Delete button (`DeleteIcon`) calls `DELETE /api/predictions/:id` and removes the card via `onDelete` callback.
+- `DELETE /api/predictions/:id` route added to `predictions.js` router; `deletePrediction` handler added to `predictionController.js` (ownership-guarded `findOneAndDelete`).
+- `predictions.delete(id)` added to `client/src/utils/api.js`.
+
+### Files modified
+- `server/models/AIPrediction.js` — `riskRating` + `opportunityCost` fields
+- `server/services/predictionEngine.js` — new system prompt, date injection, new fields, `sanitizeAIJson` bugfix
+- `server/controllers/predictionController.js` — `deletePrediction` export
+- `server/routes/predictions.js` — `DELETE /:id` route
+- `client/src/utils/api.js` — `predictions.delete`
+- `client/src/components/PredictionCard.js` — risk highlight, opportunityCost, delete button
+- `client/src/pages/PredictionsPage.js` — Sober Dashboard, risk filter, delete handler
+
+### Files NOT modified
+`aiService.js` (model remains `claude-haiku-4-5-20251001`), `GoalsWidget.js` (carry-forward bug).
+
+### 2.3 — Bracket-boundary sanitization (documentation only)
+`sanitizeAIJson` was updated in this session. The comment block describing the change was present from a prior session, but the implementation used `indexOf('}')` (finds the first `}`) instead of `lastIndexOf('}')` (finds the last `}`). This caused every multi-field JSON response to be truncated. The fix — changing `indexOf` to `lastIndexOf` — was applied in 5h.
+
+### Test results
+All 27 backend tests pass. Manual verification of Stress-Test buffers (e.g., AI raising a low estimate) confirmed.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5h. Carry forward.

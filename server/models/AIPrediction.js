@@ -16,6 +16,8 @@ const AIPredictionSchema = new mongoose.Schema(
     monthlySavingsTarget: { type: Number, min: 0 },
     timelineLabel: { type: String },       // e.g. "12–18 months"
     confidence: { type: String, enum: ['low', 'medium', 'high'] },
+    riskRating: { type: String, enum: ['low', 'medium', 'high'] },
+    opportunityCost: { type: String },
     linkedGoalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Goal' },
     dismissed: { type: Boolean, default: false },
     aiProvider: { type: String, default: 'anthropic' },
