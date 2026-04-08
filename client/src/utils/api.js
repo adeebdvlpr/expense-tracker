@@ -198,12 +198,14 @@ export const deleteLifeEvent = async (id) => {
   return response.data;
 };
 
-/// --------- predictions APIs (Change 5e / 5h)
+/// --------- predictions APIs (Change 5e / 5h / 5j)
 export const predictions = {
   getAll: () => api.get('/api/predictions'),
   generateForAsset: (assetId) => api.post(`/api/predictions/asset/${assetId}`),
   generateForLifeEvent: (eventId) => api.post(`/api/predictions/life-event/${eventId}`),
   delete: (id) => api.delete(`/api/predictions/${id}`),
+  globalAudit: () => api.get('/api/predictions/global-audit'),
+  advisorChat: (question) => api.post('/api/predictions/advisor-chat', { question }),
 };
 
 /// --------- notifications APIs (stub — implemented in 5f)

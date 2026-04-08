@@ -998,3 +998,75 @@ All 27 backend tests pass. Manual verification of Stress-Test buffers (e.g., AI 
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in 5h. Carry forward.
+
+---
+
+## Change 5j — Conversational Advisory & Dynamic Mapping
+
+### What was built
+
+A full-stack intelligence layer that transforms the Financial Advisory page from a static "Sober Dashboard" into a live conversational experience with dynamic 50/30/20 categorisation.
+
+**1. Dynamic CategoryMap (cost-optimised)**
+- Default categories (Housing, Food, etc.) are classified with a static code map — zero AI calls.
+- Custom categories (user-defined) are classified once by AI (haiku) when first encountered and stored permanently in a new `CategoryMap` MongoDB collection (one doc per user, append-only audit trail).
+- Re-classification never happens; the same custom category is never sent to AI twice.
+
+**2. Global 50/30/20 Audit (`generateGlobalAudit`)**
+- Aggregates last 30 days of expenses by category (amounts only — no raw descriptions sent to AI per privacy rule).
+- Maps each category to need/want/saving via `generateCategoryMap`.
+- Calls AI (haiku) for `runwayMonths`, `twelveMonthRequirement`, and a `pulseInsight` string.
+- Stores audit trail as a dismissed `AIPrediction` (sourceType: 'manual').
+- Full fallback object returned on any failure.
+
+**3. Conversational Advisor (`POST /api/predictions/advisor-chat`)**
+- Accepts a free-text `question` from the user.
+- Builds data context from `generateGlobalAudit` (aggregated data only).
+- Calls AI with a financial advisor system prompt + user question.
+- Returns `{ answer: string }`. Fallback message on failure.
+
+**4. AdvisoryPulseWidget (frontend)**
+- Self-contained React component; fetches `/api/predictions/global-audit` on mount.
+- Renders a 3-segment colour-coded bar (Needs/Wants/Savings) using MUI `Box` flex — no extra chart dependencies.
+- Shows AI `pulseInsight` in italic below the bar.
+
+**5. PredictionsPage conversational UI**
+- Replaced the static Sober Dashboard Paper with `<AdvisoryPulseWidget />`.
+- Added "Ask Ledgic" chat section: scrollable history, user bubbles (right), AI bubbles (left), Enter-to-submit, spinner, error state.
+- Existing risk-filter + PredictionCard grid retained below.
+
+### Key logic
+
+```
+generateCategoryMap(userId, categories)
+  → split into defaults (static map) + customs
+  → look up customs from CategoryMap doc
+  → only call AI for truly unclassified customs
+  → upsert CategoryMap, return merged plain object
+
+generateGlobalAudit(userId)
+  → expenses last 30 days (category + amount only)
+  → generateCategoryMap → bucket totals (needs/wants/savings)
+  → callAI for runwayMonths + pulseInsight
+  → store audit trail in AIPrediction (dismissed: true)
+  → return audit object or safe FALLBACK on any error
+```
+
+### New files
+- `server/models/CategoryMap.js`
+- `client/src/components/AdvisoryPulseWidget.js`
+
+### Modified files
+- `server/services/predictionEngine.js` — `generateCategoryMap`, `generateGlobalAudit`, `DEFAULT_TYPE_MAP`
+- `server/controllers/predictionController.js` — `globalAudit`, `advisorChat`
+- `server/routes/predictions.js` — `GET /global-audit`, `POST /advisor-chat`
+- `client/src/utils/api.js` — `predictions.globalAudit`, `predictions.advisorChat`
+- `client/src/pages/PredictionsPage.js` — full page rewrite (AdvisoryPulseWidget + chat)
+- `server/tests/predictions.test.js` — 2 new smoke tests (total: 5 passing)
+
+### Architecture rules upheld
+- All AI calls via `aiService.callAI()` only
+- All client API calls via `client/src/utils/api.js` only
+- No raw transaction descriptions sent to AI
+- rawPrompt + rawResponse stored for all AI outputs
+- Graceful degradation on AI failure throughout

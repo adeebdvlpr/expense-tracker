@@ -12,6 +12,7 @@ import ExpenseList from '../components/ExpenseList';
 import ExpenseChart from '../components/ExpenseChart';
 import GoalsWidget from '../components/GoalsWidget';
 import BudgetWidget from '../components/BudgetWidget';
+import AdvisoryPulseWidget from '../components/AdvisoryPulseWidget';
 import BudgetDotGrid from '../components/BudgetDotGrid';
 import ExpandableWidget from '../components/ExpandableWidget';
 
@@ -584,15 +585,19 @@ const ExpenseTracker = () => {
 
         {/* Combo chart: donut (this month) + bar (last 6 months) */}
         {dashPrefs.showExpenseChart && (
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 1 }}>
             <ExpenseChart expenses={expenses} chartType="combo" height={200} />
           </Box>
         )}
+        <Box sx={{display: 'flex', gap: 2}}>
+          <AdvisoryPulseWidget />
+        </Box>
 
         {/* Dashboard: list + sidebar, fluid responsive */}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {/* Money Feed */}
           <Box sx={{ flex: '1 1 300px', minWidth: 0 , }}>
+            
             <Paper sx={{ p: 2.5, display: 'flex', flexDirection: 'column', background:"rgba(247, 249, 252, 0.9)" }}>
               {/* Header: title + filter controls right-aligned */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
@@ -651,6 +656,7 @@ const ExpenseTracker = () => {
 
           {/* Right sidebar — starts at 280px, shrinks to 155px before wrapping */}
           <Box sx={{ flex: '0 1 280px', minWidth: 155, display: 'flex', flexDirection: 'column', gap: 1 ,  }}>
+
 
             {dashPrefs.showBudgetWidget && (
               <ExpandableWidget title="Budget Details" expandedContent={<BudgetExpandedContent />}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Container,
@@ -8,12 +8,13 @@ import {
   Paper,
   ToggleButton,
   ToggleButtonGroup,
+  TextField,
+  Button,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import AppLayout from '../components/AppLayout';
 import PredictionCard from '../components/PredictionCard';
-import { predictions as predictionsApi, getMe } from '../utils/api';
-import { formatMoney } from '../utils/money';
+import { predictions as predictionsApi } from '../utils/api';
 
 const RISK_FILTERS = [
   { value: 'all', label: 'All' },
@@ -27,40 +28,59 @@ const PredictionsPage = () => {
   const [predictionsList, setPredictionsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [riskFilter, setRiskFilter] = useState('all');
-  const [userCurrency, setUserCurrency] = useState('USD');
-  const [annualIncome, setAnnualIncome] = useState(null);
+
+  // Conversational advisor state
+  const [chatHistory, setChatHistory] = useState([]); // [{ q, a }]
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState('');
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    Promise.all([
-      predictionsApi.getAll(),
-      getMe(),
-    ])
-      .then(([predsRes, user]) => {
-        setPredictionsList(predsRes.data);
-        if (user && user.currency) setUserCurrency(user.currency);
-        if (user && user.monthlyIncome) setAnnualIncome(user.monthlyIncome * 12);
-      })
+    predictionsApi.getAll()
+      .then((res) => setPredictionsList(res.data))
       .catch((err) => console.error('Failed to load predictions:', err))
       .finally(() => setLoading(false));
   }, []);
 
+  // Scroll chat to bottom on new messages
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory]);
+
   const handleDelete = (deletedId) => {
     setPredictionsList((prev) => prev.filter((p) => p._id !== deletedId));
+  };
+
+  const handleChat = async () => {
+    const q = chatInput.trim();
+    if (!q) return;
+    setChatInput('');
+    setChatLoading(true);
+    setChatError('');
+    try {
+      const res = await predictionsApi.advisorChat(q);
+      setChatHistory((prev) => [...prev, { q, a: res.data.answer }]);
+    } catch {
+      setChatError('Could not get a response. Please try again.');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleChatKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !chatLoading) {
+      e.preventDefault();
+      handleChat();
+    }
   };
 
   const filtered = useMemo(() => {
     if (riskFilter === 'all') return predictionsList;
     return predictionsList.filter((p) => p.riskRating === riskFilter);
   }, [predictionsList, riskFilter]);
-
-  const totalBurden = useMemo(
-    () => predictionsList.reduce((sum, p) => sum + (p.projectedCost || 0), 0),
-    [predictionsList]
-  );
-
-  const burdenPct = annualIncome && annualIncome > 0
-    ? ((totalBurden / annualIncome) * 100).toFixed(1)
-    : null;
 
   return (
     <AppLayout>
@@ -72,46 +92,103 @@ const PredictionsPage = () => {
           AI-powered advisory insights generated from your assets and life events.
         </Typography>
 
-        {/* Global Advisory Summary — Sober Dashboard */}
-        {!loading && predictionsList.length > 0 && (
-          <Paper
-            elevation={0}
-            sx={{
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: '14px',
-              p: 3,
-              mb: 3,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 4,
-            }}
-          >
-            <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Total Projected Burden
-              </Typography>
-              <Typography variant="h2" color="primary.main" sx={{ mt: 0.25 }}>
-                {formatMoney(totalBurden, userCurrency)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                across {predictionsList.length} insight{predictionsList.length !== 1 ? 's' : ''}
-              </Typography>
+        {/* Ask Ledgic — conversational advisor */}
+        <Paper
+          elevation={0}
+          sx={{
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: '14px',
+            p: 3,
+            mb: 3,
+          }}
+        >
+          <Typography variant="h3" sx={{ mb: 0.5 }}>
+            Ask Ledgic
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Ask about your spending, goals, or future plans.
+          </Typography>
+
+          {/* Chat history */}
+          {chatHistory.length > 0 && (
+            <Box
+              sx={{
+                maxHeight: 340,
+                overflowY: 'auto',
+                mb: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+              }}
+            >
+              {chatHistory.map(({ q, a }, i) => (
+                <Box key={i}>
+                  {/* User question */}
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        bgcolor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
+                        borderRadius: '12px 12px 2px 12px',
+                        px: 2,
+                        py: 1,
+                        maxWidth: '75%',
+                      }}
+                    >
+                      <Typography variant="body2">{q}</Typography>
+                    </Box>
+                  </Box>
+                  {/* AI answer */}
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <Box
+                      sx={{
+                        bgcolor: theme.palette.action.hover,
+                        borderRadius: '12px 12px 12px 2px',
+                        px: 2,
+                        py: 1,
+                        maxWidth: '80%',
+                      }}
+                    >
+                      <Typography variant="body2" color="text.primary">
+                        {a}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+              <div ref={chatEndRef} />
             </Box>
-            {burdenPct !== null && (
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Burden vs. Annual Income
-                </Typography>
-                <Typography variant="h2" color={parseFloat(burdenPct) > 100 ? 'error.main' : 'text.primary'} sx={{ mt: 0.25 }}>
-                  {burdenPct}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  of your annual income ({formatMoney(annualIncome, userCurrency)})
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        )}
+          )}
+
+          {/* Input row */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={4}
+              size="small"
+              placeholder="Ask about your spending, goals, or future plans..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={handleChatKeyDown}
+              disabled={chatLoading}
+            />
+            <Button
+              variant="contained"
+              onClick={handleChat}
+              disabled={chatLoading || !chatInput.trim()}
+              sx={{ minWidth: 80, height: 40, flexShrink: 0 }}
+            >
+              {chatLoading ? <CircularProgress size={18} color="inherit" /> : 'Ask'}
+            </Button>
+          </Box>
+
+          {chatError && (
+            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+              {chatError}
+            </Typography>
+          )}
+        </Paper>
 
         {/* Risk Filter Bar */}
         {!loading && predictionsList.length > 0 && (
@@ -131,6 +208,7 @@ const PredictionsPage = () => {
           </Box>
         )}
 
+        {/* Prediction Cards */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />

@@ -11,6 +11,7 @@
 
 const { callAI } = require('./aiService');
 const AIPrediction = require('../models/AIPrediction');
+const CategoryMap = require('../models/CategoryMap');
 const Asset = require('../models/Asset');
 const LifeEvent = require('../models/LifeEvent');
 const User = require('../models/User');
@@ -105,6 +106,25 @@ function parseAIJson(text) {
 function safeProjectedCost(value) {
   return typeof value === 'number' && isFinite(value) && value >= 0 ? value : 0;
 }
+
+// ---------------------------------------------------------------------------
+// Static default category → type mapping (no AI needed for these)
+// ---------------------------------------------------------------------------
+
+const DEFAULT_TYPE_MAP = {
+  'Housing':                 'need',
+  'Food':                    'need',
+  'Utilities':               'need',
+  'Transportation':          'need',
+  'Savings & Investments':   'saving',
+  'Debt Payments':           'need',
+  'Health & Personal Care':  'need',
+  'Entertainment & Leisure': 'want',
+  'Insurance':               'need',
+  'Other':                   'want',
+};
+
+const DEFAULT_CATEGORY_SET = new Set(Object.keys(DEFAULT_TYPE_MAP));
 
 // ---------------------------------------------------------------------------
 // Shared system prompt shape
@@ -374,5 +394,219 @@ Additional rules for life event projections:
 }
 
 // ---------------------------------------------------------------------------
+// generateCategoryMap
+// ---------------------------------------------------------------------------
 
-module.exports = { generateForAsset, generateForLifeEvent };
+/**
+ * Return a mapping of category name → 'need' | 'want' | 'saving' for the
+ * given list of categories.
+ *
+ * - Default categories are classified statically (zero AI calls).
+ * - Custom categories are looked up from the persisted CategoryMap doc.
+ * - Only newly-seen custom categories trigger an AI call; the result is
+ *   stored permanently so the same category is never classified twice.
+ *
+ * @param {string|ObjectId} userId
+ * @param {string[]} categories
+ * @returns {Promise<Record<string, 'need'|'want'|'saving'>>}
+ */
+async function generateCategoryMap(userId, categories) {
+  const result = {};
+
+  const customs = [];
+  for (const cat of categories) {
+    if (DEFAULT_CATEGORY_SET.has(cat)) {
+      result[cat] = DEFAULT_TYPE_MAP[cat];
+    } else {
+      customs.push(cat);
+    }
+  }
+
+  if (customs.length === 0) return result;
+
+  // Load existing custom classifications for this user
+  const doc = await CategoryMap.findOne({ user: userId });
+  const existingMapping = doc ? doc.mapping : new Map();
+
+  const unclassified = customs.filter((c) => !existingMapping.has(c));
+
+  // Merge already-classified customs into result
+  for (const cat of customs) {
+    if (existingMapping.has(cat)) {
+      result[cat] = existingMapping.get(cat);
+    }
+  }
+
+  if (unclassified.length === 0) return result;
+
+  // Classify unclassified customs via AI (haiku — cheap, fast)
+  const systemPrompt =
+    'You are a personal finance classifier. Classify each expense category name as one of: need, want, or saving. ' +
+    'Respond ONLY with a valid JSON object mapping each category name exactly as provided to one of those three values. No markdown. No explanation.';
+  const userPrompt = JSON.stringify(unclassified);
+
+  let newClassifications = {};
+  let rawPrompt = userPrompt;
+  let rawResponse = '';
+
+  try {
+    const { text, rawResponse: raw } = await callAI({ systemPrompt, userPrompt, maxTokens: 512 });
+    rawResponse = raw;
+    const parsed = parseAIJson(text);
+    if (parsed && typeof parsed === 'object') {
+      const valid = ['need', 'want', 'saving'];
+      for (const cat of unclassified) {
+        const val = parsed[cat];
+        newClassifications[cat] = valid.includes(val) ? val : 'want';
+      }
+    } else {
+      for (const cat of unclassified) newClassifications[cat] = 'want';
+    }
+  } catch (_) {
+    // AI failure — default all unclassified to 'want'
+    for (const cat of unclassified) newClassifications[cat] = 'want';
+  }
+
+  // Persist new classifications (upsert into CategoryMap doc)
+  try {
+    const update = {};
+    for (const [cat, type] of Object.entries(newClassifications)) {
+      update[`mapping.${cat}`] = type;
+    }
+    await CategoryMap.findOneAndUpdate(
+      { user: userId },
+      {
+        $set: update,
+        $push: { rawPrompts: rawPrompt, rawResponses: rawResponse },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (_) {
+    // Non-fatal — classifications still returned for this request
+  }
+
+  Object.assign(result, newClassifications);
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// generateGlobalAudit
+// ---------------------------------------------------------------------------
+
+/**
+ * Aggregate the user's spending into need/want/saving buckets and generate
+ * an AI-powered "pulse insight" string.
+ *
+ * Privacy rule: only category names and aggregated totals go to AI — never
+ * raw transaction descriptions.
+ *
+ * @param {string|ObjectId} userId
+ * @returns {Promise<object>} audit result with buckets + AI insight fields
+ */
+async function generateGlobalAudit(userId) {
+  const FALLBACK = {
+    needs: 0,
+    wants: 0,
+    savings: 0,
+    monthlyIncome: 0,
+    currency: 'USD',
+    runwayMonths: null,
+    twelveMonthRequirement: null,
+    categoryMap: {},
+    pulseInsight: null,
+  };
+
+  try {
+    // Fetch user financial profile
+    const user = await User.findById(userId).select('monthlyIncome currency');
+    const monthlyIncome = (user && user.monthlyIncome) || 0;
+    const currency = (user && user.currency) || 'USD';
+
+    // Fetch current calendar month's expenses — category + amount ONLY (no descriptions)
+    const now = new Date();
+    const since = new Date(now.getFullYear(), now.getMonth(), 1);
+    const expenses = await Expense.find({ user: userId, date: { $gte: since } })
+      .select('amount category')
+      .lean();
+
+    // Group by category
+    const categoryTotals = {};
+    for (const e of expenses) {
+      const cat = e.category || 'Other';
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + (e.amount || 0);
+    }
+
+    const categories = Object.keys(categoryTotals);
+
+    // Classify categories (static for defaults, AI for customs)
+    const categoryMap = categories.length
+      ? await generateCategoryMap(userId, categories)
+      : {};
+
+    // Compute bucket totals
+    let needs = 0, wants = 0, savings = 0;
+    for (const [cat, total] of Object.entries(categoryTotals)) {
+      const type = categoryMap[cat] || 'want';
+      if (type === 'need') needs += total;
+      else if (type === 'saving') savings += total;
+      else wants += total;
+    }
+
+    // Fetch active AIPredictions (title + projectedCost only)
+    const predictions = await AIPrediction.find({ user: userId, dismissed: { $ne: true } })
+      .select('title projectedCost')
+      .lean();
+
+    // Build AI input (no descriptions — privacy compliant)
+    const auditInput = JSON.stringify({
+      categoryTotals,
+      categoryMap,
+      monthlyIncome,
+      predictions: predictions.map((p) => ({ title: p.title, projectedCost: p.projectedCost })),
+    });
+
+    const systemPrompt =
+      'You are a financial analyst. Given the user\'s monthly spending data, calculate their financial runway and provide a brief insight. ' +
+      'Respond ONLY with a valid JSON object with exactly these fields: ' +
+      '{ "runwayMonths": number, "twelveMonthRequirement": number, "pulseInsight": "string (1-2 sentences, practical and specific)" }. ' +
+      'No markdown. No extra fields.';
+
+    const { text, rawResponse } = await callAI({ systemPrompt, userPrompt: auditInput, maxTokens: 512 });
+
+    let runwayMonths = null;
+    let twelveMonthRequirement = null;
+    let pulseInsight = null;
+
+    const parsed = parseAIJson(text);
+    if (parsed) {
+      runwayMonths = typeof parsed.runwayMonths === 'number' ? parsed.runwayMonths : null;
+      twelveMonthRequirement = typeof parsed.twelveMonthRequirement === 'number' ? parsed.twelveMonthRequirement : null;
+      pulseInsight = typeof parsed.pulseInsight === 'string' ? parsed.pulseInsight : null;
+    }
+
+    // Store audit trail as a dismissed AIPrediction (sourceType: 'manual')
+    try {
+      await AIPrediction.create({
+        user: userId,
+        sourceType: 'manual',
+        title: 'Global Audit',
+        summary: pulseInsight || 'Global 50/30/20 audit',
+        projectedCost: 0,
+        dismissed: true,
+        aiProvider: 'anthropic',
+        rawPrompt: auditInput,
+        rawResponse,
+      });
+    } catch (_) {
+      // Audit trail failure is non-fatal
+    }
+
+    return { needs, wants, savings, monthlyIncome, currency, runwayMonths, twelveMonthRequirement, categoryMap, pulseInsight };
+  } catch (_) {
+    return FALLBACK;
+  }
+}
+
+// ---------------------------------------------------------------------------
+
+module.exports = { generateForAsset, generateForLifeEvent, generateCategoryMap, generateGlobalAudit };

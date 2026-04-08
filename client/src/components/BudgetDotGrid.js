@@ -87,7 +87,7 @@ const BudgetDotGrid = ({ spent, income, monthLabel }) => {
         {/* Left: text labels */}
         <Box sx={{ flexShrink: 0 }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-            {monthLabel} Budget
+            {monthLabel} Consumption
           </Typography>
           <Typography variant="h2" sx={{ fontWeight: 400, lineHeight: 1.1, mb: 0.5 }}>
             {fmt.format(spent)}

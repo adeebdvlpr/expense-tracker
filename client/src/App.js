@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, DEFAULT_THEME } from './theme';
+import { AdvisoryProvider } from './context/AdvisoryContext';
 
 import MarketingLandingPage from './pages/MarketingLandingPage';
 import ExpenseTracker from './pages/ExpenseTracker';
@@ -63,6 +64,7 @@ const App = () => {
     <ThemeContext.Provider value={themeContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <AdvisoryProvider>
         <BrowserRouter>
           <Routes>
                   {/* PUBLIC ...*/}
@@ -113,6 +115,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />}/>
           </Routes>
         </BrowserRouter>
+        </AdvisoryProvider>
       </ThemeProvider>
     </ThemeContext.Provider>
   );
