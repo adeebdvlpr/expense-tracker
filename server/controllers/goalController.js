@@ -1,4 +1,7 @@
 const Goal = require('../models/Goal');
+const { createNotification } = require('../services/notificationService');
+
+const MILESTONES = [25, 50, 75, 100];
 
 exports.listGoals = async (req, res, next) => {
   try {
@@ -49,6 +52,12 @@ exports.updateGoal = async (req, res, next) => {
     if ('status' in req.body) update.status = status;
     if ('currency' in req.body) update.currency = currency;
 
+    // Fetch before-state only when currentAmount is being updated (for milestone detection)
+    let before = null;
+    if ('currentAmount' in req.body) {
+      before = await Goal.findOne({ _id: req.params.id, user: req.user.id }).lean();
+    }
+
     const updated = await Goal.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },
       { $set: update },
@@ -56,6 +65,23 @@ exports.updateGoal = async (req, res, next) => {
     ).lean();
 
     if (!updated) return res.status(404).json({ message: 'Goal not found' });
+
+    // Fire goal_milestone notifications — fire-and-forget
+    if (before && updated.targetAmount > 0) {
+      const prevPct = (before.currentAmount / updated.targetAmount) * 100;
+      const newPct = (updated.currentAmount / updated.targetAmount) * 100;
+      const crossed = MILESTONES.filter((m) => newPct >= m && prevPct < m);
+      for (const m of crossed) {
+        createNotification(req.user.id, {
+          type: 'goal_milestone',
+          title: `${updated.name} — ${m}% reached`,
+          message: `You've saved ${updated.currentAmount.toFixed(2)} of your ${updated.targetAmount.toFixed(2)} goal.`,
+          sourceType: 'goal',
+          sourceId: updated._id,
+        }).catch(() => {});
+      }
+    }
+
     res.json(updated);
   } catch (err) {
     next(err);

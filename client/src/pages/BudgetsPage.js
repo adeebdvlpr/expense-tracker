@@ -46,7 +46,8 @@ function getPreviousPeriodYYYYMM() {
 
 function periodToMonthName(period) {
   if (!period) return period;
-  return new Date(`${period}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const [y, m] = period.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 export default function BudgetsPage() {

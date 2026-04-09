@@ -3,6 +3,7 @@
 const AIPrediction = require('../models/AIPrediction');
 const predictionEngine = require('../services/predictionEngine');
 const { callAI } = require('../services/aiService');
+const { createNotification } = require('../services/notificationService');
 
 exports.getAllPredictions = async (req, res, next) => {
   try {
@@ -19,6 +20,13 @@ exports.getAllPredictions = async (req, res, next) => {
 exports.generateForAsset = async (req, res) => {
   try {
     const prediction = await predictionEngine.generateForAsset(req.user.id, req.params.assetId);
+    createNotification(req.user.id, {
+      type: 'ai_prediction',
+      title: prediction.title,
+      message: prediction.summary,
+      sourceType: prediction.sourceType,
+      sourceId: prediction._id,
+    }).catch(() => {});
     res.json(prediction);
   } catch (error) {
     res.status(500).json({
@@ -31,6 +39,13 @@ exports.generateForAsset = async (req, res) => {
 exports.generateForLifeEvent = async (req, res) => {
   try {
     const prediction = await predictionEngine.generateForLifeEvent(req.user.id, req.params.eventId);
+    createNotification(req.user.id, {
+      type: 'ai_prediction',
+      title: prediction.title,
+      message: prediction.summary,
+      sourceType: prediction.sourceType,
+      sourceId: prediction._id,
+    }).catch(() => {});
     res.json(prediction);
   } catch (error) {
     res.status(500).json({

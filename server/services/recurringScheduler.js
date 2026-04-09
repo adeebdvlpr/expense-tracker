@@ -1,6 +1,8 @@
 const cron = require('node-cron');
 const RecurringPayment = require('../models/RecurringPayment');
 const Expense = require('../models/Expense');
+const Asset = require('../models/Asset');
+const { createNotification } = require('./notificationService');
 
 /**
  * Advance a date by one interval step.
@@ -83,6 +85,33 @@ async function runScheduler() {
   }
 }
 
+async function runWarrantyExpiryCheck() {
+  const now = new Date();
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const timestamp = now.toISOString();
+
+  try {
+    const assets = await Asset.find({
+      warrantyExpiryDate: { $gte: now, $lte: in30Days },
+    }).exec();
+
+    for (const asset of assets) {
+      const expiryStr = asset.warrantyExpiryDate.toISOString().slice(0, 10);
+      await createNotification(asset.user, {
+        type: 'warranty_expiry',
+        title: `Warranty expiring: ${asset.name}`,
+        message: `The warranty for ${asset.name} expires on ${expiryStr}. Consider reviewing your coverage.`,
+        sourceType: 'asset',
+        sourceId: asset._id,
+      });
+    }
+
+    console.log(`[Scheduler] ${timestamp} — Warranty check: ${assets.length} asset(s) expiring within 30 days.`);
+  } catch (err) {
+    console.error(`[Scheduler] ${timestamp} — Error during warranty check:`, err.message || err);
+  }
+}
+
 /**
  * Start the recurring payment scheduler.
  * Runs daily at 00:05 server time.
@@ -91,6 +120,9 @@ async function runScheduler() {
 function startScheduler() {
   cron.schedule('4 5 * 2 1', runScheduler);
   console.log('[Scheduler] Recurring payment scheduler started (daily at 00:05).');
+
+  cron.schedule('0 8 * * *', runWarrantyExpiryCheck);
+  console.log('[Scheduler] Warranty expiry checker started (daily at 08:00).');
 }
 
 module.exports = { startScheduler };

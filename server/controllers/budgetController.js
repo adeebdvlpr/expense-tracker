@@ -1,11 +1,12 @@
 const Budget = require('../models/Budgets');
 const Expense = require('../models/Expense');
+const { createNotification } = require('../services/notificationService');
 
 function parsePeriod(period) {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)) return null;
     const [y, m] = period.split('-').map(Number);
-    const from = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
-    const to = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0)); // exclusive
+    const from = new Date(y, m - 1, 1, 0, 0, 0, 0); // local midnight
+    const to = new Date(y, m, 1, 0, 0, 0, 0);        // exclusive, local midnight
     return { from, to };
 }
     
@@ -74,7 +75,37 @@ exports.listBudgets = async (req, res, next) => {
           update,
           { new: true, upsert: true, runValidators: true }
         ).lean();
-    
+
+        // Fire budget_alert if spend >= 80% — fire-and-forget
+        const range = parsePeriod(period);
+        if (range && saved.amount > 0) {
+          Expense.find({
+            user: req.user.id,
+            category,
+            date: { $gte: range.from, $lt: range.to },
+          })
+            .select('amount')
+            .lean()
+            .exec()
+            .then((expenses) => {
+              const spent = expenses.reduce((sum, e) => sum + (typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0), 0);
+              if (spent / saved.amount >= 0.8) {
+                const pct = Math.round((spent / saved.amount) * 100);
+                const over = spent > saved.amount;
+                createNotification(req.user.id, {
+                  type: 'budget_alert',
+                  title: over ? `Over budget: ${category}` : `${category} at ${pct}%`,
+                  message: over
+                    ? `You've spent ${spent.toFixed(2)} against a ${saved.amount.toFixed(2)} budget for ${category} in ${period}.`
+                    : `You've used ${pct}% of your ${category} budget for ${period}.`,
+                  sourceType: 'budget',
+                  sourceId: saved._id,
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
+
         return res.status(201).json(saved);
       } catch (err) {
         if (err?.code === 11000) {

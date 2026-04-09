@@ -338,6 +338,7 @@ const ExpenseTracker = () => {
       setExpenses((prev) => [...prev, newExpense]);
       setError(null);
       openSnack('Expense added.', 'success');
+      window.dispatchEvent(new Event('ledgic:expense-saved'));
     } catch {
       setError('Failed to add expense. Please try again.');
       openSnack('Failed to add expense.', 'error');

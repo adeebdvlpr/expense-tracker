@@ -1,4 +1,6 @@
 const Expense = require('../models/Expense');
+const Budget = require('../models/Budgets');
+const { createNotification } = require('../services/notificationService');
 
 exports.addExpense = async (req, res, next) => {
   try {
@@ -12,6 +14,45 @@ exports.addExpense = async (req, res, next) => {
     });
 
     const savedExpense = await newExpense.save();
+
+    // Check if this expense pushes a budget to >= 80% — fire-and-forget
+    const expDate = savedExpense.date || new Date();
+    const period = `${expDate.getUTCFullYear()}-${String(expDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    const from = new Date(Date.UTC(expDate.getUTCFullYear(), expDate.getUTCMonth(), 1));
+    const to = new Date(Date.UTC(expDate.getUTCFullYear(), expDate.getUTCMonth() + 1, 1));
+
+    Budget.findOne({ user: req.user.id, period, category: savedExpense.category })
+      .lean()
+      .then((budget) => {
+        if (!budget || budget.amount <= 0) return;
+        return Expense.find({
+          user: req.user.id,
+          category: savedExpense.category,
+          date: { $gte: from, $lt: to },
+        })
+          .select('amount')
+          .lean()
+          .then((expenses) => {
+            const spent = expenses.reduce(
+              (s, e) => s + (typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0),
+              0
+            );
+            if (spent / budget.amount >= 0.8) {
+              const pct = Math.round((spent / budget.amount) * 100);
+              const over = spent > budget.amount;
+              createNotification(req.user.id, {
+                type: 'budget_alert',
+                title: over ? `Over budget: ${savedExpense.category}` : `${savedExpense.category} at ${pct}%`,
+                message: over
+                  ? `You've spent ${spent.toFixed(2)} against a ${budget.amount.toFixed(2)} budget for ${savedExpense.category} in ${period}.`
+                  : `You've used ${pct}% of your ${savedExpense.category} budget for ${period}.`,
+                sourceType: 'budget',
+                sourceId: budget._id,
+              }).catch(() => {});
+            }
+          });
+      })
+      .catch(() => {});
 
     res.status(201).json({
       _id: savedExpense._id,

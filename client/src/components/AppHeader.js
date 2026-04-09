@@ -20,6 +20,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useTheme } from '@mui/material/styles';
+import NotificationBell from './NotificationBell';
 
 const NAV_TABS = [
   { label: 'Dashboard', path: '/app' },
@@ -91,6 +92,9 @@ const AppHeader = () => {
             </Tabs>
           )}
 
+          {/* Desktop notification bell */}
+          {!isMobile && <NotificationBell />}
+
           {/* Desktop logout */}
           {!isMobile && (
             <Tooltip title="Logout">
@@ -129,6 +133,9 @@ const AppHeader = () => {
                 </ListItemButton>
               </ListItem>
             ))}
+            <ListItem sx={{ justifyContent: 'center', py: 1 }}>
+              <NotificationBell />
+            </ListItem>
             <Divider />
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>

@@ -224,4 +224,9 @@ export const markAllNotificationsRead = async () => {
   return response.data;
 };
 
+export const dismissNotification = async (id) => {
+  const response = await api.patch(`/api/notifications/${id}`, { dismissed: true });
+  return response.data;
+};
+
 export default api;
