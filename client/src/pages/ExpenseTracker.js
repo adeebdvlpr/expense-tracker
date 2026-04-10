@@ -392,6 +392,30 @@ const ExpenseTracker = () => {
     return { from: startOfDay(startOfMonth(to)), to: startOfDay(to) };
   }, [filter, customFrom, customTo]);
 
+  const thisMonthWindow = useMemo(() => {
+    // default: this month
+    const to = new Date();
+    return { from: startOfDay(startOfMonth(to)), to: startOfDay(to) };
+  }, []);
+
+  const thisMonthExpenses = useMemo(() => {
+    const { from, to } = thisMonthWindow;
+    const filtered = (!from || !to) ? expenses : expenses.filter((e) => {
+      const dt = parseExpenseDate(e);
+      if (!dt) return false;
+      const d = startOfDay(dt);
+      return d >= from && d <= to;
+    });
+    return [...filtered].sort((a, b) => {
+      const da = parseExpenseDate(a);
+      const db = parseExpenseDate(b);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return db.getTime() - da.getTime();
+    });
+  }, [expenses, thisMonthWindow]);
+
   const filteredExpenses = useMemo(() => {
     const { from, to } = filterWindow;
     const filtered = (!from || !to) ? expenses : expenses.filter((e) => {
@@ -437,11 +461,6 @@ const ExpenseTracker = () => {
   }, [filteredExpenses, filteredIncome]);
 
   const summary = useMemo(() => {
-    const total = filteredExpenses.reduce((sum, e) => {
-      const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
-      return sum + amt;
-    }, 0);
-
     const categoryTotals = new Map();
     for (const e of filteredExpenses) {
       const cat = e.category || 'Uncategorized';
@@ -459,25 +478,19 @@ const ExpenseTracker = () => {
     }
 
     let biggestHit = 0;
-    for (const e of filteredExpenses) {
+    for (const e of thisMonthExpenses) {
       const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
       if (amt > biggestHit) biggestHit = amt;
     }
 
-    let avgPerDay = total;
-    const { from, to } = filterWindow;
-    if (from && to) {
-      const days = daysBetweenInclusive(from, to);
-      avgPerDay = total / days;
-    } else {
-      const dates = filteredExpenses.map(parseExpenseDate).filter(Boolean);
-      if (dates.length >= 2) {
-        const min = new Date(Math.min(...dates.map((d) => d.getTime())));
-        const max = new Date(Math.max(...dates.map((d) => d.getTime())));
-        const days = daysBetweenInclusive(min, max);
-        avgPerDay = total / days;
-      }
-    }
+    const monthTotal = thisMonthExpenses.reduce((sum, e) => {
+      const amt = typeof e.amount === 'number' ? e.amount : Number(e.amount) || 0;
+      return sum + amt;
+    }, 0);
+
+    const { from, to } = thisMonthWindow;
+    const days = (from && to) ? daysBetweenInclusive(from, to) : 1;
+    const avgPerDay = monthTotal / days;
 
     const now = new Date();
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -490,7 +503,7 @@ const ExpenseTracker = () => {
       biggestHitFmt: fmt.format(biggestHit),
       daysToReset,
     };
-  }, [filteredExpenses, filterWindow]);
+  }, [filteredExpenses, thisMonthExpenses, thisMonthWindow]);
 
   const thisMonthTotal = useMemo(() => {
     const now = new Date();
