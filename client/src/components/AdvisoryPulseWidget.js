@@ -66,7 +66,7 @@ const AdvisoryPulseWidget = () => {
   return (
     <Paper
       elevation={0}
-      sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '14px', p: 2, mb: 1 , background:"rgba(247, 249, 252, 0.9)"}}
+      sx={{  width: '100%', border: `1px solid ${theme.palette.divider}`, borderRadius: '14px', p: 2, mb: 1 , background:"rgba(247, 249, 252, 0.9)"}}
     >
       {/* Header row */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>

@@ -18,7 +18,15 @@ const UserSchema = new mongoose.Schema({
   },
   passwordHash: {
     type: String,
-    required: true,
+    required: false, // optional — social (Google) users have no password
+  },
+
+  // OAuth — Google
+  googleId: {
+    type: String,
+    default: null,
+    sparse: true, // allows multiple null values while still being unique
+    unique: true,
   },
   dateOfBirth: {
     type: Date,
@@ -83,9 +91,6 @@ const UserSchema = new mongoose.Schema({
   // Onboarding completion flag
   onboardingCompleted: { type: Boolean, default: false },
 
-  // for third-party auth later
-  // authProvider: { type: String, default: 'local', enum: ['local', 'google'] },
-  // googleId: { type: String }
 
 }, { timestamps: true });
 

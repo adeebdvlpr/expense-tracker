@@ -3,7 +3,7 @@ import { predictions as predictionsApi } from '../utils/api';
 
 const AdvisoryContext = createContext(null);
 
-export const AdvisoryProvider = ({ children }) => {
+export const AdvisoryProvider = ({ children, isAuthenticated }) => {
   const [auditData, setAuditData] = useState(null);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState(false);
@@ -23,12 +23,11 @@ export const AdvisoryProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (token && !fetchedRef.current) {
+    if (isAuthenticated && !fetchedRef.current) {
       fetchedRef.current = true;
       fetchAudit();
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const refreshAudit = () => {
     fetchAudit();

@@ -4,20 +4,18 @@ let app;
 
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-async function getToken() {
+async function createAuthAgent() {
+  const agent = request.agent(app);
   const u = unique();
-  const username = `u${u}`.slice(0, 20);
-
-  const res = await request(app)
+  await agent
     .post('/api/auth/register')
     .send({
-      username,
-      email: `${username}@example.com`,
+      username: `u${u}`.slice(0, 20),
+      email:    `u${u}@example.com`,
       password: 'Password1',
     })
     .expect(200);
-
-  return res.body.token;
+  return agent;
 }
 
 beforeAll(() => {
@@ -26,20 +24,19 @@ beforeAll(() => {
 
 describe('Life Events CRUD (basic)', () => {
   test('POST /api/life-events returns 201 with valid payload', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/life-events')
-      .set('x-auth-token', token)
       .send({
         name: 'Buddy the Dog',
         type: 'pet',
         details: {
-          petName: 'Buddy',
-          species: 'Dog',
+          petName:       'Buddy',
+          species:       'Dog',
           estimatedCost: 150,
           costFrequency: 'monthly',
-          targetDate: '2026-06-01',
+          targetDate:    '2026-06-01',
         },
       })
       .expect(201);
@@ -54,18 +51,17 @@ describe('Life Events CRUD (basic)', () => {
   });
 
   test('POST /api/life-events with type wedding returns 201', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/life-events')
-      .set('x-auth-token', token)
       .send({
         name: 'Our Wedding',
         type: 'wedding',
         details: {
           estimatedCost: 30000,
           costFrequency: 'one_time',
-          targetDate: '2027-06-15',
+          targetDate:    '2027-06-15',
         },
       })
       .expect(201);
@@ -76,39 +72,34 @@ describe('Life Events CRUD (basic)', () => {
   });
 
   test('GET /api/life-events returns 200 with array', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    // Create one first
-    await request(app)
+    await agent
       .post('/api/life-events')
-      .set('x-auth-token', token)
       .send({ name: 'College Fund', type: 'college' })
       .expect(201);
 
-    const res = await request(app)
-      .get('/api/life-events')
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const res = await agent.get('/api/life-events').expect(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
   test('PATCH /api/life-events/:id returns 200 for owner', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/life-events')
-      .set('x-auth-token', token)
       .send({ name: 'Dad care', type: 'eldercare', isActive: true })
       .expect(201);
 
     const id = created.body._id;
 
-    const res = await request(app)
+    const res = await agent
       .patch(`/api/life-events/${id}`)
-      .set('x-auth-token', token)
-      .send({ isActive: false, details: { personName: 'Dad', careLevel: 'in_home', estimatedCost: 2000, costFrequency: 'monthly' } })
+      .send({
+        isActive: false,
+        details: { personName: 'Dad', careLevel: 'in_home', estimatedCost: 2000, costFrequency: 'monthly' },
+      })
       .expect(200);
 
     expect(res.body.isActive).toBe(false);
@@ -117,35 +108,23 @@ describe('Life Events CRUD (basic)', () => {
   });
 
   test('DELETE /api/life-events/:id returns 200 for owner', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/life-events')
-      .set('x-auth-token', token)
       .send({ name: 'Old medical plan', type: 'medical' })
       .expect(201);
 
     const id = created.body._id;
 
-    const res = await request(app)
-      .delete(`/api/life-events/${id}`)
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const res = await agent.delete(`/api/life-events/${id}`).expect(200);
     expect(res.body).toHaveProperty('message');
 
-    // Confirm it's gone
-    const list = await request(app)
-      .get('/api/life-events')
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const list = await agent.get('/api/life-events').expect(200);
     expect(list.body.find((e) => e._id === id)).toBeUndefined();
   });
 
   test('GET /api/life-events returns 401 without auth token', async () => {
-    await request(app)
-      .get('/api/life-events')
-      .expect(401);
+    await request(app).get('/api/life-events').expect(401);
   });
 });

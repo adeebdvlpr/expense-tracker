@@ -4,20 +4,19 @@ let app;
 
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-async function getToken() {
+/** Register a new user and return a cookie-bearing agent. */
+async function createAuthAgent() {
+  const agent = request.agent(app);
   const u = unique();
-  const username = `u${u}`.slice(0, 20);
-
-  const res = await request(app)
+  await agent
     .post('/api/auth/register')
     .send({
-      username,
-      email: `${username}@example.com`,
+      username: `u${u}`.slice(0, 20),
+      email:    `u${u}@example.com`,
       password: 'Password1',
     })
     .expect(200);
-
-  return res.body.token;
+  return agent;
 }
 
 beforeAll(() => {
@@ -26,11 +25,10 @@ beforeAll(() => {
 
 describe('Assets CRUD (basic)', () => {
   test('POST /api/assets returns 201 with valid payload', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/assets')
-      .set('x-auth-token', token)
       .send({
         name: 'Toyota Camry 2020', type: 'vehicle', brand: 'Toyota', condition: 'good',
         estimatedCurrentValue: 14000,
@@ -56,11 +54,10 @@ describe('Assets CRUD (basic)', () => {
   });
 
   test('POST /api/assets returns 201 for real_estate with income fields', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/assets')
-      .set('x-auth-token', token)
       .send({
         name: 'Rental Property', type: 'real_estate',
         generatesIncome: true,
@@ -76,38 +73,28 @@ describe('Assets CRUD (basic)', () => {
   });
 
   test('GET /api/assets returns 200 with array', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    // Create one first
-    await request(app)
-      .post('/api/assets')
-      .set('x-auth-token', token)
-      .send({ name: 'Refrigerator', type: 'appliance' })
-      .expect(201);
+    await agent.post('/api/assets').send({ name: 'Refrigerator', type: 'appliance' }).expect(201);
 
-    const res = await request(app)
-      .get('/api/assets')
-      .set('x-auth-token', token)
-      .expect(200);
+    const res = await agent.get('/api/assets').expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
   test('PATCH /api/assets/:id returns 200 for owner', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/assets')
-      .set('x-auth-token', token)
       .send({ name: 'Toyota Camry', type: 'vehicle', mileage: 45000 })
       .expect(201);
 
     const id = created.body._id;
 
-    const res = await request(app)
+    const res = await agent
       .patch(`/api/assets/${id}`)
-      .set('x-auth-token', token)
       .send({ mileage: 47000, condition: 'good' })
       .expect(200);
 
@@ -116,35 +103,23 @@ describe('Assets CRUD (basic)', () => {
   });
 
   test('DELETE /api/assets/:id returns 200 for owner', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/assets')
-      .set('x-auth-token', token)
       .send({ name: 'Old Laptop', type: 'electronics' })
       .expect(201);
 
     const id = created.body._id;
 
-    const res = await request(app)
-      .delete(`/api/assets/${id}`)
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const res = await agent.delete(`/api/assets/${id}`).expect(200);
     expect(res.body).toHaveProperty('message');
 
-    // Confirm it's gone
-    const list = await request(app)
-      .get('/api/assets')
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const list = await agent.get('/api/assets').expect(200);
     expect(list.body.find((a) => a._id === id)).toBeUndefined();
   });
 
   test('GET /api/assets returns 401 without auth token', async () => {
-    await request(app)
-      .get('/api/assets')
-      .expect(401);
+    await request(app).get('/api/assets').expect(401);
   });
 });

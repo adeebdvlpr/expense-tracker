@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const authRoutes = require('./routes/auth');
 const expenseRoutes = require('./routes/expenses');
@@ -15,6 +16,7 @@ const lifeEventRoutes = require('./routes/lifeEvents');
 const notificationRoutes = require('./routes/notifications');
 const predictionRoutes = require('./routes/predictions');
 const { startScheduler } = require('./services/recurringScheduler');
+const passport = require('./config/passport');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -72,13 +74,14 @@ app.use(cors({
     }
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  credentials: false, // header-based JWT auth, no cookies needed
+  credentials: true, // required for HttpOnly cookie auth
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-auth-token', 'x-request-id']
+  allowedHeaders: ['Content-Type', 'x-request-id']
 }));
 
-
+app.use(cookieParser());
 app.use(express.json());
+app.use(passport.initialize());
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Expense Tracker API');

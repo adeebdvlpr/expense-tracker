@@ -21,6 +21,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useTheme } from '@mui/material/styles';
 import NotificationBell from './NotificationBell';
+import { logout } from '../utils/api';
 
 const NAV_TABS = [
   { label: 'Dashboard', path: '/app' },
@@ -41,8 +42,12 @@ const AppHeader = () => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('token');
+  const handleLogout = async () => {
+    try {
+      await logout(); // clears HttpOnly cookies on the server
+    } catch {
+      // server unreachable — proceed anyway, cookies will expire naturally
+    }
     window.location.assign('/');
   };
 

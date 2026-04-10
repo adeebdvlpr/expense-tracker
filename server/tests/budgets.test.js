@@ -4,20 +4,18 @@ let app;
 
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-async function getToken() {
+async function createAuthAgent() {
+  const agent = request.agent(app);
   const u = unique();
-  const username = `u${u}`.slice(0, 20);
-
-  const res = await request(app)
+  await agent
     .post('/api/auth/register')
     .send({
-      username,
-      email: `${username}@example.com`,
+      username: `u${u}`.slice(0, 20),
+      email:    `u${u}@example.com`,
       password: 'Password1',
     })
     .expect(200);
-
-  return res.body.token;
+  return agent;
 }
 
 beforeAll(() => {
@@ -26,33 +24,28 @@ beforeAll(() => {
 
 describe('Budgets v1', () => {
   test('Upsert -> List -> Delete budget', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/budgets')
-      .set('x-auth-token', token)
       .send({
-        period: '2026-02',
+        period:   '2026-02',
         category: 'Groceries',
-        amount: 500,
+        amount:   500,
         currency: 'USD',
       })
       .expect(201);
 
     expect(created.body).toHaveProperty('_id');
 
-    const list = await request(app)
+    const list = await agent
       .get('/api/budgets')
-      .set('x-auth-token', token)
       .query({ period: '2026-02', includeSpent: true })
       .expect(200);
 
     expect(list.body).toHaveProperty('period', '2026-02');
     expect(Array.isArray(list.body.budgets)).toBe(true);
 
-    await request(app)
-      .delete(`/api/budgets/${created.body._id}`)
-      .set('x-auth-token', token)
-      .expect(200);
+    await agent.delete(`/api/budgets/${created.body._id}`).expect(200);
   });
 });

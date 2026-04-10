@@ -590,7 +590,8 @@ const ExpenseTracker = () => {
             <ExpenseChart expenses={expenses} chartType="combo" height={200} />
           </Box>
         )}
-        <Box sx={{display: 'flex', gap: 2}}>
+        {/* The 'advisor overview' AI financial Snapshot analysis widget*/}
+        <Box sx={{display: 'flex', gap: 2, width: '100%'  }}>
           <AdvisoryPulseWidget />
         </Box>
 

@@ -17,7 +17,7 @@ The app is a portfolio-grade production project. Code quality, visual consistenc
 - **Runtime:** Node.js
 - **Framework:** Express
 - **Database:** MongoDB via Mongoose
-- **Auth:** JWT (1-hour expiry), stored in `sessionStorage` client-side, passed as `x-auth-token` header
+- **Auth:** JWT — `accessToken` (15 min) + `refreshToken` (7 days), both stored as HttpOnly cookies. Silent refresh via `POST /api/auth/refresh`. No sessionStorage. No `x-auth-token` header. OAuth 2.0 (Google) via `passport` + `passport-google-oauth20` — strategy in `server/config/passport.js`.
 - **Security:** Helmet, express-rate-limit (auth routes: 20 req/15 min), CORS (configurable origins)
 - **Validation:** express-validator + custom `validate.js` middleware
 - **Logging:** Morgan (dev/prod format) + correlation IDs (x-request-id)
@@ -47,6 +47,8 @@ expense-tracker/
 │
 ├── server/
 │   ├── server.js                     ← Express app + middleware + route registration
+│   ├── config/
+│   │   └── passport.js               ← Google OAuth 2.0 strategy + serialize stubs (Auth Phase 2)
 │   ├── models/
 │   │   ├── User.js
 │   │   ├── Income.js
@@ -57,7 +59,8 @@ expense-tracker/
 │   │   ├── Asset.js
 │   │   ├── LifeEvent.js
 │   │   ├── AIPrediction.js
-│   │   └── Notification.js
+│   │   ├── Notification.js
+│   │   └── CategoryMap.js            ← AI custom-category classifier cache (Change 5j)
 │   ├── controllers/
 │   │   ├── authController.js
 │   │   ├── userController.js
@@ -86,7 +89,7 @@ expense-tracker/
 │   │   ├── recurringScheduler.js
 │   │   ├── aiService.js              ← SINGLE AI gateway
 │   │   ├── predictionEngine.js
-│   │   └── notificationService.js    ← [Change 5f]
+│   │   └── notificationService.js    ← createNotification() with deduplication
 │   ├── middleware/
 │   │   ├── auth.js
 │   │   └── validate.js
@@ -97,7 +100,8 @@ expense-tracker/
 │       ├── expenses.test.js
 │       ├── assets.test.js
 │       ├── lifeEvents.test.js
-│       └── predictionEngine.test.js
+│       ├── predictionEngine.test.js
+│       └── predictions.test.js       ← 5 smoke tests for HTTP prediction routes (Change 5e/5j)
 │
 └── client/
     ├── package.json
@@ -114,7 +118,7 @@ expense-tracker/
         │   ├── GoalsPage.js
         │   ├── RecurringPage.js
         │   ├── AssetsPage.js
-        │   ├── PredictionsPage.js
+        │   ├── PredictionsPage.js    ← Financial Advisory dashboard (complete)
         │   └── LifeEventsPage.js
         ├── components/
         │   ├── AppLayout.js
@@ -138,11 +142,14 @@ expense-tracker/
         │   ├── PredictionCard.js
         │   ├── LifeEventForm.js
         │   ├── LifeEventCard.js
-        │   ├── NotificationBell.js   ← [Change 5f]
+        │   ├── NotificationBell.js   ← fully implemented (bell icon, popover, mark read/dismiss)
+        │   ├── AdvisoryPulseWidget.js ← 50/30/20 bar + AI pulse insight (Change 5j)
         │   ├── OnboardingWalkthrough.js ← [Change 6]
         │   └── auth/
         │       ├── Login.js
         │       └── Register.js
+        ├── context/
+        │   └── AdvisoryContext.js    ← React context: fetches global-audit once per session (Change 5j)
         ├── utils/
         │   ├── api.js                ← All API calls — add new functions here, never make axios calls elsewhere
         │   └── money.js
@@ -166,7 +173,7 @@ expense-tracker/
 | `/goals` | GoalsPage | Protected |
 | `/recurring` | RecurringPage | Protected |
 | `/assets` | AssetsPage | Protected |
-| `/predictions` | PredictionsPage | Protected [Change 5e] |
+| `/predictions` | PredictionsPage | Protected |
 | `/life-events` | LifeEventsPage | Protected |
 
 ---
@@ -176,7 +183,7 @@ expense-tracker/
 ### Current Models
 
 **User**
-- `username`, `email`, `passwordHash`
+- `username`, `email`, `passwordHash` (optional — omitted for social logins), `googleId` (sparse unique)
 - `dateOfBirth`, `reason` (enum: Budgeting/Saving/Debt/Tracking/Other), `monthlyIncome`, `currency`
 - `dashboardPrefs`: `{ showExpenseChart, showBudgetWidget, showGoalsWidget, chartType (enum: pie/bar/line) }`
 - `selectedTheme`: String (default `'misty-highlands'`) — 6 theme options
@@ -239,6 +246,8 @@ expense-tracker/
 - `user`, `sourceType` (asset/lifeEvent/expense/manual), `sourceId`
 - `title`, `summary`, `projectedCost`, `projectedDate`
 - `monthlySavingsTarget`, `timelineLabel`, `confidence`
+- `riskRating`: enum `['low','medium','high']` (added Change 5h)
+- `opportunityCost`: String — AI-generated opportunity cost narrative (added Change 5h)
 - `linkedGoalId`, `dismissed`
 - `aiProvider`, `rawPrompt`, `rawResponse` (for debugging/audit)
 
@@ -247,12 +256,18 @@ expense-tracker/
 - `title`, `message`, `sourceType`, `sourceId`
 - `read`, `dismissed`, `scheduledFor`
 
+**CategoryMap** — AI-classified custom expense category cache (Change 5j)
+- `user` (ref User, unique — one doc per user)
+- `mapping`: Map of String (`customCategoryName → 'need' | 'want' | 'saving'`) — append-only, AI called at most once per new custom category ever
+- `rawPrompts`, `rawResponses`: [String] — append-only audit trail of each AI batch call
+
 ---
 
 ## API Endpoints
 
 ### Existing
-- `POST /api/auth/register`, `POST /api/auth/login`
+- `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
+- `GET /api/auth/google` (OAuth trigger), `GET /api/auth/google/callback` (OAuth callback)
 - `GET /api/expenses`, `POST /api/expenses`, `DELETE /api/expenses/:id`
 - `GET /api/users/me`, `PATCH /api/users/me`
 - `GET /api/budgets?period=YYYY-MM`, `POST /api/budgets`, `DELETE /api/budgets/:id`
@@ -262,11 +277,9 @@ expense-tracker/
 - `GET /api/assets`, `POST /api/assets`, `PATCH /api/assets/:id`, `DELETE /api/assets/:id` *(Change 5b)*
 - `GET /api/life-events`, `POST /api/life-events`, `PATCH /api/life-events/:id`, `DELETE /api/life-events/:id` *(Change 5c)*
 - `GET /api/predictions`, `POST /api/predictions/asset/:assetId`, `POST /api/predictions/life-event/:eventId` *(Change 5e)*
-
-### Stub Endpoints (registered, return 501 — full implementation pending)
-
-**Notifications (`/api/notifications`)** — full implementation in Change 5f
-- `GET`, `PATCH /:id`, `PATCH /mark-all-read`
+- `DELETE /api/predictions/:id` *(Change 5h)*
+- `GET /api/predictions/global-audit`, `POST /api/predictions/advisor-chat` *(Change 5j)*
+- `GET /api/notifications`, `PATCH /api/notifications/:id`, `PATCH /api/notifications/mark-all-read` *(fully implemented — real controller, not stubs)*
 
 ---
 
@@ -296,9 +309,10 @@ expense-tracker/
 - Charts use `@mui/x-charts` as primary — use `chart.js` only if x-charts cannot support the required visualization
 
 ### Auth Conventions
-- Token stored in `sessionStorage` key: `'token'`
-- All protected API calls use `x-auth-token` header (set automatically by axios interceptor)
-- 401 response auto-redirects to `/auth` and clears token (handled in `api.js` interceptor)
+- `accessToken` (15 min) + `refreshToken` (7 days) stored as HttpOnly cookies — no sessionStorage, no `x-auth-token` header
+- Silent refresh: axios 401 interceptor calls `POST /api/auth/refresh`; queues concurrent requests; calls `_onAuthFailure` if refresh fails
+- Google OAuth: `GET /api/auth/google` triggers redirect; `GET /api/auth/google/callback` receives code, sets same HttpOnly cookies, redirects to `/app`
+- Social users have no `passwordHash` — `googleId` field links their account
 
 ---
 
@@ -1070,3 +1084,144 @@ generateGlobalAudit(userId)
 - No raw transaction descriptions sent to AI
 - rawPrompt + rawResponse stored for all AI outputs
 - Graceful degradation on AI failure throughout
+
+---
+
+**2026-04-08 — Technical Audit Session:**
+
+- **Trigger:** Routine post-implementation audit following Changes 5f–5j. Verifying that Architecture.md reflects the actual state of the codebase after several AI feature sessions.
+- **Audit method:** Every file listed in the directory tree checked for existence on disk (Glob). Every model schema read and compared field-by-field. Every route file read and endpoints extracted. App.js routes verified against route table. AppHeader.js NAV_TABS verified. api.js exports enumerated. GoalsWidget.js hover bug re-confirmed still present.
+
+### Findings
+
+**Tech Stack — VERIFIED ACCURATE.** `@anthropic-ai/sdk ^0.82.0`, `node-cron ^4.2.1` confirmed in root package.json. All MUI/React versions correct.
+
+**Directory Structure — CORRECTIONS MADE:**
+- `server/models/CategoryMap.js` — existed on disk (added in 5j), not listed → added
+- `server/tests/predictions.test.js` — existed on disk (added in 5e, expanded in 5j to 5 tests), not listed → added
+- `client/src/components/AdvisoryPulseWidget.js` — existed on disk (added in 5j), not listed → added
+- `client/src/context/AdvisoryContext.js` (entire `context/` directory) — existed on disk, imported by App.js, not listed in Architecture.md → added. Note: this file is NOT mentioned in the 5j session note, which is a documentation gap in that session's "New files" list.
+- `PredictionsPage.js` — `[Change 5e]` marker removed; file is fully implemented on disk.
+- `NotificationBell.js` — `[Change 5f]` marker removed; file is fully implemented (real popover, mark-read, dismiss logic).
+- `notificationService.js` — `[Change 5f]` marker removed; file has real `createNotification()` implementation with deduplication. No session note explicitly marks the notification system as complete, but the code is not a stub.
+
+**Current Routes — CORRECTION MADE:**
+- `/predictions` row: removed `[Change 5e]` marker — PredictionsPage.js exists on disk and is in App.js. All 10 routes in App.js verified.
+
+**Data Models — CORRECTIONS MADE:**
+- **AIPrediction:** Added `riskRating` (enum low/medium/high) and `opportunityCost` (String) — both added in Change 5h, previously undocumented in this section.
+- **CategoryMap:** Added new model documentation — one doc per user, `mapping` Map, `rawPrompts`/`rawResponses` audit arrays. Added in Change 5j.
+- User, Expense, Income, Goal, Budgets, RecurringPayment, Asset, LifeEvent, Notification — VERIFIED ACCURATE.
+
+**API Endpoints — CORRECTIONS MADE:**
+- Notifications: moved from "Stub Endpoints" to "Existing" — `notificationController.js` has real implementations (listNotifications, markRead, markAllRead); not 501 stubs.
+- Predictions: added `DELETE /api/predictions/:id` (Change 5h), `GET /api/predictions/global-audit` and `POST /api/predictions/advisor-chat` (Change 5j) — all confirmed in `server/routes/predictions.js`.
+
+**AppHeader NAV_TABS — CORRECTION MADE:**
+- Prior audit (2026-04-06) stated "7 tabs." Actual count is now 8: Dashboard, Budgets, Goals, Recurring, Assets, Life Events, **Advisory** (/predictions), Account. The "Advisory" tab (path `/predictions`) was added during Changes 5e/5g and labeled "Advisory" in the current code (not "Financial Advisory" as named in some session notes).
+
+**api.js exports — UPDATED (informational):**
+- Prior audit count of "31 exported functions" is now outdated. Additional exports since then: `predictions.globalAudit`, `predictions.advisorChat` (Change 5j), `dismissNotification` (added but not explicitly documented in a session note — found in api.js and used by NotificationBell.js).
+
+**Test files — CORRECTION MADE:**
+- `predictions.test.js` added to directory listing. Contains 5 tests: GET all, POST asset (success), POST asset (graceful 500), GET global-audit, POST advisor-chat.
+- Total test files on disk: 8 (jest.setup.js + 7 .test.js files).
+
+**GoalsWidget.js isOuterRing hover bug — CONFIRMED STILL PRESENT.**
+Line 76: `const isOuterRing = (highlighted.seriesId ? true : false)`. Correct fix is `highlighted.seriesId === 1`. Carry forward unchanged.
+
+**Session notes — VERIFIED (last 3 substantive sessions: 5j, 5h, 5g):**
+- All files listed as modified in 5g, 5h, 5j session notes confirmed to exist on disk.
+- One undocumented file: `client/src/context/AdvisoryContext.js` — exists on disk and is imported by App.js, but not listed in the 5j "New files" section. Flagged here; session note preserved verbatim per audit rules.
+
+### Architecture.md status after audit: CORRECTED — see findings above. No application files were modified in this session.
+
+---
+
+**2026-04-08 — Auth Phase 1: Securing the Foundation (HttpOnly Cookies + Refresh Tokens)**
+
+### Mission
+Upgrade auth from sessionStorage/header-based JWT to HttpOnly cookies with a refresh-token rotation pattern. Phase 1 of 2 (Phase 2 = OAuth/Google). No new features — security hardening only.
+
+### What was built
+
+**Step 1.1 — HttpOnly Cookies (eradicate XSS risk)**
+- `server/server.js` — added `cookie-parser` middleware (`app.use(cookieParser())`). Updated CORS: `credentials: true` (required for cookies), removed `x-auth-token` from `allowedHeaders`.
+- `server/middleware/auth.js` — replaced `req.header('x-auth-token')` with `req.cookies?.accessToken`. Unused `err` catch variable removed.
+- `client/src/utils/api.js` — added `withCredentials: true` to axios instance. Removed request interceptor that attached `x-auth-token`. Removed `sessionStorage.removeItem('token')` from 401 handler.
+- `client/src/pages/AuthPage.js` — removed `sessionStorage.setItem('token', data.token)`, removed `if (!data?.token) throw` guard. Calls `window.location.assign('/app')` on any non-throwing response.
+
+**Step 1.2 — Refresh Tokens (fix UX logout friction)**
+- `server/controllers/authController.js` — full rewrite. `setAuthCookies(res, userId)` issues two JWTs: `accessToken` (15 min, global path) and `refreshToken` (7 days, scoped to `path: '/api/auth/refresh'`). Both: `httpOnly: true`, `secure: process.env.NODE_ENV === 'production'`, `sameSite: 'strict'`. New exports: `refresh` (issues new accessToken from valid refreshToken cookie), `logout` (clears both cookies).
+- `server/routes/auth.js` — added `POST /refresh` and `POST /logout`. Removed async DB-lookup username validator (username uniqueness now in controller only).
+- `client/src/utils/api.js` — 401 interceptor implements silent refresh with request queuing: on 401, calls `POST /api/auth/refresh`; if success, drains queue and retries; if fail, redirects to `/auth`. Exported `logout()`.
+
+**Step 1.3 — Account enumeration patch**
+- `authController.js` register: email-exists now returns `200 OK` with generic message (no cookie). Username collision still `409` — intentional (usernames are public). Login: both "user not found" and "wrong password" return the same `"Invalid credentials"` message.
+
+### New package
+- `cookie-parser` added to root `package.json`.
+
+### New .env variable required
+- `REFRESH_TOKEN_SECRET` — signs/verifies refresh tokens. Falls back to `JWT_SECRET` if unset; separate value recommended for production.
+
+### Files modified
+`server/server.js`, `server/controllers/authController.js`, `server/middleware/auth.js`, `server/routes/auth.js`, `client/src/utils/api.js`, `client/src/pages/AuthPage.js`
+
+### ⚠ Test suite impact (known breakage — not fixed this session)
+`auth.test.js` will fail: tests check `res.body.token` (no longer in body) and don't configure supertest cookie jars. Fix deferred to a dedicated test-update session.
+
+### Architecture rule update
+Rule 10 ("Token in sessionStorage, header x-auth-token, no cookies") is superseded. Canonical auth is now HttpOnly cookies (`accessToken` + `refreshToken`). sessionStorage and `x-auth-token` are gone.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+---
+
+**2026-04-09 — Auth Phase 2: OAuth 2.0 / Google Social Login**
+
+### Mission
+Wire Google OAuth into the existing HttpOnly cookie auth system. Users can now sign in or register via Google without a password. Local email+password login remains fully intact.
+
+### What was built
+
+**Backend — new package:**
+- `passport` + `passport-google-oauth20` added to root `package.json` dependencies.
+
+**Backend — new file:**
+- `server/config/passport.js` — Google Strategy configuration. Three-path verify function: (1) existing `googleId` → return user; (2) matching `email` with no `googleId` → link and return; (3) new user → create passwordless account with derived username + 4-digit suffix. Strategy is conditionally registered (`if GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET`) so the test suite can load the app without credentials. Serializer/deserializer stubs satisfy Passport internals (sessions not used — stateless JWT cookies only).
+
+**Backend — modified files:**
+- `server/models/User.js` — `passwordHash` changed to `required: false`. `googleId: { type: String, sparse: true, unique: true }` added.
+- `server/controllers/authController.js` — `googleCallback` export added: calls `setAuthCookies(res, req.user.id)` then redirects to `CLIENT_URL/app`.
+- `server/routes/auth.js` — `GET /google` (trigger) and `GET /google/callback` (Passport + googleCallback) added.
+- `server/server.js` — imports `./config/passport`, adds `app.use(passport.initialize())`.
+
+**Frontend — modified files:**
+- `client/src/components/auth/Login.js` — Google SVG icon, Divider, "Continue with Google" outlined Button (`window.location.href` redirect, not axios).
+- `client/src/components/auth/Register.js` — same pattern; label "Sign up with Google".
+
+**Tests — all 7 suites fixed and passing:**
+- `auth.test.js` — rewritten: `supertest.agent` cookie-jar, checks `res.body.success + Set-Cookie`, added logout test.
+- All other test files (`assets`, `budgets`, `expenses`, `lifeEvents`, `predictions`, `predictionEngine`) — migrated from `getToken()` / `x-auth-token` to `createAuthAgent()` helper. `predictionEngine.test.js` gets userId via `GET /api/users/me`.
+
+### New .env variables used
+```
+GOOGLE_CLIENT_ID       — already in .env
+GOOGLE_CLIENT_SECRET   — already in .env
+GOOGLE_CALLBACK_URL    — already in .env
+CLIENT_URL             — optional, defaults to http://localhost:3000
+```
+
+### Test results
+7 suites, 31 tests: **PASS**.
+
+### Files modified this session
+`server/config/passport.js` (new), `server/models/User.js`, `server/controllers/authController.js`, `server/routes/auth.js`, `server/server.js`, `client/src/components/auth/Login.js`, `client/src/components/auth/Register.js`, all 7 test files, `ARCHITECTURE.md`.
+
+### Files NOT modified this session
+`client/src/pages/AuthPage.js` (Google button lives inside Login/Register components it delegates to), `client/src/utils/api.js` (already correct from Phase 1), `client/src/App.js` (already correct from Phase 1).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.

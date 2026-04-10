@@ -10,14 +10,18 @@ let app;
 
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-async function getToken() {
+async function createAuthAgent() {
+  const agent = request.agent(app);
   const u = unique();
-  const username = `u${u}`.slice(0, 20);
-  const res = await request(app)
+  await agent
     .post('/api/auth/register')
-    .send({ username, email: `${username}@example.com`, password: 'Password1' })
+    .send({
+      username: `u${u}`.slice(0, 20),
+      email:    `u${u}@example.com`,
+      password: 'Password1',
+    })
     .expect(200);
-  return res.body.token;
+  return agent;
 }
 
 beforeAll(() => {
@@ -30,31 +34,25 @@ beforeEach(() => {
 
 describe('Predictions API', () => {
   test('GET /api/predictions returns 200 and an array', async () => {
-    const token = await getToken();
-
-    const res = await request(app)
-      .get('/api/predictions')
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const agent = await createAuthAgent();
+    const res = await agent.get('/api/predictions').expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
   test('POST /api/predictions/asset/:id returns 200 with mocked prediction', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
     const mockPrediction = {
-      _id: '000000000000000000000001',
-      title: 'Toyota Camry Replacement Cost',
-      summary: 'Based on age and depreciation, replacement in 5 years.',
+      _id:          '000000000000000000000001',
+      title:        'Toyota Camry Replacement Cost',
+      summary:      'Based on age and depreciation, replacement in 5 years.',
       projectedCost: 28000,
-      confidence: 'medium',
+      confidence:   'medium',
     };
     predictionEngine.generateForAsset.mockResolvedValue(mockPrediction);
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/predictions/asset/000000000000000000000001')
-      .set('x-auth-token', token)
       .expect(200);
 
     expect(res.body.title).toBe('Toyota Camry Replacement Cost');
@@ -62,12 +60,11 @@ describe('Predictions API', () => {
   });
 
   test('POST /api/predictions/asset/:id returns 500 gracefully when engine throws', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
     predictionEngine.generateForAsset.mockRejectedValue(new Error('AI service unavailable'));
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/predictions/asset/000000000000000000000001')
-      .set('x-auth-token', token)
       .expect(500);
 
     expect(res.body).toHaveProperty('error');
@@ -75,23 +72,20 @@ describe('Predictions API', () => {
   });
 
   test('GET /api/predictions/global-audit returns 200 with audit shape', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
     predictionEngine.generateGlobalAudit.mockResolvedValue({
-      needs: 1200,
-      wants: 600,
-      savings: 300,
-      monthlyIncome: 5000,
-      currency: 'USD',
-      runwayMonths: 8,
+      needs:                  1200,
+      wants:                  600,
+      savings:                300,
+      monthlyIncome:          5000,
+      currency:               'USD',
+      runwayMonths:           8,
       twelveMonthRequirement: 25000,
-      categoryMap: { Housing: 'need' },
-      pulseInsight: 'Good progress on savings.',
+      categoryMap:            { Housing: 'need' },
+      pulseInsight:           'Good progress on savings.',
     });
 
-    const res = await request(app)
-      .get('/api/predictions/global-audit')
-      .set('x-auth-token', token)
-      .expect(200);
+    const res = await agent.get('/api/predictions/global-audit').expect(200);
 
     expect(res.body).toHaveProperty('needs');
     expect(res.body).toHaveProperty('pulseInsight');
@@ -99,16 +93,15 @@ describe('Predictions API', () => {
   });
 
   test('POST /api/predictions/advisor-chat returns 200 with answer', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
     predictionEngine.generateGlobalAudit.mockResolvedValue({
       needs: 0, wants: 0, savings: 0, monthlyIncome: 0, currency: 'USD',
       runwayMonths: null, twelveMonthRequirement: null, categoryMap: {}, pulseInsight: null,
     });
     callAI.mockResolvedValue({ text: 'You should increase your savings rate.', rawResponse: '{}' });
 
-    const res = await request(app)
+    const res = await agent
       .post('/api/predictions/advisor-chat')
-      .set('x-auth-token', token)
       .send({ question: 'Am I saving enough?' })
       .expect(200);
 

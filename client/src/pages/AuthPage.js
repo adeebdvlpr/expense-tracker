@@ -23,24 +23,22 @@ const AuthPage = () => {
     setIsLoading(true);
 
     try {
-      const data = isLogin
-        ? await login({
-            identifier: payload.identifier,
-            password: payload.password,
-          })
-        : await register({
-            username: payload.username,
-            email: payload.email,
-            password: payload.password,
-            dateOfBirth: payload.dateOfBirth,
-            reason: payload.reason,
-          });
-
-      if (!data?.token) {
-        throw new Error('No token received from server'); 
+      if (isLogin) {
+        await login({
+          identifier: payload.identifier,
+          password: payload.password,
+        });
+      } else {
+        await register({
+          username: payload.username,
+          email: payload.email,
+          password: payload.password,
+          dateOfBirth: payload.dateOfBirth,
+          reason: payload.reason,
+        });
       }
-        sessionStorage.setItem('token', data.token);
-        window.location.assign('/app');
+
+      window.location.assign('/app');
     } catch (err) {
       console.error('Auth error:', err.response || err);
       setError(

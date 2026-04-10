@@ -4,20 +4,18 @@ let app;
 
 const unique = () => `${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-async function getToken() {
+async function createAuthAgent() {
+  const agent = request.agent(app);
   const u = unique();
-  const username = `u${u}`.slice(0, 20);
-
-  const res = await request(app)
+  await agent
     .post('/api/auth/register')
     .send({
-      username,
-      email: `${username}@example.com`,
+      username: `u${u}`.slice(0, 20),
+      email:    `u${u}@example.com`,
       password: 'Password1',
     })
     .expect(200);
-
-  return res.body.token;
+  return agent;
 }
 
 beforeAll(() => {
@@ -26,11 +24,10 @@ beforeAll(() => {
 
 describe('Expenses CRUD (basic)', () => {
   test('Create -> List -> Delete expense', async () => {
-    const token = await getToken();
+    const agent = await createAuthAgent();
 
-    const created = await request(app)
+    const created = await agent
       .post('/api/expenses')
-      .set('x-auth-token', token)
       .send({
         description: 'Coffee',
         amount: 4.75,
@@ -41,22 +38,13 @@ describe('Expenses CRUD (basic)', () => {
     expect(created.body).toHaveProperty('_id');
     const id = created.body._id;
 
-    const list = await request(app)
-      .get('/api/expenses')
-      .set('x-auth-token', token)
-      .expect(200);
-
+    const list = await agent.get('/api/expenses').expect(200);
     expect(Array.isArray(list.body)).toBe(true);
 
-    await request(app)
-      .delete(`/api/expenses/${id}`)
-      .set('x-auth-token', token)
-      .expect(200);
+    await agent.delete(`/api/expenses/${id}`).expect(200);
   });
 
   test('Cannot access expenses without token', async () => {
-    await request(app)
-      .get('/api/expenses')
-      .expect(401);
+    await request(app).get('/api/expenses').expect(401);
   });
 });

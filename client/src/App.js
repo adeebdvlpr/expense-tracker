@@ -4,6 +4,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, DEFAULT_THEME } from './theme';
 import { AdvisoryProvider } from './context/AdvisoryContext';
+import { getMe, registerAuthFailureCallback } from './utils/api';
+
 
 import MarketingLandingPage from './pages/MarketingLandingPage';
 import ExpenseTracker from './pages/ExpenseTracker';
@@ -42,18 +44,28 @@ const App = () => {
   );
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = sessionStorage.getItem('token');
-      setIsAuthenticated(Boolean(token));
-      setIsLoading(false);
+    // Register the callback BEFORE calling getMe() so the interceptor can
+    // flip auth state if the refresh token is also expired.
+    registerAuthFailureCallback(() => setIsAuthenticated(false));
+
+    let cancelled = false;
+
+    const checkAuth = async () => {
+      try {
+        await getMe();
+        if (!cancelled) setIsAuthenticated(true);
+      } catch {
+        // Interceptor already attempted a silent refresh. If we're here,
+        // both tokens are gone — stay unauthenticated.
+        if (!cancelled) setIsAuthenticated(false);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     };
 
     checkAuth();
-    window.addEventListener('storage', checkAuth);
 
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-    };
+    return () => { cancelled = true; };
   }, []);
 
   if (isLoading) {
@@ -64,7 +76,7 @@ const App = () => {
     <ThemeContext.Provider value={themeContextValue}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AdvisoryProvider>
+        <AdvisoryProvider isAuthenticated={isAuthenticated}>
         <BrowserRouter>
           <Routes>
                   {/* PUBLIC ...*/}
