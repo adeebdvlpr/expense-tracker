@@ -441,7 +441,7 @@ export default function RecurringPage() {
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }}>
           <Box>
-            <Typography variant="h2">Recurring Payments</Typography>
+            <Typography variant="h4" sx={{fontWeight : 800}}>Recurring Payments</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Manage and auto-log your repeating expenses.
             </Typography>

@@ -129,7 +129,7 @@ export default function LifeEventsPage() {
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
           <Box>
-            <Typography variant="h2">Life Events</Typography>
+            <Typography variant="h4" sx={{fontWeight: 800 }}>Life Events</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Track ongoing circumstances that affect your long-term finances.
             </Typography>

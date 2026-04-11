@@ -159,7 +159,10 @@ const AccountPage = () => {
   return (
     <AppLayout>
       <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Typography variant="h4" sx={{ mb: 2 }}>Account</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 800,  mb: 2 }}>Account</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+           Manage your account prefrences
+        </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}

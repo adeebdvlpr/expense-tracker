@@ -84,8 +84,8 @@ const PredictionsPage = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h1" sx={{ mb: 0.5 }}>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Typography variant="h4" sx={{fontWeight: 800 ,mb: 0.5 }}>
           Financial Advisory
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>

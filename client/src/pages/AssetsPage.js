@@ -140,7 +140,7 @@ export default function AssetsPage() {
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
           <Box>
-            <Typography variant="h2">Asset Inventory</Typography>
+            <Typography variant="h4" sx={{fontWeight : 800}}>Asset Inventory</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Track your home systems, appliances, vehicles, and more.
             </Typography>
