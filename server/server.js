@@ -27,7 +27,7 @@ const app = express();
 
 const crypto = require('crypto');
 
-// If you're behind Heroku/Render/NGINX, this helps IP + rate limit accuracy
+// Required when running behind a reverse proxy (Vercel, Render, NGINX) for accurate IP + rate limiting
 app.set('trust proxy', 1);
 // Correlation ID middleware (Request ID)
 app.use((req, res, next) => {

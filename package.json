@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node server/server.js",
     "test": "NODE_ENV=test jest --runInBand",
-    "lint": "eslint \"server/**/*.js\"",
-    "heroku-postbuild": "cd client && npm install && npm run build"
+    "lint": "eslint \"server/**/*.js\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
