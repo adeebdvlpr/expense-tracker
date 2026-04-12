@@ -1,6 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const connectDB = require('./config/db');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -83,6 +83,12 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(passport.initialize());
 
+// Ensure the DB connection is alive before every request.
+// connectDB() returns immediately on warm invocations (cached conn).
+app.use((req, res, next) => {
+  connectDB().then(() => next()).catch(next);
+});
+
 app.get('/', (req, res) => {
   res.send('Welcome to the Expense Tracker API');
 });
@@ -109,17 +115,18 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/predictions', predictionRoutes);
 
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-  if (process.env.NODE_ENV !== 'test') {
-    startScheduler();
-  }
-})
-.catch(err => console.error('MongoDB connection error:', err));
+// When running as a normal server (local dev / traditional hosting), connect
+// once at startup and launch the scheduler.  In serverless environments Vercel
+// imports this file as a module, so require.main !== module and this block is
+// skipped — the per-request connectDB() middleware above handles the connection.
+if (require.main === module) {
+  connectDB()
+    .then(() => {
+      startScheduler();
+      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    })
+    .catch((err) => console.error('Startup error:', err));
+}
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
@@ -134,11 +141,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error', requestId: req.requestId });
 });
 
-
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
 
 module.exports = app;

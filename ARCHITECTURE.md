@@ -1313,3 +1313,9 @@ Refactored the static Change #6 Dialog tour into an interactive, navigation-awar
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+---
+
+**2026-04-11 — Change #8 (Deployment Preparation):**
+
+**Change #8:** Configured project for Vercel deployment. Added `vercel.json` with serverless routing rules and optimized Mongoose connection logic using global caching to prevent connection pool exhaustion in serverless functions.
