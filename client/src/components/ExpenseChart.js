@@ -143,7 +143,7 @@ const ExpenseChart = ({ expenses, chartType = 'pie', height = 320 }) => {
   const theme = useTheme();
   const donutPalette = theme.palette.donutPalette;
   const donutPaletteOnPrimary = theme.palette.donutPaletteOnPrimary;
-  const safeExpenses = Array.isArray(expenses) ? expenses : [];
+  const safeExpenses = useMemo(() => (Array.isArray(expenses) ? expenses : []), [expenses]);
 
   // Drives donut center content on hover
   const [hoveredIdx, setHoveredIdx] = useState(null);

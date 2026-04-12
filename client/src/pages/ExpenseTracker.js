@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo, useContext } from 'react';
-import { getExpenses, addExpense, deleteExpense, getIncome, addIncome, deleteIncome, getBudgets, getGoals } from '../utils/api';
+import { getExpenses, addExpense, deleteExpense, addIncome, deleteIncome, getBudgets, getGoals } from '../utils/api';
 import { useTheme } from '@mui/material/styles';
 import { ThemeContext } from '../App';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
@@ -301,7 +301,7 @@ const ExpenseTracker = () => {
         .catch(() => {});
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [setSelectedTheme]);
 
   useEffect(() => {
     fetchExpenses();

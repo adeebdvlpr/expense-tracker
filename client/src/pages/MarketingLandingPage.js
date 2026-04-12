@@ -26,24 +26,6 @@ const BrandMark = () => (
   </Box>
 );
 
-const FloatingChip = ({ label, sx }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      px: 1.5,
-      py: 1,
-      borderRadius: 999,
-      border: (t) => `1px solid ${t.palette.divider}`,
-      bgcolor: 'background.paper',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 1,
-      ...sx,
-    }}
-  >
-    <Chip size="small" label={label} variant="outlined" />
-  </Paper>
-);
 
 const MarketingLandingPage = () => {
   const navigate = useNavigate();
