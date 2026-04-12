@@ -4,6 +4,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, DEFAULT_THEME } from './theme';
 import { AdvisoryProvider } from './context/AdvisoryContext';
+import { Analytics } from '@vercel/analytics/react';
 import { getMe, registerAuthFailureCallback } from './utils/api';
 import AppLayout from './components/AppLayout';
 
@@ -111,6 +112,7 @@ const App = () => {
                   {/* CATCH ALL ...*/}
             <Route path="*" element={<Navigate to="/" replace />}/>
           </Routes>
+        <Analytics />
         </BrowserRouter>
         </AdvisoryProvider>
       </ThemeProvider>
