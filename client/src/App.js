@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, DEFAULT_THEME } from './theme';
 import { AdvisoryProvider } from './context/AdvisoryContext';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { getMe, registerAuthFailureCallback } from './utils/api';
 import AppLayout from './components/AppLayout';
 
@@ -113,6 +114,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />}/>
           </Routes>
         <Analytics />
+        <SpeedInsights />
         </BrowserRouter>
         </AdvisoryProvider>
       </ThemeProvider>
