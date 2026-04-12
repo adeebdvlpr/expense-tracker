@@ -6,7 +6,7 @@ const NotificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['warranty_expiry', 'inspection_reminder', 'ai_prediction', 'budget_alert', 'goal_milestone'],
+      enum: ['warranty_expiry', 'inspection_reminder', 'ai_prediction', 'budget_alert', 'goal_milestone', 'onboarding_checklist'],
     },
     title: { type: String, required: true, maxlength: 200 },
     message: { type: String, required: true },

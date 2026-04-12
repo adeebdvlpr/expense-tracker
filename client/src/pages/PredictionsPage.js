@@ -12,7 +12,6 @@ import {
   Button,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import AppLayout from '../components/AppLayout';
 import PredictionCard from '../components/PredictionCard';
 import { predictions as predictionsApi } from '../utils/api';
 
@@ -83,7 +82,7 @@ const PredictionsPage = () => {
   }, [predictionsList, riskFilter]);
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography variant="h4" sx={{fontWeight: 800 ,mb: 0.5 }}>
           Financial Advisory
@@ -231,7 +230,7 @@ const PredictionsPage = () => {
           </Grid>
         )}
       </Container>
-    </AppLayout>
+    </>
   );
 };
 

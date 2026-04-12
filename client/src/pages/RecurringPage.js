@@ -43,7 +43,6 @@ import {
 } from '../utils/api';
 import { formatMoney } from '../utils/money';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
-import AppLayout from '../components/AppLayout';
 
 const INTERVALS = ['daily', 'weekly', 'monthly', 'annual'];
 
@@ -435,7 +434,7 @@ export default function RecurringPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
 
         {/* Header */}
@@ -527,6 +526,6 @@ export default function RecurringPage() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 }

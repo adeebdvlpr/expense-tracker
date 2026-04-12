@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
   // OAuth — Google
   googleId: {
     type: String,
-    default: null,
+    // default: null,
     sparse: true, // allows multiple null values while still being unique
     unique: true,
   },

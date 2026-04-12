@@ -144,7 +144,11 @@ expense-tracker/
         │   ├── LifeEventCard.js
         │   ├── NotificationBell.js   ← fully implemented (bell icon, popover, mark read/dismiss)
         │   ├── AdvisoryPulseWidget.js ← 50/30/20 bar + AI pulse insight (Change 5j)
-        │   ├── OnboardingWalkthrough.js ← [Change 6]
+        │   ├── onboarding/
+        │   │   ├── OnboardingTour.js
+        │   │   ├── ProfileChecklist.js
+        │   │   └── __tests__/
+        │   │       └── OnboardingTour.test.js
         │   └── auth/
         │       ├── Login.js
         │       └── Register.js
@@ -1222,6 +1226,90 @@ CLIENT_URL             — optional, defaults to http://localhost:3000
 
 ### Files NOT modified this session
 `client/src/pages/AuthPage.js` (Google button lives inside Login/Register components it delegates to), `client/src/utils/api.js` (already correct from Phase 1), `client/src/App.js` (already correct from Phase 1).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+---
+
+**2026-04-11 — Change 6 (Onboarding Walkthrough & Profile Completion Checklist):**
+
+*(original Change 6 notes below — Change 7 session notes are appended at the end of this file)*
+
+### What was built
+
+Implemented Onboarding Walkthrough and Profile Completion Checklist. Added notification triggers for empty critical fields to improve AI context gathering.
+
+### Backend files modified
+
+- `server/models/Notification.js` — Added `onboarding_checklist` to type enum.
+- `server/controllers/notificationController.js` — Added `createChecklistNotifications`: fetches user + active goals, evaluates 3 critical fields (monthlyIncome, location, active goal), and calls `createNotification()` for each missing field with a personalised message. Imports User, Goal, and notificationService.
+- `server/routes/notifications.js` — Added `POST /checklist` route (auth-guarded) wired to `createChecklistNotifications`.
+
+### New frontend files
+
+- `client/src/components/onboarding/OnboardingTour.js` — 4-step MUI Dialog walkthrough. Steps: Welcome → Dashboard → Inputs → AI Audit. Step indicator dots in the coloured header. Last step embeds `ProfileChecklist`. On "Finish Setup": calls `updateMe({ onboardingCompleted: true })` then fires `onComplete()`. Renders only when `user.onboardingCompleted === false`.
+- `client/src/components/onboarding/ProfileChecklist.js` — Checklist UI component. Exports `evaluateCriticalFields(user, goals)` (returns array with `complete` flag per field) and `getCompletenessPercent(user, goals)`. Renders a dense list with check/unchecked icons styled via `useTheme()`.
+- `client/src/components/onboarding/__tests__/OnboardingTour.test.js` — 3 smoke tests: tour renders when `onboardingCompleted: false`; renders nothing when `onboardingCompleted: true`; `onComplete` is called only after all 4 steps and "Finish Setup" is clicked.
+
+### Frontend files modified
+
+- `client/src/utils/api.js` — Added `triggerChecklistNotifications()` (POST /api/notifications/checklist).
+- `client/src/components/AppLayout.js` — Fetches `getMe()` on mount; renders `<OnboardingTour>` when `user.onboardingCompleted === false`. `handleTourComplete` flips local state and calls `triggerChecklistNotifications()`, then dispatches `ledgic:checklist-created` event.
+- `client/src/components/NotificationBell.js` — Added `onboarding_checklist` to `NOTIFICATION_ROUTES` (navigates to `/account`). Listens for `ledgic:checklist-created` event to re-fetch notifications immediately after tour completes.
+
+### Architecture decisions
+
+- Used existing `onboardingCompleted` field on User model (added in Change 5a) — no new schema field needed.
+- Tour uses custom MUI Dialog + Box stepper (no new npm dependency).
+- Checklist notifications are server-persisted (via `notificationService.createNotification()` with deduplication) — they appear in NotificationBell and survive page reloads.
+
+### Files NOT modified
+`aiService.js`, `predictionEngine.js`, all theme files, all other pages, `GoalsWidget.js` (carry-forward bug).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+---
+
+**2026-04-11 — Change 7 (Onboarding: Interactive Multi-Page Guided Tour):**
+
+### What was built
+
+Refactored the static Change #6 Dialog tour into an interactive, navigation-aware guided overlay. Users are now walked through the app page-by-page with field-level spotlight highlighting and a persistent docked instruction card.
+
+### Architecture decisions
+
+- **Tour is now an interactive overlay, not a Dialog.** `OnboardingTour` renders two elements via MUI `Portal`: (1) a full-screen semi-transparent dim overlay (`zIndex: 1099`, `pointer-events: none`) sitting below the sticky AppBar so the nav header stays visible, and (2) a `TourStepCard` docked to the bottom of the screen (`zIndex: 1301`) with step instructions, progress dots, Back / Next / Skip buttons.
+- **No new npm dependencies.** Spotlight uses direct DOM style manipulation (`element.style.*`) via `useRef` + `setTimeout`. MUI `Portal` and `useNavigate` handle rendering and navigation.
+- **Spotlight cleanup is explicit.** `applyHighlight` and `removeHighlight` are module-level pure functions that write/clear exactly 6 inline style properties. They run in `useEffect` cleanup and on unmount to leave no DOM pollution.
+- **Overlay z-index 1099** keeps the AppBar (1100) and spotlighted element (1250) above the dim layer, so the pulsing nav tab is always legible.
+
+### New files
+
+- `client/src/components/onboarding/TourStepCard.js` — Non-modal docked card. Props: `step`, `stepIndex`, `totalSteps`, `onNext`, `onBack`, `onSkip`, `user`. Shows icon, title, body, `ProfileChecklist` (last step only), progress dots, Back/Next/Skip. All styles via `useTheme()`.
+
+### Files modified
+
+- `client/src/components/onboarding/OnboardingTour.js` — Major refactor: Dialog → Portal overlay + TourStepCard. 5-step `STEPS` array with `route`, `targetId`, `showChecklist` per step. `useNavigate` drives page transitions on step change. Spotlight applies 480ms after step change (navigation settle delay). Skip immediately calls `updateMe({ onboardingCompleted: true })` + `onComplete()`.
+- `client/src/components/AppLayout.js` — Added `tourActive` boolean; passed to `AppHeader`.
+- `client/src/components/AppHeader.js` — Accepts `tourActive` prop; active nav tab gets `@keyframes tourTabPulse` box-shadow animation while tour is in progress. Added `alpha` import from `@mui/material/styles`.
+- `client/src/pages/AccountPage.js` — Income section wrapped in `<Box id="tour-monthly-income">`. Location section wrapped in `<Box id="tour-location">`.
+- `client/src/pages/ExpenseTracker.js` — Dashboard summary row Box gets `id="tour-dashboard"`.
+- `client/src/components/onboarding/__tests__/OnboardingTour.test.js` — Added `jest.mock('react-router-dom')` with `mockNavigate`. 3 new assertions: navigate called on step transitions; Skip triggers `updateMe` + `onComplete`; Next button never disabled (no deadlocks).
+
+### 5-step tour flow
+
+| Step | Title | Route | Spotlight target |
+|---|---|---|---|
+| 0 | Welcome to Ledgic | `/app` | none |
+| 1 | Your Financial Dashboard | `/app` | `#tour-dashboard` |
+| 2 | Set Your Monthly Income | `/account` | `#tour-monthly-income` |
+| 3 | Add Your Location | `/account` | `#tour-location` |
+| 4 | You're Ready for Your Financial Audit | `/app` | none (ProfileChecklist shown) |
+
+### Files NOT modified
+`ProfileChecklist.js`, `NotificationBell.js`, `aiService.js`, `predictionEngine.js`, all server files, all other pages, `GoalsWidget.js` (carry-forward bug).
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.

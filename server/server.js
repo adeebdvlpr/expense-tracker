@@ -128,6 +128,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+
 app.use((err, req, res, next) => {
   console.error(`[${req.requestId}]`, err.stack || err);
   res.status(500).json({ message: 'Internal server error', requestId: req.requestId });

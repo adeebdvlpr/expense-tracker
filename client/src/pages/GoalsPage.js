@@ -24,7 +24,6 @@ import { useTheme } from '@mui/material/styles';
 
 import { getGoals, createGoal, updateGoal, deleteGoal } from '../utils/api';
 import { formatMoney } from '../utils/money';
-import AppLayout from '../components/AppLayout';
 import GoalForm from '../components/GoalForm';
 import GoalProgressChart from '../components/GoalProgressChart';
 
@@ -109,7 +108,7 @@ export default function GoalsPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
@@ -332,6 +331,6 @@ export default function GoalsPage() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 }

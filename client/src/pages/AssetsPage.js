@@ -16,7 +16,6 @@ import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 
 import { getAssets, createAsset, updateAsset, deleteAsset } from '../utils/api';
-import AppLayout from '../components/AppLayout';
 import AssetCard from '../components/AssetCard';
 import AssetForm from '../components/AssetForm';
 
@@ -134,7 +133,7 @@ export default function AssetsPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
 
         {/* Header */}
@@ -229,6 +228,6 @@ export default function AssetsPage() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 }

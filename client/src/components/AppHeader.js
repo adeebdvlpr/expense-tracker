@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import NotificationBell from './NotificationBell';
 import { logout } from '../utils/api';
 
@@ -34,7 +34,7 @@ const NAV_TABS = [
   { label: 'Account', path: '/account' },
 ];
 
-const AppHeader = () => {
+const AppHeader = ({ tourActive = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -91,8 +91,25 @@ const AppHeader = () => {
               indicatorColor="primary"
               sx={{ '& .MuiTab-root': { fontWeight: 600, minWidth: 80 } }}
             >
-              {NAV_TABS.map((tab) => (
-                <Tab key={tab.path} label={tab.label} />
+              {NAV_TABS.map((tab, i) => (
+                <Tab
+                  key={tab.path}
+                  label={tab.label}
+                  sx={
+                    tourActive && i === activeTabIndex
+                      ? {
+                          '@keyframes tourTabPulse': {
+                            '0%, 100%': { boxShadow: 'none' },
+                            '50%': {
+                              boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.32)}`,
+                            },
+                          },
+                          animation: 'tourTabPulse 1.8s ease-in-out infinite',
+                          borderRadius: '8px',
+                        }
+                      : undefined
+                  }
+                />
               ))}
             </Tabs>
           )}

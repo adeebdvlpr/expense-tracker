@@ -19,6 +19,7 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead, dismi
 
 const NOTIFICATION_ROUTES = {
   ai_prediction: '/predictions',
+  onboarding_checklist: '/account',
 };
 
 function relativeTime(dateStr) {
@@ -51,9 +52,11 @@ const NotificationBell = () => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
     window.addEventListener('ledgic:expense-saved', fetchNotifications);
+    window.addEventListener('ledgic:checklist-created', fetchNotifications);
     return () => {
       clearInterval(interval);
       window.removeEventListener('ledgic:expense-saved', fetchNotifications);
+      window.removeEventListener('ledgic:checklist-created', fetchNotifications);
     };
   }, [fetchNotifications]);
 

@@ -6,7 +6,6 @@ import {
   ToggleButtonGroup, ToggleButton, Chip, Paper,
 } from '@mui/material';
 
-import AppLayout from '../components/AppLayout';
 import { ThemeContext } from '../App';
 import { THEMES } from '../theme';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
@@ -148,16 +147,14 @@ const AccountPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <Container maxWidth="sm" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Container>
-      </AppLayout>
+      <Container maxWidth="sm" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800,  mb: 2 }}>Account</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
@@ -202,41 +199,43 @@ const AccountPage = () => {
           <Divider sx={{ my: 1 }} />
 
           {/* ── Location ── */}
-          <Typography variant="h6">Location</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Used for AI regional cost projections. If unset, projections will not be location-specific.
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              label="City"
-              value={location.city}
-              onChange={(e) => setLocation((l) => ({ ...l, city: e.target.value }))}
-              size="small"
-              sx={{ flex: 1 }}
-            />
-            <TextField
-              label="State / Province"
-              value={location.state}
-              onChange={(e) => setLocation((l) => ({ ...l, state: e.target.value }))}
-              size="small"
-              sx={{ flex: 1 }}
-            />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              label="Country"
-              value={location.country}
-              onChange={(e) => setLocation((l) => ({ ...l, country: e.target.value }))}
-              size="small"
-              sx={{ flex: 1 }}
-            />
-            <TextField
-              label="Postal Code"
-              value={location.postalCode}
-              onChange={(e) => setLocation((l) => ({ ...l, postalCode: e.target.value }))}
-              size="small"
-              sx={{ flex: 1 }}
-            />
+          <Box id="tour-location" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="h6">Location</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Used for AI regional cost projections. If unset, projections will not be location-specific.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="City"
+                value={location.city}
+                onChange={(e) => setLocation((l) => ({ ...l, city: e.target.value }))}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="State / Province"
+                value={location.state}
+                onChange={(e) => setLocation((l) => ({ ...l, state: e.target.value }))}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="Country"
+                value={location.country}
+                onChange={(e) => setLocation((l) => ({ ...l, country: e.target.value }))}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Postal Code"
+                value={location.postalCode}
+                onChange={(e) => setLocation((l) => ({ ...l, postalCode: e.target.value }))}
+                size="small"
+                sx={{ flex: 1 }}
+              />
+            </Box>
           </Box>
 
           <Divider sx={{ my: 1 }} />
@@ -371,53 +370,55 @@ const AccountPage = () => {
           <Divider sx={{ my: 1 }} />
 
           {/* ── Income ── */}
-          <Typography variant="h6">Income</Typography>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
-              Income type
-            </Typography>
-            <ToggleButtonGroup
-              size="small"
-              value={incomeType}
-              exclusive
-              onChange={(_e, val) => val && setIncomeType(val)}
-            >
-              <ToggleButton value="monthly">{INCOME_TYPE_LABELS.monthly}</ToggleButton>
-              <ToggleButton value="annual">{INCOME_TYPE_LABELS.annual}</ToggleButton>
-              <ToggleButton value="weekly">{INCOME_TYPE_LABELS.weekly}</ToggleButton>
-              <ToggleButton value="rolling">{INCOME_TYPE_LABELS.rolling}</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {incomeType === 'rolling' ? (
-            <Typography variant="body2" color="text.secondary">
-              Your income rolls in as it comes. Add income entries from the dashboard.
-            </Typography>
-          ) : (
+          <Box id="tour-monthly-income" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="h6">Income</Typography>
             <Box>
-              <TextField
-                label={INCOME_AMOUNT_LABELS[incomeType] || 'Income amount'}
-                value={monthlyIncome}
-                onChange={(e) => setMonthlyIncome(e.target.value)}
-                type="number"
-                inputProps={{ min: 0, step: '0.01' }}
-                helperText="Optional — used for budgets & goals"
-                margin="none"
-              />
-              {incomeType !== 'monthly' && monthlyEquivalent != null && Number(monthlyIncome) > 0 && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                  ≈ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(monthlyEquivalent)}/month
-                </Typography>
-              )}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
+                Income type
+              </Typography>
+              <ToggleButtonGroup
+                size="small"
+                value={incomeType}
+                exclusive
+                onChange={(_e, val) => val && setIncomeType(val)}
+              >
+                <ToggleButton value="monthly">{INCOME_TYPE_LABELS.monthly}</ToggleButton>
+                <ToggleButton value="annual">{INCOME_TYPE_LABELS.annual}</ToggleButton>
+                <ToggleButton value="weekly">{INCOME_TYPE_LABELS.weekly}</ToggleButton>
+                <ToggleButton value="rolling">{INCOME_TYPE_LABELS.rolling}</ToggleButton>
+              </ToggleButtonGroup>
             </Box>
-          )}
+
+            {incomeType === 'rolling' ? (
+              <Typography variant="body2" color="text.secondary">
+                Your income rolls in as it comes. Add income entries from the dashboard.
+              </Typography>
+            ) : (
+              <Box>
+                <TextField
+                  label={INCOME_AMOUNT_LABELS[incomeType] || 'Income amount'}
+                  value={monthlyIncome}
+                  onChange={(e) => setMonthlyIncome(e.target.value)}
+                  type="number"
+                  inputProps={{ min: 0, step: '0.01' }}
+                  helperText="Optional — used for budgets & goals"
+                  margin="none"
+                />
+                {incomeType !== 'monthly' && monthlyEquivalent != null && Number(monthlyIncome) > 0 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    ≈ {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(monthlyEquivalent)}/month
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
 
           <Button variant="contained" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save Changes'}
           </Button>
         </Box>
       </Container>
-    </AppLayout>
+    </>
   );
 };
 

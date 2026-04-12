@@ -5,7 +5,6 @@ import { ThemeContext } from '../App';
 import { DEFAULT_CATEGORIES } from '../constants/categories';
 import { formatMoney } from '../utils/money';
 
-import AppLayout from '../components/AppLayout';
 import ExpenseForm from '../components/ExpenseForm';
 import IncomeForm from '../components/IncomeForm';
 import ExpenseList from '../components/ExpenseList';
@@ -522,16 +521,14 @@ const ExpenseTracker = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <Container maxWidth="xl" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
-          <CircularProgress />
-        </Container>
-      </AppLayout>
+      <Container maxWidth="xl" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+        <CircularProgress />
+      </Container>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <Box sx={{ flex: 1, bgcolor: theme.palette.dashboardBg }}>
       <Container maxWidth="xl" sx={{ py: 3 }}>
         {error && (
@@ -540,8 +537,8 @@ const ExpenseTracker = () => {
           </Alert>
         )}
 
-        {/* Summary row */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'stretch' }}>
+        {/* Summary row — id used by the onboarding tour spotlight */}
+        <Box id="tour-dashboard" sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'stretch' }}>
           {/* 4 stat cards */}
           <Paper sx={{ p: 1.5, flex: '0.75 1 110px', background:"rgba(247, 249, 252, 0.9)"}}>
             <Typography variant="body2" color="text.secondary">Daily Burn</Typography>
@@ -731,7 +728,7 @@ const ExpenseTracker = () => {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 };
 

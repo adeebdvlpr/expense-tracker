@@ -24,7 +24,6 @@ import { useTheme, alpha } from '@mui/material/styles';
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 
 import { getBudgets, upsertBudget, deleteBudget, getMe, updateMe } from '../utils/api';
-import AppLayout from '../components/AppLayout';
 import BudgetForm from '../components/BudgetForm';
 import BudgetChart from '../components/BudgetChart';
 import { formatMoney } from '../utils/money';
@@ -171,7 +170,7 @@ export default function BudgetsPage() {
   }
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
 
         {/* Header */}
@@ -413,6 +412,6 @@ export default function BudgetsPage() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 }

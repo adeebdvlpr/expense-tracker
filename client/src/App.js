@@ -1,10 +1,11 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, DEFAULT_THEME } from './theme';
 import { AdvisoryProvider } from './context/AdvisoryContext';
 import { getMe, registerAuthFailureCallback } from './utils/api';
+import AppLayout from './components/AppLayout';
 
 
 import MarketingLandingPage from './pages/MarketingLandingPage';
@@ -89,39 +90,23 @@ const App = () => {
               path="/auth"
               element={isAuthenticated ? <Navigate to="/app" replace /> : <AuthPage />}
             />
-                  {/* PROTECTED ...*/}
+                  {/* PROTECTED — single persistent AppLayout shell; never unmounts on navigation */}
             <Route
-              path="/app"
-              element={isAuthenticated ? <ExpenseTracker /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/account"
-              element={isAuthenticated ? <AccountPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/budgets"
-              element={isAuthenticated ? <BudgetsPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/goals"
-              element={isAuthenticated ? <GoalsPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/recurring"
-              element={isAuthenticated ? <RecurringPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/assets"
-              element={isAuthenticated ? <AssetsPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/life-events"
-              element={isAuthenticated ? <LifeEventsPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/predictions"
-              element={isAuthenticated ? <PredictionsPage /> : <Navigate to="/auth" replace />}
-            />
+              element={
+                isAuthenticated
+                  ? <AppLayout><Outlet /></AppLayout>
+                  : <Navigate to="/auth" replace />
+              }
+            >
+              <Route path="/app"         element={<ExpenseTracker />} />
+              <Route path="/account"     element={<AccountPage />} />
+              <Route path="/budgets"     element={<BudgetsPage />} />
+              <Route path="/goals"       element={<GoalsPage />} />
+              <Route path="/recurring"   element={<RecurringPage />} />
+              <Route path="/assets"      element={<AssetsPage />} />
+              <Route path="/life-events" element={<LifeEventsPage />} />
+              <Route path="/predictions" element={<PredictionsPage />} />
+            </Route>
 
                   {/* CATCH ALL ...*/}
             <Route path="*" element={<Navigate to="/" replace />}/>

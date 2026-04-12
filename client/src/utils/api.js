@@ -266,4 +266,9 @@ export const dismissNotification = async (id) => {
   return response.data;
 };
 
+export const triggerChecklistNotifications = async () => {
+  const response = await api.post('/api/notifications/checklist');
+  return response.data;
+};
+
 export default api;

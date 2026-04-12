@@ -16,7 +16,6 @@ import AddIcon from '@mui/icons-material/Add';
 import { useNavigate } from 'react-router-dom';
 
 import { getLifeEvents, createLifeEvent, updateLifeEvent, deleteLifeEvent } from '../utils/api';
-import AppLayout from '../components/AppLayout';
 import LifeEventCard from '../components/LifeEventCard';
 import LifeEventForm from '../components/LifeEventForm';
 
@@ -123,7 +122,7 @@ export default function LifeEventsPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <Container maxWidth="md" sx={{ py: 4 }}>
 
         {/* Header */}
@@ -218,6 +217,6 @@ export default function LifeEventsPage() {
           {snack.message}
         </Alert>
       </Snackbar>
-    </AppLayout>
+    </>
   );
 }
