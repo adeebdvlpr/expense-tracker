@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema({
   passwordHash: {
     type: String,
     required: false, // optional — social (Google) users have no password
+    select: false,   // never returned in queries unless explicitly opted in with .select('+passwordHash')
   },
 
   // OAuth — Google

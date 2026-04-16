@@ -67,6 +67,18 @@ exports.addExpense = async (req, res, next) => {
   }
 };
 
+//todo --> function to find any active goals that the users could add to "add expense"
+// !! this will be built into the add expense function??? Or will there be a helper function to retrieve the goals
+
+//1. get tthe list of the users goals
+
+//2. populate a drop down within "Add expenses" with users goals
+
+//3. see if adding an expense -- refrencin a goal -- will update goal.id with amount
+
+// 4. update goal.currentAmount vs goal target 
+
+
 exports.getExpenses = async (req, res, next) => {
   try {
     const expenses = await Expense.find({ user: req.user.id }).lean().exec();

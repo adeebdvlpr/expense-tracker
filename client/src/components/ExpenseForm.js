@@ -158,6 +158,10 @@ const ExpenseForm = ({ onAddExpense, open = false, onClose, categories }) => {
             helperText={showError('description') && errors.description}
           />
 
+
+          {/* Row 3 --> drop down containing the goals user has active */}
+
+          
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>

@@ -1319,3 +1319,41 @@ Refactored the static Change #6 Dialog tour into an interactive, navigation-awar
 **2026-04-11 — Change #8 (Deployment Preparation):**
 
 **Change #8:** Configured project for Vercel deployment. Added `vercel.json` with serverless routing rules and optimized Mongoose connection logic using global caching to prevent connection pool exhaustion in serverless functions.
+
+---
+
+**2026-04-16 — Google OAuth Production Bug Fixes (Vercel):**
+
+### Mission
+Diagnose and fix a `500 Internal Server Error` blocking Google OAuth login on the Vercel-deployed production environment. Four targeted fixes applied across three files.
+
+### Root causes identified
+
+1. **OAuth cookie delivery failure** — `sameSite: 'strict'` caused the browser to silently drop cookies during Google's cross-site redirect chain. Browsers only send `strict` cookies on same-site navigations; the OAuth callback is a top-level cross-site redirect from `accounts.google.com`, which does not qualify.
+
+2. **Vercel proxy / redirect URI mismatch** — Vercel's edge layer terminates TLS and forwards requests to serverless functions over plain HTTP internally. Passport reconstructed the callback URL as `http://` instead of `https://`, producing a redirect URI that doesn't match the registered value in Google Cloud Console, causing a 500 before the callback handler ran.
+
+3. **`passwordHash` schema hardening (defense in depth)** — `select: false` was not set on the `passwordHash` field, meaning any `find`/`findOne`/`findById` call returned the hash by default, even in contexts where it would never be used. Added as a schema-level guarantee.
+
+4. **Login flow broken by `select: false`** — Direct consequence of fix 3: the login controller compares `password` against `user.passwordHash` via bcrypt. With `select: false` on the schema, the field is excluded from the query result unless explicitly opted in. Without the opt-in, `bcrypt.compare` receives `undefined` and every login returns "Invalid credentials."
+
+### Changes applied
+
+**`server/controllers/authController.js`**
+- `COOKIE_BASE.sameSite`: `'strict'` → `'lax'`. `lax` allows cookies on top-level GET navigations (the OAuth redirect), but still blocks cross-site POST and iframe requests — appropriate balance for this deployment topology.
+- `login` controller: added `.select('+passwordHash')` to the `User.findOne(...)` query. Required because `passwordHash` now has `select: false` on the schema.
+
+**`server/config/passport.js`**
+- Added `proxy: true` to the `GoogleStrategy` options object. This instructs Passport to trust the `X-Forwarded-Proto` header set by Vercel's proxy, so it builds the callback URL with `https://` — matching the value registered in Google Cloud Console.
+
+**`server/models/User.js`**
+- Added `select: false` to the `passwordHash` field definition. The hash is now excluded from all query results by default. The only call site that needs it (`authController.login`) is explicitly opted in with `.select('+passwordHash')`. The two pre-existing `.select('-passwordHash')` exclusions in `userController.js` are now redundant but harmless.
+
+### Files modified
+`server/controllers/authController.js`, `server/config/passport.js`, `server/models/User.js`
+
+### Files NOT modified
+All frontend files, all other server controllers/routes/models, `aiService.js`, `predictionEngine.js`, `GoalsWidget.js` (carry-forward bug).
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.

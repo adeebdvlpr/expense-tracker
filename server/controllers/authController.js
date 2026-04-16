@@ -8,7 +8,9 @@ const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days (seconds for jwt)
 const COOKIE_BASE = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  // 'lax' (not 'strict') is required for OAuth: the browser must send cookies
+  // on the top-level GET redirect back from Google. 'strict' drops them.
+  sameSite: 'lax',
 };
 
 function setAuthCookies(res, userId) {
@@ -80,12 +82,13 @@ exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
+    // passwordHash has select:false on the schema — opt in explicitly here
     const user = await User.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { username: identifier.toLowerCase() },
       ],
-    });
+    }).select('+passwordHash');
 
     // Uniform message — prevents user-enumeration via login
     if (!user) {
