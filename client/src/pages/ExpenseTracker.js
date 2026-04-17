@@ -656,7 +656,7 @@ const ExpenseTracker = () => {
               )}
 
               {/* List — always reserves 12-row height, scrollable beyond */}
-              <Box sx={{ overflow: 'auto', minHeight: 520, maxHeight: 520 }}>
+              <Box sx={{ overflow: 'auto', minHeight: 620, maxHeight: 620 }}>
                 <ExpenseList
                   transactions={allTransactions}
                   onDeleteExpense={handleDeleteExpense}
