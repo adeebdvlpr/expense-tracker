@@ -1394,3 +1394,41 @@ All server files, all other page components, all utility files, all component fi
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in this session. Carry forward.
+
+---
+
+**2026-04-17 — Landing Page Visual & Content Overhaul (V2):**
+
+### What was built
+
+Complete rewrite of `MarketingLandingPage.js` — copy, layout, visual hierarchy, and new sections.
+No functional changes, no routing changes, no backend changes, no other files modified.
+
+### Changes applied
+
+- **Nav redesigned:** pill buttons replaced with pipe-separated text links. "Under the Hood" text link added (desktop only; collapses on mobile). "Sign in" visible on all breakpoints as unstyled text. "Get started" retains contained button style as sole nav CTA. Pipe `|` separators are non-clickable `Typography` nodes in `text.disabled`.
+- **Hero headline:** "Your finances, finally understood." — phrase "finally understood." rendered in `theme.palette.primary.main` via two `<Box component="span">` children inside a single `Typography`.
+- **Hero subheading:** italic muted line — "The advisor that tracks every variable — assets, life events, goals, spending, economic pressure — so you always know what's coming." Unchanged from prior session.
+- **Hero paragraph:** Unchanged from prior session (LLM reasoning copy).
+- **Tech stack chips:** Already removed in prior session. Not present.
+- **"See how it works ↓" scroll link:** Changed from `Button variant="text"` to `Typography variant="body2"` with cursor pointer, no underline by default, underline on hover, `mt: 1.5`, smooth-scrolls to `#how-it-works`.
+- **Trust strip:** Added `bgcolor: alpha(theme.palette.primary.main, 0.06)`. Security copy unchanged.
+- **"How It Works" section:** Replaced `Grid` layout with dual flexbox (desktop flex-row with `›` connector / mobile Stack). Step 2 title corrected: "Get your complete financial picture" → "Get your financial picture". Card styling updated: `elevation={0}`, `border: 1px solid divider`, `borderRadius: 14px`. Step number changed `variant="h1" + opacity` → `variant="h2" + color: alpha(primary.main, 0.18)`. Step title changed `variant="h3"` → `variant="h6" fontWeight 700`.
+- **Feature cards overhauled:** 7 cards in asymmetric grid. Card 1 full-width (`xs={12}`). Cards 2–7 in 2-column grid (`xs={12} sm={6}`). Cards 1, 2, 6 use Type A (primary accent bg, white text). Cards 3, 4, 5, 7 use Type B (paper bg, divider border). Cards 6 and 7 were previously swapped — corrected. All card body copy matches V2 spec exactly.
+- **"See It In Action" screenshot section:** Added subheading "A platform built for depth, not just tracking." Tab indicator and selected label color explicitly set to `theme.palette.primary.main` via `TabIndicatorProps` + `sx`. Placeholder boxes render since no screenshot files present.
+- **"Under the Hood" section:** Moved from `Container` to full-width `Box` with `bgcolor: theme.palette.secondary.main`. Card 1 body: "AI-generated" prefix removed — now reads "Each projection stores its full reasoning chain...". Cards 1–4 at `sm={6}`, Card 5 at `xs={12}` (full-width). All text white / white with opacity. Card surfaces use `alpha('#ffffff', 0.07)` background.
+- **Footer:** Already reads "© 2026 Ledgic". No change needed.
+- **`useTheme` added** to imports and called inside component. Used for border colors, trust strip bgcolor, How It Works card borders, screenshot placeholder border, Under the Hood section and card styles.
+
+### Files modified
+`client/src/pages/MarketingLandingPage.js`
+
+### Files NOT modified
+All server files, all other page components, all utility files, all component files, `theme.js`, `App.js`, `api.js`.
+
+### Deviations from plan
+- Trust strip does not use `px: 4` as a standalone prop — it is applied via the `sx` object alongside `py: 2` and `bgcolor`. Visual result is identical.
+- How It Works desktop connector uses inline `›` character in a flex `Box` rather than a separate Grid item, avoiding column-width overflow in MUI v7 Grid.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in this session. Carry forward.
