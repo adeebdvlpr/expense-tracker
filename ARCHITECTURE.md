@@ -1357,3 +1357,40 @@ All frontend files, all other server controllers/routes/models, `aiService.js`, 
 
 ### Known issues carried forward
 **GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed. Carry forward.
+
+---
+
+**2026-04-16 — Landing Page Content Overhaul:**
+
+### What was built
+
+Rewrote all marketing copy and content on `MarketingLandingPage.js` to reflect the full product feature set and communicate technical credibility. No functional, routing, or backend changes were made.
+
+### Changes applied
+
+- **Hero headline** replaced: "Spend with confidence. Track your money in minutes." → "Your finances, finally understood." with new subheading positioning the product as a forward-looking advisor.
+- **Hero subheadline** replaced: generic dashboard description → purpose-built financial intelligence engine copy referencing LLM reasoning.
+- **Tech stack chips removed:** `React + MUI`, `Node + Express`, `MongoDB` chips deleted from hero. `Chip` import removed (now unused).
+- **"See how it works" scroll link added** below hero CTAs, smooth-scrolls to `#how-it-works`.
+- **"Under the Hood" nav link added**, smooth-scrolls to `#under-the-hood` section.
+- **Feature cards overhauled:** 3 generic cards → 7 feature-specific cards (2-col grid, responsive) covering financial audit, life event forecasting, asset depreciation, recurring payment tracking, 50/30/20 pulse, adaptive goals, and custom category mapping.
+- **Trust strip added** between hero and "How It Works": one-line muted text with dividers above/below — "Google OAuth. HttpOnly tokens. Rate-limited auth. Your data never leaves your account."
+- **"How It Works" section added** (3-step flow, `id="how-it-works"`): Connect → Get your picture → Act with confidence.
+- **Demo screenshots section added**: MUI Tabs interface (Dashboard / Financial Advisory / Goals / Assets). No screenshot files present at `client/src/assets/screenshots/` — placeholder boxes with correct aspect ratios and drop-in path labels rendered instead.
+- **"Under the Hood" section added** (`id="under-the-hood"`): 5 technical credibility principles — auditability, location-awareness, session architecture, security hardening, risk ratings.
+- **Footer updated:** "built as a portfolio-grade expense platform." tagline removed. Footer now reads "© 2026 Ledgic".
+- **`scrollTo` helper added** (module-level, plain JS `scrollIntoView`) — no external library.
+- **`Tabs` and `Tab` imports added** (MUI standard components, for screenshot section).
+
+### Files modified
+`client/src/pages/MarketingLandingPage.js`
+
+### Files NOT modified
+All server files, all other page components, all utility files, all component files, `theme.js`, `App.js`, `api.js`.
+
+### Deviations from plan
+- Feature cards section specifies "six cards" in the heading but lists seven distinct cards in the spec. All seven were implemented.
+- Screenshot files not present; placeholder boxes rendered per the spec's fallback instruction.
+
+### Known issues carried forward
+**GoalsWidget.js — isOuterRing hover logic:** `const isOuterRing = highlighted.seriesId === 1` is the correct fix. Not addressed in this session. Carry forward.
