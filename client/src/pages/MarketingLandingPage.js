@@ -1,6 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ReactComponent as LandingArt } from '../animations/Landing-Page-Animaton.svg';
+import screenshotDashboard from '../assets/screenshots/dashboard.png';
+import screenshotAdvisory from '../assets/screenshots/predictions.png';
+import screenshotAssets from '../assets/screenshots/assets.png';
+import screenshotLifeEvents from '../assets/screenshots/life-events.png';
 import {
   AppBar,
   Toolbar,
@@ -97,10 +101,10 @@ const UNDER_THE_HOOD_CARDS = [
 ];
 
 const SCREENSHOT_TABS = [
-  { label: 'Dashboard', width: 900, height: 560 },
-  { label: 'Financial Advisory', width: 900, height: 560 },
-  { label: 'Goals', width: 900, height: 560 },
-  { label: 'Assets', width: 900, height: 560 },
+  { label: 'Dashboard', src: screenshotDashboard },
+  { label: 'Financial Advisory', src: screenshotAdvisory },
+  { label: 'Assets', src: screenshotAssets },
+  { label: 'Life Events', src: screenshotLifeEvents },
 ];
 
 const HOW_IT_WORKS_STEPS = [
@@ -430,26 +434,17 @@ const MarketingLandingPage = () => {
             <Box key={t.label} role="tabpanel" hidden={screenshotTab !== i}>
               {screenshotTab === i && (
                 <Box
+                  component="img"
+                  src={t.src}
+                  alt={`${t.label} screenshot`}
                   sx={{
                     width: '100%',
-                    aspectRatio: `${t.width} / ${t.height}`,
-                    bgcolor: alpha(theme.palette.primary.main, 0.04),
-                    border: `2px dashed ${theme.palette.divider}`,
+                    height: 'auto',
                     borderRadius: '14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 1,
+                    display: 'block',
+                    boxShadow: `0 4px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
                   }}
-                >
-                  <Typography variant="h6" color="text.disabled">
-                    {t.label}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    {t.width} × {t.height} — drop screenshot at client/src/assets/screenshots/{t.label.toLowerCase().replace(/ /g, '-')}.png
-                  </Typography>
-                </Box>
+                />
               )}
             </Box>
           ))}
