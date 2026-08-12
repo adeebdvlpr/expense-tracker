@@ -40,7 +40,7 @@ async function callAI({ systemPrompt, userPrompt, model, maxTokens }) {
       messages: [{ role: 'user', content: userPrompt }],
     });
   } catch (err) {
-    throw new Error(`AI call failed: ${err.message}`);
+    throw new Error(`AI call failed: ${err.message}`, { cause: err });
   }
 
   const text = response.content[0].text;

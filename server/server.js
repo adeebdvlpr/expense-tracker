@@ -136,7 +136,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 
-app.use((err, req, res, next) => {
+// Express identifies error handlers by arity, so the 4th arg must stay declared.
+app.use((err, req, res, _next) => {
   console.error(`[${req.requestId}]`, err.stack || err);
   res.status(500).json({ message: 'Internal server error', requestId: req.requestId });
 });
