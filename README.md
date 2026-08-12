@@ -6,6 +6,9 @@
 
 **A full-stack personal finance platform that tracks where your money goes — and projects where it's going next.**
 
+### [**→ Try it live at ledgictech.com**](https://ledgictech.com)
+
+[![Live](https://img.shields.io/badge/live-ledgictech.com-4C6EF5)](https://ledgictech.com)
 [![CI](https://github.com/adeebdvlpr/expense-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/adeebdvlpr/expense-tracker/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/node-20.x-339933?logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/react-18-61DAFB?logo=react&logoColor=black)
@@ -21,6 +24,8 @@
 Most expense trackers are backward-looking: they tell you what you already spent. Ledgic starts there — expenses, budgets, savings goals — and then extends into **forward-looking financial planning**. It models the assets you own and the life events you have planned, and uses an AI advisory layer to project future costs, surface risks, and answer questions about your own financial data.
 
 The app is built as a production-grade MERN application: HttpOnly-cookie JWT auth with silent refresh, Google OAuth, request correlation IDs, rate limiting, schema validation on every write, and an integration test suite running against an in-memory MongoDB.
+
+**Ledgic is live in production at [ledgictech.com](https://ledgictech.com)** — deployed on Vercel against MongoDB Atlas. You can create an account and use the full app there; the setup steps below are only needed to run it locally.
 
 ---
 
@@ -261,6 +266,8 @@ Auth routes are rate limited to **20 requests per IP per 15 minutes**.
 ---
 
 ## Deployment
+
+Ledgic runs in production at **[ledgictech.com](https://ledgictech.com)**, hosted on Vercel with MongoDB Atlas as the datastore.
 
 The repo ships with a `vercel.json` that builds the React client as a static site and the Express app as a serverless Node function, routing `/api/*` to the server and everything else to `index.html`.
 
